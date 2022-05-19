@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import config from './config';
+import { Block } from './entities';
 
 export const AppDataSource = new DataSource({
   type: config.DATABASE_TYPE,
@@ -9,9 +11,12 @@ export const AppDataSource = new DataSource({
   username: config.DATABASE_USERNAME,
   password: config.DATABASE_PASSWORD,
   database: config.DATABASE_NAME,
-  synchronize: false,
+  synchronize: true,
   logging: false,
-  entities: [],
+  entities: [
+    Block,
+  ],
   migrations: [],
   subscribers: [],
+  namingStrategy: new SnakeNamingStrategy(),
 });

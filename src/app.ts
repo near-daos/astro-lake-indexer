@@ -2,20 +2,33 @@ import S3Fetcher from './s3-fetcher';
 import config from './config';
 import { sleep } from './utils';
 import * as Near from './near';
+import { BlocksService } from './services';
+import { createLogger } from './logger';
+import { Logger } from 'log4js';
 
 export default class App {
+  private readonly logger: Logger;
   private readonly fetcher: S3Fetcher;
   private running = false;
 
   private lastBlockHeight: number;
 
   constructor() {
+    this.logger = createLogger('app');
     this.fetcher = new S3Fetcher();
     this.lastBlockHeight = config.START_BLOCK_HEIGHT;
   }
 
-  start() {
+  async start() {
     this.running = true;
+
+    const latestBlockHeight = await BlocksService.getLatestBlockHeight();
+
+    if (latestBlockHeight) {
+      this.lastBlockHeight = latestBlockHeight;
+    }
+
+    this.logger.info(`Last block height ${this.lastBlockHeight}`);
     process.nextTick(() => this.poll());
   }
 
@@ -52,6 +65,6 @@ export default class App {
     block: Near.Block,
     shards: Near.Shard[],
   ) {
-    console.log(blockHeight, block, shards);
+    await BlocksService.storeBlock(block);
   }
 }

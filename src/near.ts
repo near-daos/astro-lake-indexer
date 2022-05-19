@@ -1,8 +1,12 @@
 export type Amount = string;
 
 export interface BlockHeader {
+  gas_price: string;
   hash: string;
   height: number;
+  prev_hash: string;
+  timestamp: number;
+  total_supply: string;
 }
 
 export interface ChunkHeader {

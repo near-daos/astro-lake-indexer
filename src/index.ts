@@ -36,9 +36,10 @@ process
     stop(3);
   });
 
-(async() => {
+(async () => {
   await AppDataSource.initialize();
 
-  app.start();
+  await app.start();
+
   logger.info('Started');
 })();
