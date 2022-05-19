@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import * as AWS from 'aws-sdk';
 import { Logger } from 'log4js';
 import config from './config';
 import { createLogger } from './logger';

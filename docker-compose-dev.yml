@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - '5437:5432'
+    volumes:
+      - pg-data:/data/postgres
+    environment:
+      - POSTGRES_USER=indexer
+      - POSTGRES_PASSWORD=indexer
+      - POSTGRES_DB=indexer
+
+volumes:
+  pg-data:

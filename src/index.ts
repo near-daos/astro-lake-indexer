@@ -1,7 +1,8 @@
-import AWS from 'aws-sdk';
+import * as AWS from 'aws-sdk';
 import App from './app';
 import config from './config';
 import { createLogger } from './logger';
+import { AppDataSource } from './data-source';
 
 AWS.config.update({
   accessKeyId: config.AWS_ACCESS_KEY_ID,
@@ -35,5 +36,9 @@ process
     stop(3);
   });
 
-app.start();
-logger.info('Started');
+(async() => {
+  await AppDataSource.initialize();
+
+  app.start();
+  logger.info('Started');
+})();
