@@ -11,8 +11,8 @@ export interface BlockHeader {
 
 export interface ChunkHeader {
   chunk_hash: string;
-  gas_limit: string;
-  gas_used: string;
+  gas_limit: number;
+  gas_used: number;
   shard_id: number;
   signature: string;
 }

@@ -9,7 +9,7 @@ export class BlocksService {
       block_height: block.header.height,
       block_hash: block.header.hash,
       prev_block_hash: block.header.prev_hash,
-      block_timestamp: String(block.header.timestamp),
+      block_timestamp: block.header.timestamp,
       total_supply: block.header.total_supply,
       gas_price: block.header.gas_price,
       author_account_id: block.author,
@@ -18,13 +18,13 @@ export class BlocksService {
   }
 
   static async getLatestBlockHeight() {
-    const { block_height } = await AppDataSource.getRepository(Block)
+    const entity = await AppDataSource.getRepository(Block)
       .createQueryBuilder()
       .select('block_height')
       .orderBy('block_height', 'DESC')
       .limit(1)
-      .getRawOne();
+      .getOne();
 
-    return block_height;
+    return entity?.block_height;
   }
 }

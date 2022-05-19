@@ -17,10 +17,10 @@ export class Chunk {
   signature: string;
 
   @Column('numeric', { precision: 20 })
-  gas_limit: string;
+  gas_limit: number;
 
   @Column('numeric', { precision: 20 })
-  gas_used: string;
+  gas_used: number;
 
   @Column('text')
   author_account_id: string;

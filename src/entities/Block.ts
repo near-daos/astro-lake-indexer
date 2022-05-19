@@ -15,7 +15,7 @@ export class Block {
 
   @Column('numeric', { precision: 20 })
   @Index()
-  block_timestamp: string;
+  block_timestamp: number;
 
   @Column('numeric', { precision: 45 })
   total_supply: string;
