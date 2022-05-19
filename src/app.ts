@@ -1,10 +1,10 @@
+import { Logger } from 'log4js';
 import S3Fetcher from './s3-fetcher';
 import config from './config';
 import { sleep } from './utils';
 import * as Near from './near';
-import { BlocksService } from './services';
 import { createLogger } from './logger';
-import { Logger } from 'log4js';
+import { BlocksService, ChunksService } from './services';
 
 export default class App {
   private readonly logger: Logger;
@@ -65,6 +65,10 @@ export default class App {
     block: Near.Block,
     shards: Near.Shard[],
   ) {
+    this.logger.info(`Processing block ${blockHeight} (${block.header.hash})`);
+
     await BlocksService.storeBlock(block);
+
+    await ChunksService.storeChunks(block.header.hash, shards.map((shard) => shard.chunk).filter((chunk) => chunk));
   }
 }

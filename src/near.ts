@@ -11,7 +11,10 @@ export interface BlockHeader {
 
 export interface ChunkHeader {
   chunk_hash: string;
+  gas_limit: string;
+  gas_used: string;
   shard_id: number;
+  signature: string;
 }
 
 export interface Block {
@@ -65,12 +68,15 @@ export interface StateChange {
   type: string;
 }
 
+export interface Chunk {
+  author: string;
+  header: ChunkHeader;
+  receipts: Receipt[];
+  transactions: Transaction[];
+}
+
 export interface Shard {
-  chunk: {
-    header: ChunkHeader;
-    receipts: Receipt[];
-    transactions: Transaction[];
-  };
+  chunk: Chunk;
   receipt_execution_outcomes: ReceiptExecutionOutcome[];
   shard_id: number;
   state_changes: StateChange[];

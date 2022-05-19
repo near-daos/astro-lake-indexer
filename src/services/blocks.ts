@@ -4,8 +4,8 @@ import { Block } from '../entities';
 
 export class BlocksService {
   static async storeBlock(block: Near.Block) {
-    const blockRepository = AppDataSource.getRepository(Block);
-    const blockEntity = blockRepository.create({
+    const repository = AppDataSource.getRepository(Block);
+    const entity = repository.create({
       block_height: block.header.height,
       block_hash: block.header.hash,
       prev_block_hash: block.header.prev_hash,
@@ -14,12 +14,11 @@ export class BlocksService {
       gas_price: block.header.gas_price,
       author_account_id: block.author,
     });
-    return blockRepository.save(blockEntity);
+    return repository.save(entity);
   }
 
   static async getLatestBlockHeight() {
-    const { block_height } = await AppDataSource
-      .getRepository(Block)
+    const { block_height } = await AppDataSource.getRepository(Block)
       .createQueryBuilder()
       .select('block_height')
       .orderBy('block_height', 'DESC')
