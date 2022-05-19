@@ -8,6 +8,7 @@
     "clean": "tsc --build --clean",
     "start": "node -r ts-node/register src/index.ts",
     "start:debug": "LOG_LEVEL=debug npm run start",
+    "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint --ext .ts src/",
     "lint:fix": "eslint --ext .ts src/ --fix",
     "pretest": "npm run lint",
@@ -22,6 +23,9 @@
     "@typescript-eslint/eslint-plugin": "5.25.0",
     "@typescript-eslint/parser": "5.25.0",
     "eslint": "8.15.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-prettier": "4.0.0",
+    "prettier": "2.6.2",
     "ts-node": "10.7.0",
     "typescript": "4.6.4"
   },
