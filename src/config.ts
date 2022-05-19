@@ -10,8 +10,7 @@ export class Config {
     this.provider.defaults({
       LOG_LEVEL: 'info',
       START_BLOCK_HEIGHT: 1,
-      WAIT_FOR_NEW_BLOCKS: 2000,
-    })
+    });
     this.provider.required([
       'LOG_LEVEL',
       'AWS_ACCESS_KEY_ID',
@@ -44,10 +43,6 @@ export class Config {
 
   get START_BLOCK_HEIGHT(): number {
     return parseInt(this.provider.get('START_BLOCK_HEIGHT'));
-  }
-
-  get WAIT_FOR_NEW_BLOCKS(): number {
-    return parseInt(this.provider.get('WAIT_FOR_NEW_BLOCKS'));
   }
 }
 

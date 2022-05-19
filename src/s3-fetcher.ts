@@ -1,7 +1,9 @@
 import AWS from 'aws-sdk';
+import { Logger } from 'log4js';
 import config from './config';
 import { createLogger } from './logger';
-import { Logger } from 'log4js';
+import { formatBlockHeight, sleep } from './utils';
+import { Near } from './near';
 
 export default class S3Fetcher {
   private readonly s3: AWS.S3;
@@ -13,7 +15,7 @@ export default class S3Fetcher {
   }
 
   async listBlocks(startBlockHeight: number) {
-    const startAfter = String(startBlockHeight).padStart(12, '0');
+    const startAfter = formatBlockHeight(startBlockHeight);
 
     this.logger.debug(`Fetching blocks since ${startAfter}`)
 
@@ -30,5 +32,46 @@ export default class S3Fetcher {
       .map((prefix) => {
         return parseInt(prefix.Prefix!.split('/')[0]);
       });
+  }
+
+  async getBlock(blockHeight: number) {
+    const key = `${formatBlockHeight(blockHeight)}/block.json`;
+
+    this.logger.debug(`Fetching block ${key}`);
+
+    let result: AWS.S3.GetObjectOutput;
+
+    try {
+      result = await this.s3.getObject({
+        Bucket: config.AWS_BUCKET,
+        Key: key,
+        RequestPayer: 'requester',
+      }).promise();
+    } catch (err) {
+      this.logger.debug(`Failed to get ${key}, retrying immediately...`);
+    }
+
+    return JSON.parse(result!.Body!.toString()) as Near.Block;
+  }
+
+  async getShard(blockHeight: number, shardId: number) {
+    const key = `${formatBlockHeight(blockHeight)}/shard_${shardId}.json`;
+
+    this.logger.debug(`Fetching shard ${key}`);
+
+    let result: AWS.S3.GetObjectOutput;
+
+    try {
+      result = await this.s3.getObject({
+        Bucket: config.AWS_BUCKET,
+        Key: key,
+        RequestPayer: 'requester',
+      }).promise();
+    } catch (err) {
+      this.logger.debug(`Failed to get ${key}, retrying in 1s...`);
+      await sleep(1000);
+    }
+
+    return JSON.parse(result!.Body!.toString()) as Near.Shard;
   }
 }

@@ -1,5 +1,7 @@
 import S3Fetcher from './s3-fetcher';
 import config from './config';
+import { sleep } from './utils';
+import { Near } from './near';
 
 export default class App {
   private readonly fetcher: S3Fetcher;
@@ -14,7 +16,7 @@ export default class App {
 
   start() {
     this.running = true;
-    setImmediate(this.poll.bind(this));
+    process.nextTick(() => this.poll());
   }
 
   stop() {
@@ -24,14 +26,24 @@ export default class App {
   private async poll() {
     while (this.running) {
       const blocks = await this.fetcher.listBlocks(this.lastBlockHeight);
-      if (blocks.length) {
-        for (const blockHeight of blocks) {
-          console.log(blockHeight);
-          this.lastBlockHeight = blockHeight + 1;
-        }
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, config.WAIT_FOR_NEW_BLOCKS));
+
+      if (!blocks.length) {
+        await sleep(2000);
+        continue;
+      }
+
+      for (const blockHeight of blocks) {
+        const block = await this.fetcher.getBlock(blockHeight);
+        const shards = await Promise.all(block.chunks.map((chunk) => this.fetcher.getShard(blockHeight, chunk.shard_id)));
+
+        await this.processBlock(blockHeight, block, shards);
+
+        this.lastBlockHeight = blockHeight + 1;
       }
     }
+  }
+
+  private async processBlock(blockHeight: number, block: Near.Block, shards: Near.Shard[]) {
+    console.log(blockHeight, block, shards);
   }
 }
