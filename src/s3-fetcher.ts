@@ -1,18 +1,14 @@
 import * as AWS from 'aws-sdk';
-import { Logger } from 'log4js';
 import config from './config';
 import { createLogger } from './logger';
 import { formatBlockHeight, sleep } from './utils';
 import * as Near from './near';
 
 export default class S3Fetcher {
-  private readonly s3: AWS.S3;
-  private readonly logger: Logger;
-
-  constructor() {
-    this.s3 = new AWS.S3();
-    this.logger = createLogger('s3-fetcher');
-  }
+  constructor(
+    private readonly s3 = new AWS.S3(),
+    private readonly logger = createLogger('s3-fetcher'),
+  ) {}
 
   async listBlocks(startBlockHeight: number) {
     const startAfter = formatBlockHeight(startBlockHeight);

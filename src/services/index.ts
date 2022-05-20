@@ -1,2 +1,2 @@
-export * from './blocks';
-export * from './chunks';
+export * from './block.service';
+export * from './chunk.service';

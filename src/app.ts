@@ -1,28 +1,27 @@
-import { Logger } from 'log4js';
+import { PromisePool } from '@supercharge/promise-pool';
 import S3Fetcher from './s3-fetcher';
 import config from './config';
 import { sleep } from './utils';
 import * as Near from './near';
 import { createLogger } from './logger';
-import { BlocksService, ChunksService } from './services';
+import * as services from './services';
+import { AppDataSource } from './data-source';
 
 export default class App {
-  private readonly logger: Logger;
-  private readonly fetcher: S3Fetcher;
   private running = false;
 
-  private lastBlockHeight: number;
-
-  constructor() {
-    this.logger = createLogger('app');
-    this.fetcher = new S3Fetcher();
-    this.lastBlockHeight = config.START_BLOCK_HEIGHT;
+  constructor(
+    private readonly logger = createLogger('app'),
+    private readonly fetcher = new S3Fetcher(),
+    private lastBlockHeight = config.START_BLOCK_HEIGHT,
+  ) {
   }
 
   async start() {
     this.running = true;
 
-    const latestBlockHeight = await BlocksService.getLatestBlockHeight();
+    const latestBlockHeight =
+      await services.blockService.getLatestBlockHeight();
 
     if (latestBlockHeight) {
       this.lastBlockHeight = latestBlockHeight;
@@ -45,14 +44,22 @@ export default class App {
         continue;
       }
 
-      for (const blockHeight of blocks) {
-        const block = await this.fetcher.getBlock(blockHeight);
-        const shards = await Promise.all(
-          block.chunks.map((chunk) =>
-            this.fetcher.getShard(blockHeight, chunk.shard_id),
-          ),
-        );
+      const { results } = await PromisePool.for(blocks)
+        .withConcurrency(10)
+        .process(async (blockHeight) => {
+          const block = await this.fetcher.getBlock(blockHeight);
+          const shards = await Promise.all(
+            block.chunks.map((chunk) =>
+              this.fetcher.getShard(blockHeight, chunk.shard_id),
+            ),
+          );
 
+          return { blockHeight, block, shards };
+        });
+
+      results.sort((a, b) => a.blockHeight - b.blockHeight);
+
+      for (const { blockHeight, block, shards } of results) {
         await this.processBlock(blockHeight, block, shards);
 
         this.lastBlockHeight = blockHeight + 1;
@@ -67,8 +74,10 @@ export default class App {
   ) {
     this.logger.info(`Processing block ${blockHeight} (${block.header.hash})`);
 
-    await BlocksService.storeBlock(block);
+    await AppDataSource.transaction(async () => {
+      await services.blockService.store(block);
 
-    await ChunksService.storeChunks(block.header.hash, shards.map((shard) => shard.chunk).filter((chunk) => chunk));
+      await services.chunkService.store(block, shards);
+    })
   }
 }
