@@ -14,8 +14,7 @@ export default class App {
     private readonly logger = createLogger('app'),
     private readonly fetcher = new S3Fetcher(),
     private lastBlockHeight = config.START_BLOCK_HEIGHT,
-  ) {
-  }
+  ) {}
 
   async start() {
     this.running = true;
@@ -79,6 +78,8 @@ export default class App {
       await services.blockService.store(block);
 
       await services.chunkService.store(block, shards);
-    })
+
+      await services.transactionsService.store(block, shards);
+    });
   }
 }

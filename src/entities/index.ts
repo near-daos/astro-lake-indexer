@@ -1,2 +1,3 @@
-export * from './Block';
-export * from './Chunk';
+export * from './block';
+export * from './chunk';
+export * from './transaction';

@@ -29,13 +29,31 @@ export interface Receipt {
   receiver_id: string;
 }
 
+export enum ExecutionOutcomeStatus {
+  Unknown = 'UNKNOWN',
+  Failure = 'FAILURE',
+  SuccessValue = 'SUCCESS_VALUE',
+  SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
+}
+
+export type ExecutionOutcomeStatusKey = keyof typeof ExecutionOutcomeStatus;
+export type ExecutionOutcomeStatusObject = Record<
+  ExecutionOutcomeStatusKey,
+  string
+>;
+
+export interface Outcome {
+  executor_id: string;
+  gas_burnt: number;
+  receipt_ids: string[];
+  status: ExecutionOutcomeStatusObject;
+  tokens_burnt: string;
+}
+
 export interface ExecutionOutcome {
   block_hash: string;
   id: string;
-  outcome: {
-    executor_id: string;
-    receipt_ids: string[];
-  };
+  outcome: Outcome;
 }
 
 export interface ReceiptExecutionOutcome {
@@ -44,16 +62,18 @@ export interface ReceiptExecutionOutcome {
 }
 
 export interface Transaction {
+  actions: object[];
+  hash: string;
+  nonce: number;
+  public_key: string;
+  receiver_id: string;
+  signature: string;
+  signer_id: string;
+}
+
+export interface TransactionWithOutcome {
   outcome: ReceiptExecutionOutcome;
-  transaction: {
-    actions: object[];
-    hash: string;
-    nonce: number;
-    public_key: string;
-    receiver_id: string;
-    signature: string;
-    signer_id: string;
-  };
+  transaction: Transaction;
 }
 
 export interface StateChange {
@@ -72,7 +92,7 @@ export interface Chunk {
   author: string;
   header: ChunkHeader;
   receipts: Receipt[];
-  transactions: Transaction[];
+  transactions: TransactionWithOutcome[];
 }
 
 export interface Shard {

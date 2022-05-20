@@ -16,13 +16,13 @@ export class Block {
 
   @Column('numeric', { precision: 20, transformer: transformers.bigInt })
   @Index()
-  block_timestamp: BigInt;
+  block_timestamp: bigint;
 
   @Column('numeric', { precision: 45, transformer: transformers.bigInt })
-  total_supply: BigInt;
+  total_supply: bigint;
 
   @Column('numeric', { precision: 45, transformer: transformers.bigInt })
-  gas_price: BigInt;
+  gas_price: bigint;
 
   @Column('text')
   author_account_id: string;
