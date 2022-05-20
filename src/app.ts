@@ -23,7 +23,7 @@ export default class App {
     const latestBlockHeight =
       await services.blockService.getLatestBlockHeight();
 
-    if (latestBlockHeight) {
+    if (latestBlockHeight && latestBlockHeight > this.lastBlockHeight) {
       this.lastBlockHeight = latestBlockHeight;
     }
 
@@ -40,6 +40,7 @@ export default class App {
       const blocks = await this.fetcher.listBlocks(this.lastBlockHeight);
 
       if (!blocks.length) {
+        this.logger.info('Waiting for new blocks...');
         await sleep(2000);
         continue;
       }

@@ -1,4 +1,5 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
+import * as transformers from '../transformers';
 
 @Entity('blocks')
 export class Block {
@@ -13,15 +14,15 @@ export class Block {
   @Index()
   prev_block_hash: string;
 
-  @Column('numeric', { precision: 20 })
+  @Column('numeric', { precision: 20, transformer: transformers.bigInt })
   @Index()
-  block_timestamp: number;
+  block_timestamp: BigInt;
 
-  @Column('numeric', { precision: 45 })
-  total_supply: string;
+  @Column('numeric', { precision: 45, transformer: transformers.bigInt })
+  total_supply: BigInt;
 
-  @Column('numeric', { precision: 45 })
-  gas_price: string;
+  @Column('numeric', { precision: 45, transformer: transformers.bigInt })
+  gas_price: BigInt;
 
   @Column('text')
   author_account_id: string;
