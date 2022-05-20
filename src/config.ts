@@ -73,6 +73,14 @@ export class Config {
   get START_BLOCK_HEIGHT(): number {
     return parseInt(this.provider.get('START_BLOCK_HEIGHT'));
   }
+
+  get FETCH_MAX_KEYS(): number {
+    return parseInt(this.provider.get('FETCH_MAX_KEYS'));
+  }
+
+  get WAIT_FOR_NEW_BLOCKS(): number {
+    return parseInt(this.provider.get('WAIT_FOR_NEW_BLOCKS'));
+  }
 }
 
 export default new Config();

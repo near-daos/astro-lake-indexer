@@ -41,7 +41,7 @@ export default class App {
 
       if (!blocks.length) {
         this.logger.info('Waiting for new blocks...');
-        await sleep(2000);
+        await sleep(config.WAIT_FOR_NEW_BLOCKS);
         continue;
       }
 

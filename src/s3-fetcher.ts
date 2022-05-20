@@ -18,7 +18,7 @@ export default class S3Fetcher {
     const result: AWS.S3.ListObjectsV2Output = await this.s3
       .listObjectsV2({
         Bucket: config.AWS_BUCKET,
-        MaxKeys: 20,
+        MaxKeys: config.FETCH_MAX_KEYS,
         Delimiter: '/',
         RequestPayer: 'requester',
         StartAfter: startAfter,
