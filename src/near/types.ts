@@ -1,18 +1,20 @@
-export type Amount = string;
+import { ActionKindObject } from './action-kind';
+
+export type Amount = string | number;
 
 export interface BlockHeader {
-  gas_price: string;
+  gas_price: Amount;
   hash: string;
   height: number;
   prev_hash: string;
   timestamp: number;
-  total_supply: string;
+  total_supply: Amount;
 }
 
 export interface ChunkHeader {
   chunk_hash: string;
-  gas_limit: number;
-  gas_used: number;
+  gas_limit: Amount;
+  gas_used: Amount;
   shard_id: number;
   signature: string;
 }
@@ -43,10 +45,10 @@ export type ExecutionOutcomeStatusObject = Record<
 
 export interface Outcome {
   executor_id: string;
-  gas_burnt: number;
+  gas_burnt: Amount;
   receipt_ids: string[];
   status: ExecutionOutcomeStatusObject;
-  tokens_burnt: string;
+  tokens_burnt: Amount;
 }
 
 export interface ExecutionOutcome {
@@ -59,74 +61,6 @@ export interface ReceiptExecutionOutcome {
   execution_outcome: ExecutionOutcome;
   receipt: Receipt | null;
 }
-
-export enum ActionKind {
-  CreateAccount = 'CreateAccount',
-  DeployContract = 'DeployContract',
-  FunctionCall = 'FunctionCall',
-  Transfer = 'Transfer',
-  Stake = 'Stake',
-  AddKey = 'AddKey',
-  DeleteKey = 'DeleteKey',
-  DeleteAccount = 'DeleteAccount',
-}
-
-export interface ActionKindDeployContract {
-  [ActionKind.DeployContract]: {
-    code: string;
-  };
-}
-
-export interface ActionKindFunctionCall {
-  [ActionKind.FunctionCall]: {
-    method_name: string;
-    args: string;
-    gas: number;
-    deposit: string;
-  };
-}
-
-export interface ActionKindTransfer {
-  [ActionKind.Transfer]: {
-    deposit: string;
-  };
-}
-
-export interface ActionKindStake {
-  [ActionKind.Stake]: {
-    stake: string;
-    public_key: string;
-  };
-}
-
-export interface ActionKindAddKey {
-  [ActionKind.AddKey]: {
-    public_key: string;
-    access_key: Record<string, unknown>; // TODO
-  };
-}
-
-export interface ActionKindDeleteKey {
-  [ActionKind.DeleteKey]: {
-    public_key: string;
-  };
-}
-
-export interface ActionKindDeleteAccount {
-  [ActionKind.DeleteAccount]: {
-    beneficiary_id: string;
-  };
-}
-
-export type ActionKindObject =
-  | ActionKind.CreateAccount
-  | ActionKindDeployContract
-  | ActionKindFunctionCall
-  | ActionKindTransfer
-  | ActionKindStake
-  | ActionKindAddKey
-  | ActionKindDeleteKey
-  | ActionKindDeleteAccount;
 
 export interface Transaction {
   actions: ActionKindObject[];

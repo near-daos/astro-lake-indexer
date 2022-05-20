@@ -28,14 +28,13 @@ class BlockService {
   }
 
   async getLatestBlockHeight() {
-    const { block_height } = await this.repository
+    const entity = await this.repository
       .createQueryBuilder()
-      .select('block_height')
       .orderBy('block_height', 'DESC')
       .limit(1)
-      .getRawOne();
+      .getOne();
 
-    return block_height;
+    return entity?.block_height;
   }
 }
 
