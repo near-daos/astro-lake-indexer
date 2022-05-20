@@ -5,11 +5,19 @@ import {
   Index,
   ManyToOne,
   PrimaryColumn,
+  OneToMany,
 } from 'typeorm';
 import * as transformers from '../transformers';
-import { ExecutionOutcomeStatus } from '../near';
 import { Chunk } from './chunk';
 import { Block } from './block';
+import { TransactionAction } from './transaction-action';
+
+export enum TransactionStatus {
+  Unknown = 'UNKNOWN',
+  Failure = 'FAILURE',
+  SuccessValue = 'SUCCESS_VALUE',
+  SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
+}
 
 @Entity('transactions')
 @Index(['block_timestamp', 'index_in_chunk'])
@@ -58,8 +66,8 @@ export class Transaction {
   @Column('text')
   signature: string;
 
-  @Column('enum', { enum: ExecutionOutcomeStatus })
-  status: ExecutionOutcomeStatus;
+  @Column('enum', { enum: TransactionStatus })
+  status: TransactionStatus;
 
   @Column('text')
   @Index()
@@ -70,4 +78,9 @@ export class Transaction {
 
   @Column('numeric', { precision: 45, transformer: transformers.bigInt })
   receipt_conversion_tokens_burnt: bigint;
+
+  @OneToMany(() => TransactionAction, (action) => action.transaction, {
+    cascade: true,
+  })
+  actions: TransactionAction[];
 }

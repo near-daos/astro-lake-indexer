@@ -1,8 +1,8 @@
 import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
-import { Transaction } from '../entities';
-import { ExecutionOutcomeStatus, ExecutionOutcomeStatusKey } from '../near';
+import { Transaction, TransactionStatus } from '../entities';
+import * as services from '../services';
 
 class TransactionService {
   constructor(
@@ -11,6 +11,13 @@ class TransactionService {
     ),
   ) {}
 
+  parseStatus(outcomeStatus: Near.ExecutionOutcomeStatusObject) {
+    const [status] = Object.keys(
+      outcomeStatus,
+    ) as Near.ExecutionOutcomeStatus[];
+    return TransactionStatus[status];
+  }
+
   fromJSON(
     blockHash: string,
     blockTimestamp: number,
@@ -18,14 +25,6 @@ class TransactionService {
     indexInChunk: number,
     transaction: Near.TransactionWithOutcome,
   ) {
-    const status = Object.keys(
-      transaction.outcome.execution_outcome.outcome.status,
-    )
-      .map(
-        (status) => ExecutionOutcomeStatus[status as ExecutionOutcomeStatusKey],
-      )
-      .shift();
-
     return this.repository.create({
       transaction_hash: transaction.transaction.hash,
       block: { block_hash: blockHash },
@@ -37,7 +36,9 @@ class TransactionService {
       nonce: transaction.transaction.nonce,
       receiver_account_id: transaction.transaction.receiver_id,
       signature: transaction.transaction.signature,
-      status,
+      status: this.parseStatus(
+        transaction.outcome.execution_outcome.outcome.status,
+      ),
       converted_into_receipt_id:
         transaction.outcome.execution_outcome.outcome.receipt_ids[0],
       receipt_conversion_gas_burnt: BigInt(
@@ -45,6 +46,13 @@ class TransactionService {
       ),
       receipt_conversion_tokens_burnt: BigInt(
         transaction.outcome.execution_outcome.outcome.tokens_burnt,
+      ),
+      actions: transaction.transaction.actions.map((action, index) =>
+        services.transactionActionService.fromJSON(
+          transaction.transaction.hash,
+          index,
+          action,
+        ),
       ),
     });
   }
@@ -70,4 +78,4 @@ class TransactionService {
   }
 }
 
-export const transactionsService = new TransactionService();
+export const transactionService = new TransactionService();

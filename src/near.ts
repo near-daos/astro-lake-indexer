@@ -30,15 +30,14 @@ export interface Receipt {
 }
 
 export enum ExecutionOutcomeStatus {
-  Unknown = 'UNKNOWN',
-  Failure = 'FAILURE',
-  SuccessValue = 'SUCCESS_VALUE',
-  SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
+  Unknown = 'Unknown',
+  Failure = 'Failure',
+  SuccessValue = 'SuccessValue',
+  SuccessReceiptId = 'SuccessReceiptId',
 }
 
-export type ExecutionOutcomeStatusKey = keyof typeof ExecutionOutcomeStatus;
 export type ExecutionOutcomeStatusObject = Record<
-  ExecutionOutcomeStatusKey,
+  ExecutionOutcomeStatus,
   string
 >;
 
@@ -61,8 +60,76 @@ export interface ReceiptExecutionOutcome {
   receipt: Receipt | null;
 }
 
+export enum ActionKind {
+  CreateAccount = 'CreateAccount',
+  DeployContract = 'DeployContract',
+  FunctionCall = 'FunctionCall',
+  Transfer = 'Transfer',
+  Stake = 'Stake',
+  AddKey = 'AddKey',
+  DeleteKey = 'DeleteKey',
+  DeleteAccount = 'DeleteAccount',
+}
+
+export interface ActionKindDeployContract {
+  [ActionKind.DeployContract]: {
+    code: string;
+  };
+}
+
+export interface ActionKindFunctionCall {
+  [ActionKind.FunctionCall]: {
+    method_name: string;
+    args: string;
+    gas: number;
+    deposit: string;
+  };
+}
+
+export interface ActionKindTransfer {
+  [ActionKind.Transfer]: {
+    deposit: string;
+  };
+}
+
+export interface ActionKindStake {
+  [ActionKind.Stake]: {
+    stake: string;
+    public_key: string;
+  };
+}
+
+export interface ActionKindAddKey {
+  [ActionKind.AddKey]: {
+    public_key: string;
+    access_key: Record<string, unknown>; // TODO
+  };
+}
+
+export interface ActionKindDeleteKey {
+  [ActionKind.DeleteKey]: {
+    public_key: string;
+  };
+}
+
+export interface ActionKindDeleteAccount {
+  [ActionKind.DeleteAccount]: {
+    beneficiary_id: string;
+  };
+}
+
+export type ActionKindObject =
+  | ActionKind.CreateAccount
+  | ActionKindDeployContract
+  | ActionKindFunctionCall
+  | ActionKindTransfer
+  | ActionKindStake
+  | ActionKindAddKey
+  | ActionKindDeleteKey
+  | ActionKindDeleteAccount;
+
 export interface Transaction {
-  actions: object[];
+  actions: ActionKindObject[];
   hash: string;
   nonce: number;
   public_key: string;

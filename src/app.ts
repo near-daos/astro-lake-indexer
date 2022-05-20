@@ -84,7 +84,7 @@ export default class App {
 
       await services.chunkService.store(block, shards);
 
-      await services.transactionsService.store(block, shards);
+      await services.transactionService.store(block, shards);
     });
   }
 
