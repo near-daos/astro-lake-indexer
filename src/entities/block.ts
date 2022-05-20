@@ -3,7 +3,7 @@ import * as transformers from '../transformers';
 
 @Entity('blocks')
 export class Block {
-  @Column('numeric', { precision: 20 })
+  @Column('numeric', { precision: 20, transformer: transformers.int })
   @Index()
   block_height: number;
 

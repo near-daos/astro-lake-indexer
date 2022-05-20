@@ -23,7 +23,7 @@ export default class App {
       await services.blockService.getLatestBlockHeight();
 
     if (latestBlockHeight && latestBlockHeight > this.lastBlockHeight) {
-      this.lastBlockHeight = latestBlockHeight;
+      this.lastBlockHeight = latestBlockHeight + 1;
     }
 
     this.logger.info(`Last block height ${this.lastBlockHeight}`);

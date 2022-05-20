@@ -121,7 +121,7 @@ class TransactionActionService {
     }
 
     return this.repository.create({
-      transaction: { transaction_hash: transactionHash },
+      transaction_hash: transactionHash,
       index_in_transaction: indexInTransaction,
       action_kind: TransactionActionEnum[actionKind],
       args: actionArgs,
