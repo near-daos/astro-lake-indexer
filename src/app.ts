@@ -1,7 +1,7 @@
 import { PromisePool } from '@supercharge/promise-pool';
 import S3Fetcher from './s3-fetcher';
 import config from './config';
-import { sleep } from './utils';
+import { matchAccounts, sleep } from './utils';
 import * as Near from './near';
 import { createLogger } from './logger';
 import * as services from './services';
@@ -72,7 +72,12 @@ export default class App {
     block: Near.Block,
     shards: Near.Shard[],
   ) {
-    this.logger.info(`Processing block ${blockHeight} (${block.header.hash})`);
+    if (!this.shouldStore(shards)) {
+      this.logger.info(`Skipped block ${blockHeight}`);
+      return;
+    }
+
+    this.logger.info(`Storing block ${blockHeight}...`);
 
     await AppDataSource.transaction(async () => {
       await services.blockService.store(block);
@@ -81,5 +86,22 @@ export default class App {
 
       await services.transactionsService.store(block, shards);
     });
+  }
+
+  private shouldStore(shards: Near.Shard[]) {
+    return true; // TODO
+
+    for (const shard of shards) {
+      if (!shard.chunk) continue;
+
+      for (const tx of shard.chunk.transactions) {
+        if (
+          matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
+          matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
+        ) {
+          return true;
+        }
+      }
+    }
   }
 }

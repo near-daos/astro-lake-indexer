@@ -81,6 +81,12 @@ export class Config {
   get WAIT_FOR_NEW_BLOCKS(): number {
     return parseInt(this.provider.get('WAIT_FOR_NEW_BLOCKS'));
   }
+
+  get TRACK_ACCOUNTS(): string[] {
+    return (this.provider.get('TRACK_ACCOUNTS') as string)
+      .split(',')
+      .map((account) => account.trim());
+  }
 }
 
 export default new Config();
