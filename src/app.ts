@@ -1,7 +1,7 @@
 import { PromisePool } from '@supercharge/promise-pool';
 import S3Fetcher from './s3-fetcher';
 import config from './config';
-import { matchAccounts, sleep } from './utils';
+import { sleep } from './utils';
 import * as Near from './near';
 import { createLogger } from './logger';
 import * as services from './services';
@@ -95,10 +95,7 @@ export default class App {
       if (!shard.chunk) continue;
 
       for (const tx of shard.chunk.transactions) {
-        if (
-          matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
-          matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
-        ) {
+        if (services.transactionService.shouldTrack(tx)) {
           return true;
         }
       }

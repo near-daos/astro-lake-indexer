@@ -3,6 +3,8 @@ import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Transaction, TransactionStatus } from '../entities';
 import * as services from '../services';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 class TransactionService {
   constructor(
@@ -75,6 +77,11 @@ class TransactionService {
       .flat();
 
     return this.repository.save(entities);
+  }
+
+  shouldTrack(tx: Near.TransactionWithOutcome) {
+    return matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
+      matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
   }
 }
 
