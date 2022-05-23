@@ -102,6 +102,12 @@ export default class App {
           return true;
         }
       }
+
+      for (const receipt of shard.chunk.receipts) {
+        if (services.receiptService.shouldTrack(receipt)) {
+          return true;
+        }
+      }
     }
   }
 }

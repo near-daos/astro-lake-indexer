@@ -2,6 +2,8 @@ import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Receipt, ReceiptKind } from '../entities';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 class ReceiptService {
   constructor(
@@ -50,6 +52,13 @@ class ReceiptService {
       .flat();
 
     return this.repository.save(entities);
+  }
+
+  shouldTrack(receipt: Near.Receipt) {
+    return (
+      matchAccounts(receipt.predecessor_id, config.TRACK_ACCOUNTS) ||
+      matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS)
+    );
   }
 }
 
