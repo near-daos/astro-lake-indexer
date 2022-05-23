@@ -1,8 +1,10 @@
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import * as Near from '../near';
+import { ReceiptTypes } from '../near';
 import { AppDataSource } from '../data-source';
-import { Receipt, ReceiptKind } from '../entities';
+import { DataReceipt, Receipt, ReceiptKind } from '../entities';
 import { matchAccounts } from '../utils';
+import * as services from '../services';
 import config from '../config';
 
 class ReceiptService {
@@ -21,6 +23,17 @@ class ReceiptService {
   ) {
     const receiptKind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
 
+    let dataReceipt: DeepPartial<DataReceipt> | undefined;
+
+    switch (receiptKind) {
+      case ReceiptTypes.Data:
+        dataReceipt = services.dataReceiptService.fromJSON(
+          receipt.receipt_id,
+          receipt.receipt as Near.DataReceipt,
+        );
+        break;
+    }
+
     // TODO: populate originated_from_transaction_hash
     return this.repository.create({
       receipt_id: receipt.receipt_id,
@@ -31,6 +44,7 @@ class ReceiptService {
       predecessor_account_id: receipt.predecessor_id,
       receiver_account_id: receipt.receiver_id,
       receipt_kind: ReceiptKind[receiptKind],
+      data: dataReceipt,
     });
   }
 

@@ -5,6 +5,7 @@ import config from './config';
 import {
   Block,
   Chunk,
+  DataReceipt,
   Receipt,
   Transaction,
   TransactionAction,
@@ -19,7 +20,14 @@ export const AppDataSource = new DataSource({
   database: config.DATABASE_NAME,
   synchronize: true,
   logging: false,
-  entities: [Block, Chunk, Receipt, Transaction, TransactionAction],
+  entities: [
+    Block,
+    Chunk,
+    DataReceipt,
+    Receipt,
+    Transaction,
+    TransactionAction,
+  ],
   migrations: [],
   subscribers: [],
   namingStrategy: new SnakeNamingStrategy(),

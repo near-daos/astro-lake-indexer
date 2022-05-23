@@ -5,9 +5,11 @@ import {
   Index,
   ManyToOne,
   PrimaryColumn,
+  OneToOne,
 } from 'typeorm';
-import { Chunk } from './chunk';
 import { Block } from './block';
+import { Chunk } from './chunk';
+import { DataReceipt } from './data-receipt';
 import { Transaction } from './transaction';
 import * as transformers from '../transformers';
 
@@ -65,4 +67,7 @@ export class Receipt {
   @Column('text', { nullable: true })
   @Index()
   originated_from_transaction_hash: string;
+
+  @OneToOne(() => DataReceipt, { nullable: true, cascade: true })
+  data: DataReceipt | null;
 }
