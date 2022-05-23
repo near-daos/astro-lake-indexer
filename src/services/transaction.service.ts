@@ -11,7 +11,7 @@ class TransactionService {
     ),
   ) {}
 
-  parseStatus(outcomeStatus: Near.ExecutionOutcomeStatusObject) {
+  parseStatus(outcomeStatus: Near.ExecutionOutcomeStatusType) {
     const [status] = Object.keys(
       outcomeStatus,
     ) as Near.ExecutionOutcomeStatus[];

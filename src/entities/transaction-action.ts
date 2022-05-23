@@ -19,6 +19,11 @@ export enum TransactionActionEnum {
   DeleteAccount = 'DELETE_ACCOUNT',
 }
 
+export enum PermissionTypeEnum {
+  FullAccess = 'FULL_ACCESS',
+  FunctionCall = 'FUNCTION_CALL',
+}
+
 @Entity('transaction_actions')
 export class TransactionAction {
   @ManyToOne(() => Transaction)

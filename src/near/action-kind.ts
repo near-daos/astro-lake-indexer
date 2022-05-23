@@ -1,4 +1,5 @@
 import { Amount } from './types';
+import { PermissionKindType } from './permission-kind';
 
 export enum ActionKind {
   CreateAccount = 'CreateAccount',
@@ -42,7 +43,10 @@ export interface ActionKindStake {
 export interface ActionKindAddKey {
   [ActionKind.AddKey]: {
     public_key: string;
-    access_key: Record<string, unknown>; // TODO
+    access_key: {
+      nonce: number;
+      permission: PermissionKindType;
+    };
   };
 }
 
@@ -58,7 +62,7 @@ export interface ActionKindDeleteAccount {
   };
 }
 
-export type ActionKindObject =
+export type ActionKindType =
   | ActionKind.CreateAccount
   | ActionKindDeployContract
   | ActionKindFunctionCall

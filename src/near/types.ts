@@ -1,4 +1,4 @@
-import { ActionKindObject } from './action-kind';
+import { ActionKindType } from './action-kind';
 
 export type Amount = string | number;
 
@@ -38,16 +38,13 @@ export enum ExecutionOutcomeStatus {
   SuccessReceiptId = 'SuccessReceiptId',
 }
 
-export type ExecutionOutcomeStatusObject = Record<
-  ExecutionOutcomeStatus,
-  string
->;
+export type ExecutionOutcomeStatusType = Record<ExecutionOutcomeStatus, string>;
 
 export interface Outcome {
   executor_id: string;
   gas_burnt: Amount;
   receipt_ids: string[];
-  status: ExecutionOutcomeStatusObject;
+  status: ExecutionOutcomeStatusType;
   tokens_burnt: Amount;
 }
 
@@ -63,7 +60,7 @@ export interface ReceiptExecutionOutcome {
 }
 
 export interface Transaction {
-  actions: ActionKindObject[];
+  actions: ActionKindType[];
   hash: string;
   nonce: number;
   public_key: string;

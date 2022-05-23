@@ -1,7 +1,11 @@
 import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
-import { TransactionAction, TransactionActionEnum } from '../entities';
+import {
+  PermissionTypeEnum,
+  TransactionAction,
+  TransactionActionEnum,
+} from '../entities';
 import { createHash } from 'crypto';
 
 class TransactionActionService {
@@ -11,7 +15,7 @@ class TransactionActionService {
     ),
   ) {}
 
-  parseActionKind(action: Near.ActionKindObject) {
+  parseActionKind(action: Near.ActionKindType) {
     if (typeof action === 'object') {
       const [actionKind] = Object.keys(action) as Near.ActionKind[];
       return actionKind;
@@ -20,10 +24,19 @@ class TransactionActionService {
     }
   }
 
+  parsePermissionKind(permission: Near.PermissionKindType) {
+    if (typeof permission === 'object') {
+      const [permissionKind] = Object.keys(permission) as Near.PermissionKind[];
+      return permissionKind;
+    } else {
+      return permission as Near.PermissionKindType;
+    }
+  }
+
   fromJSON(
     transactionHash: string,
     indexInTransaction: number,
-    action: Near.ActionKindObject,
+    action: Near.ActionKindType,
   ) {
     const actionKind = this.parseActionKind(action);
 
@@ -90,12 +103,49 @@ class TransactionActionService {
 
       case Near.ActionKind.AddKey: {
         const {
-          AddKey: { public_key, access_key },
+          AddKey: {
+            public_key,
+            access_key: { nonce, permission },
+          },
         } = action as Near.ActionKindAddKey;
-        actionArgs = {
-          public_key,
-          access_key, // TODO: proper serialization
-        };
+
+        const permissionKind = this.parsePermissionKind(permission);
+
+        switch (permissionKind) {
+          case Near.PermissionKind.FullAccess: {
+            actionArgs = {
+              public_key,
+              access_key: {
+                nonce,
+                permission: {
+                  permission_type: PermissionTypeEnum.FullAccess,
+                },
+              },
+            };
+            break;
+          }
+
+          case Near.PermissionKind.FunctionCall: {
+            const {
+              FunctionCall: { allowance, method_names, receiver_id },
+            } = permission as Near.PermissionKindFunctionCall;
+            actionArgs = {
+              public_key,
+              access_key: {
+                nonce,
+                permission: {
+                  permission_type: PermissionTypeEnum.FunctionCall,
+                  permission_details: {
+                    allowance,
+                    method_names,
+                    receiver_id,
+                  },
+                },
+              },
+            };
+            break;
+          }
+        }
         break;
       }
 
