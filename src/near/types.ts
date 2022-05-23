@@ -1,4 +1,5 @@
 import { Action } from './action';
+import { ExecutionStatus } from './execution-status';
 
 export type Amount = string | number;
 
@@ -31,20 +32,11 @@ export interface Receipt {
   receiver_id: string;
 }
 
-export enum ExecutionOutcomeStatus {
-  Unknown = 'Unknown',
-  Failure = 'Failure',
-  SuccessValue = 'SuccessValue',
-  SuccessReceiptId = 'SuccessReceiptId',
-}
-
-export type ExecutionOutcomeStatusType = Record<ExecutionOutcomeStatus, string>;
-
 export interface Outcome {
   executor_id: string;
   gas_burnt: Amount;
   receipt_ids: string[];
-  status: ExecutionOutcomeStatusType;
+  status: ExecutionStatus;
   tokens_burnt: Amount;
 }
 
