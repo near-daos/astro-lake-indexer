@@ -6,7 +6,6 @@ import {
   TransactionAction,
   TransactionActionEnum,
 } from '../entities';
-import { createHash } from 'crypto';
 
 class TransactionActionService {
   constructor(
@@ -53,11 +52,7 @@ class TransactionActionService {
           DeployContract: { code },
         } = action as Near.ActionKindDeployContract;
         actionArgs = {
-          // TODO: check
-          code_sha256: createHash('sha256')
-            .update(Buffer.from(code, 'base64'))
-            .digest()
-            .toString('hex'),
+          code_sha256: Buffer.from(code, 'base64').toString('hex'),
         };
         break;
       }
