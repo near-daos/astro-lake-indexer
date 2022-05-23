@@ -5,6 +5,7 @@ import { Transaction, TransactionStatus } from '../entities';
 import * as services from '../services';
 import { matchAccounts } from '../utils';
 import config from '../config';
+import { ExecutionStatuses } from '../near';
 
 class TransactionService {
   constructor(
@@ -13,13 +14,6 @@ class TransactionService {
     ),
   ) {}
 
-  parseStatus(outcomeStatus: Near.ExecutionOutcomeStatusType) {
-    const [status] = Object.keys(
-      outcomeStatus,
-    ) as Near.ExecutionOutcomeStatus[];
-    return TransactionStatus[status];
-  }
-
   fromJSON(
     blockHash: string,
     blockTimestamp: number,
@@ -27,6 +21,10 @@ class TransactionService {
     indexInChunk: number,
     transaction: Near.TransactionWithOutcome,
   ) {
+    const status = Near.parseKind<ExecutionStatuses>(
+      transaction.outcome.execution_outcome.outcome.status,
+    );
+
     return this.repository.create({
       transaction_hash: transaction.transaction.hash,
       block: { block_hash: blockHash },
@@ -38,9 +36,7 @@ class TransactionService {
       nonce: transaction.transaction.nonce,
       receiver_account_id: transaction.transaction.receiver_id,
       signature: transaction.transaction.signature,
-      status: this.parseStatus(
-        transaction.outcome.execution_outcome.outcome.status,
-      ),
+      status: TransactionStatus[status],
       converted_into_receipt_id:
         transaction.outcome.execution_outcome.outcome.receipt_ids[0],
       receipt_conversion_gas_burnt: BigInt(

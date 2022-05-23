@@ -1,7 +1,11 @@
 import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
-import { ActionKind, PermissionType, TransactionAction } from '../entities';
+import {
+  PermissionType,
+  TransactionAction,
+  TransactionActionKind,
+} from '../entities';
 
 class TransactionActionService {
   constructor(
@@ -146,7 +150,7 @@ class TransactionActionService {
     return this.repository.create({
       transaction_hash: transactionHash,
       index_in_transaction: indexInTransaction,
-      action_kind: ActionKind[actionKind],
+      action_kind: TransactionActionKind[actionKind],
       args: actionArgs,
     });
   }

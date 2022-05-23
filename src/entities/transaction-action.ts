@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Transaction } from './transaction';
 
-export enum ActionKind {
+export enum TransactionActionKind {
   CreateAccount = 'CREATE_ACCOUNT',
   DeployContract = 'DEPLOY_CONTRACT',
   FunctionCall = 'FUNCTION_CALL',
@@ -39,9 +39,9 @@ export class TransactionAction {
   @PrimaryColumn('int')
   index_in_transaction: number;
 
-  @Column('enum', { enum: ActionKind })
+  @Column('enum', { enum: TransactionActionKind })
   @Index()
-  action_kind: ActionKind;
+  action_kind: TransactionActionKind;
 
   @Column('jsonb')
   args: Record<string, unknown>;
