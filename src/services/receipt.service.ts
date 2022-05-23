@@ -29,6 +29,9 @@ class ReceiptService {
     switch (receiptKind) {
       case ReceiptTypes.Action:
         actionReceipt = services.actionReceiptService.fromJSON(
+          blockTimestamp,
+          receipt.predecessor_id,
+          receipt.receiver_id,
           receipt.receipt_id,
           receipt.receipt as Near.ActionReceipt,
         );

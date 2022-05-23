@@ -4,6 +4,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import config from './config';
 import {
   ActionReceipt,
+  ActionReceiptAction,
   Block,
   Chunk,
   DataReceipt,
@@ -23,6 +24,7 @@ export const AppDataSource = new DataSource({
   logging: false,
   entities: [
     ActionReceipt,
+    ActionReceiptAction,
     Block,
     Chunk,
     DataReceipt,

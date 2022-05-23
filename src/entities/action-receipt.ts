@@ -4,8 +4,10 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryColumn,
 } from 'typeorm';
+import { ActionReceiptAction } from './action-receipt-action';
 import { Receipt } from './receipt';
 import * as transformers from '../transformers';
 
@@ -31,4 +33,9 @@ export class ActionReceipt {
 
   @Column('numeric', { precision: 45, transformer: transformers.bigInt })
   gas_price: bigint;
+
+  @OneToMany(() => ActionReceiptAction, (action) => action.receipt, {
+    cascade: true,
+  })
+  actions: ActionReceiptAction[];
 }

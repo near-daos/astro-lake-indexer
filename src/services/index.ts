@@ -1,4 +1,5 @@
 export * from './action-receipt.service';
+export * from './action-receipt-action.service';
 export * from './block.service';
 export * from './chunk.service';
 export * from './data-receipt.service';
