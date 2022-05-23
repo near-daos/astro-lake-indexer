@@ -27,7 +27,7 @@ export interface Block {
   header: BlockHeader;
 }
 
-export interface Outcome {
+export interface ExecutionOutcome {
   executor_id: string;
   gas_burnt: Amount;
   receipt_ids: string[];
@@ -35,14 +35,14 @@ export interface Outcome {
   tokens_burnt: Amount;
 }
 
-export interface ExecutionOutcome {
+export interface ExecutionOutcomeWithId {
   block_hash: string;
   id: string;
-  outcome: Outcome;
+  outcome: ExecutionOutcome;
 }
 
 export interface ReceiptExecutionOutcome {
-  execution_outcome: ExecutionOutcome;
+  execution_outcome: ExecutionOutcomeWithId;
   receipt: Receipt | null;
 }
 

@@ -18,3 +18,10 @@ export enum ReceiptKind {
   Action = 'ACTION',
   Data = 'DATA',
 }
+
+export enum ExecutionStatus {
+  Unknown = 'UNKNOWN',
+  Failure = 'FAILURE',
+  SuccessValue = 'SUCCESS_VALUE',
+  SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
+}

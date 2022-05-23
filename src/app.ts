@@ -88,6 +88,8 @@ export default class App {
         services.transactionService.store(block, shards),
         services.receiptService.store(block, shards),
       ]);
+
+      await services.executionOutcomeService.store(block, shards);
     });
   }
 
