@@ -30,7 +30,7 @@ class ActionReceiptService {
     } = actionReceipt;
 
     return this.repository.create({
-      receipt: { receipt_id: receiptId },
+      receipt_id: receiptId,
       signer_account_id: signer_id,
       signer_public_key: signer_public_key,
       gas_price: BigInt(gas_price),

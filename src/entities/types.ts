@@ -13,3 +13,8 @@ export enum PermissionType {
   FullAccess = 'FULL_ACCESS',
   FunctionCall = 'FUNCTION_CALL',
 }
+
+export enum ReceiptKind {
+  Action = 'ACTION',
+  Data = 'DATA',
+}

@@ -19,13 +19,6 @@ export class ActionReceipt {
   @Index()
   receipt_id: string;
 
-  @ManyToOne(() => Receipt)
-  @JoinColumn({
-    name: 'receipt_id',
-    referencedColumnName: 'receipt_id',
-  })
-  receipt: Receipt;
-
   @Column('text')
   @Index()
   signer_account_id: string;
@@ -35,6 +28,13 @@ export class ActionReceipt {
 
   @Column('numeric', { precision: 45, transformer: transformers.bigInt })
   gas_price: bigint;
+
+  @ManyToOne(() => Receipt)
+  @JoinColumn({
+    name: 'receipt_id',
+    referencedColumnName: 'receipt_id',
+  })
+  receipt: Receipt;
 
   @OneToMany(() => ActionReceiptAction, (action) => action.receipt, {
     cascade: true,

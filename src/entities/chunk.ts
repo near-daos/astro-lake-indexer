@@ -11,13 +11,9 @@ import * as transformers from '../transformers';
 
 @Entity('chunks')
 export class Chunk {
-  @ManyToOne(() => Block)
-  @JoinColumn({
-    name: 'included_in_block_hash',
-    referencedColumnName: 'block_hash',
-  })
+  @Column('text')
   @Index()
-  block: Block;
+  included_in_block_hash: string;
 
   @PrimaryColumn('text')
   chunk_hash: string;
@@ -36,4 +32,11 @@ export class Chunk {
 
   @Column('text')
   author_account_id: string;
+
+  @ManyToOne(() => Block)
+  @JoinColumn({
+    name: 'included_in_block_hash',
+    referencedColumnName: 'block_hash',
+  })
+  block: Block;
 }

@@ -13,32 +13,20 @@ import { Chunk } from './chunk';
 import { DataReceipt } from './data-receipt';
 import { Transaction } from './transaction';
 import * as transformers from '../transformers';
-
-export enum ReceiptKind {
-  Action = 'ACTION',
-  Data = 'DATA',
-}
+import { ReceiptKind } from './types';
 
 @Entity('receipts')
 export class Receipt {
   @PrimaryColumn('text')
   receipt_id: string;
 
-  @ManyToOne(() => Block)
-  @JoinColumn({
-    name: 'included_in_block_hash',
-    referencedColumnName: 'block_hash',
-  })
+  @Column('text')
   @Index()
-  block: Block;
+  included_in_block_hash: string;
 
-  @ManyToOne(() => Chunk)
-  @JoinColumn({
-    name: 'included_in_chunk_hash',
-    referencedColumnName: 'chunk_hash',
-  })
+  @Column('text')
   @Index()
-  chunk: Chunk;
+  included_in_chunk_hash: string;
 
   @Column('int')
   index_in_chunk: number;
@@ -58,16 +46,30 @@ export class Receipt {
   @Column('enum', { enum: ReceiptKind })
   receipt_kind: ReceiptKind;
 
+  @Column('text', { nullable: true })
+  @Index()
+  originated_from_transaction_hash: string;
+
+  @ManyToOne(() => Block)
+  @JoinColumn({
+    name: 'included_in_block_hash',
+    referencedColumnName: 'block_hash',
+  })
+  block: Block;
+
+  @ManyToOne(() => Chunk)
+  @JoinColumn({
+    name: 'included_in_chunk_hash',
+    referencedColumnName: 'chunk_hash',
+  })
+  chunk: Chunk;
+
   @ManyToOne(() => Transaction, { nullable: true })
   @JoinColumn({
     name: 'originated_from_transaction_hash',
     referencedColumnName: 'transaction_hash',
   })
   transaction: Transaction | null;
-
-  @Column('text', { nullable: true })
-  @Index()
-  originated_from_transaction_hash: string;
 
   @OneToOne(() => ActionReceipt, { nullable: true, cascade: true })
   action: ActionReceipt | null;

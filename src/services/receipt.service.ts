@@ -48,8 +48,8 @@ class ReceiptService {
     // TODO: populate originated_from_transaction_hash
     return this.repository.create({
       receipt_id: receipt.receipt_id,
-      block: { block_hash: blockHash },
-      chunk: { chunk_hash: chunkHash },
+      included_in_block_hash: blockHash,
+      included_in_chunk_hash: chunkHash,
       index_in_chunk: indexInChunk,
       included_in_block_timestamp: BigInt(blockTimestamp),
       predecessor_account_id: receipt.predecessor_id,

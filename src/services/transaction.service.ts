@@ -27,8 +27,8 @@ class TransactionService {
 
     return this.repository.create({
       transaction_hash: transaction.transaction.hash,
-      block: { block_hash: blockHash },
-      chunk: { chunk_hash: chunkHash },
+      included_in_block_hash: blockHash,
+      included_in_chunk_hash: chunkHash,
       index_in_chunk: indexInChunk,
       block_timestamp: BigInt(blockTimestamp),
       signer_account_id: transaction.transaction.signer_id,

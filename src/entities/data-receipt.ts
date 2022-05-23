@@ -17,13 +17,13 @@ export class DataReceipt {
   @Index()
   receipt_id: string;
 
+  @Column('bytea', { nullable: true })
+  data: Buffer | null;
+
   @ManyToOne(() => Receipt)
   @JoinColumn({
     name: 'receipt_id',
     referencedColumnName: 'receipt_id',
   })
   receipt: Receipt;
-
-  @Column('bytea', { nullable: true })
-  data: Buffer | null;
 }

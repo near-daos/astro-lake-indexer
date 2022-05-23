@@ -12,7 +12,7 @@ class ChunkService {
 
   fromJSON(blockHash: string, chunk: Near.Chunk) {
     return this.repository.create({
-      block: { block_hash: blockHash },
+      included_in_block_hash: blockHash,
       chunk_hash: chunk.header.chunk_hash,
       shard_id: chunk.header.shard_id,
       signature: chunk.header.signature,

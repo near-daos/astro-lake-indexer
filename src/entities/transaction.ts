@@ -25,21 +25,13 @@ export class Transaction {
   @PrimaryColumn('text')
   transaction_hash: string;
 
-  @ManyToOne(() => Block)
-  @JoinColumn({
-    name: 'included_in_block_hash',
-    referencedColumnName: 'block_hash',
-  })
+  @Column('text')
   @Index()
-  block: Block;
+  included_in_block_hash: string;
 
-  @ManyToOne(() => Chunk)
-  @JoinColumn({
-    name: 'included_in_chunk_hash',
-    referencedColumnName: 'chunk_hash',
-  })
+  @Column('text')
   @Index()
-  chunk: Chunk;
+  included_in_chunk_hash: string;
 
   @Column('int')
   index_in_chunk: number;
@@ -78,6 +70,20 @@ export class Transaction {
 
   @Column('numeric', { precision: 45, transformer: transformers.bigInt })
   receipt_conversion_tokens_burnt: bigint;
+
+  @ManyToOne(() => Block)
+  @JoinColumn({
+    name: 'included_in_block_hash',
+    referencedColumnName: 'block_hash',
+  })
+  block: Block;
+
+  @ManyToOne(() => Chunk)
+  @JoinColumn({
+    name: 'included_in_chunk_hash',
+    referencedColumnName: 'chunk_hash',
+  })
+  chunk: Chunk;
 
   @OneToMany(() => TransactionAction, (action) => action.transaction, {
     cascade: true,
