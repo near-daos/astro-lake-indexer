@@ -8,6 +8,8 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { ActionReceiptAction } from './action-receipt-action';
+import { ActionReceiptInputData } from './action-receipt-input-data';
+import { ActionReceiptOutputData } from './action-receipt-output-data';
 import { Receipt } from './receipt';
 import * as transformers from '../transformers';
 
@@ -38,4 +40,14 @@ export class ActionReceipt {
     cascade: true,
   })
   actions: ActionReceiptAction[];
+
+  @OneToMany(() => ActionReceiptInputData, (data) => data.receipt, {
+    cascade: true,
+  })
+  inputData: ActionReceiptInputData[];
+
+  @OneToMany(() => ActionReceiptOutputData, (data) => data.receipt, {
+    cascade: true,
+  })
+  outputData: ActionReceiptOutputData[];
 }

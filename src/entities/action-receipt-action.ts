@@ -6,7 +6,7 @@ import {
   ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
-import { ActionReceipt } from './action-receipt';
+import { Receipt } from './receipt';
 import * as transformers from '../transformers';
 import { ActionKind } from './types';
 
@@ -17,12 +17,12 @@ export class ActionReceiptAction {
   @PrimaryColumn('text')
   receipt_id: string;
 
-  @ManyToOne(() => ActionReceipt)
+  @ManyToOne(() => Receipt)
   @JoinColumn({
     name: 'receipt_id',
     referencedColumnName: 'receipt_id',
   })
-  receipt: ActionReceipt;
+  receipt: Receipt;
 
   @PrimaryColumn('int')
   index_in_action_receipt: number;

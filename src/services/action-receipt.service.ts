@@ -19,7 +19,14 @@ class ActionReceiptService {
     actionReceipt: Near.ActionReceipt,
   ) {
     const {
-      Action: { actions, gas_price, signer_id, signer_public_key },
+      Action: {
+        actions,
+        gas_price,
+        signer_id,
+        signer_public_key,
+        input_data_ids,
+        output_data_receivers,
+      },
     } = actionReceipt;
 
     return this.repository.create({
@@ -35,6 +42,16 @@ class ActionReceiptService {
           receiptId,
           index,
           action,
+        ),
+      ),
+      inputData: input_data_ids.map((dataId) =>
+        services.actionReceiptInputDataService.fromJSON(receiptId, dataId),
+      ),
+      outputData: output_data_receivers.map(({ data_id, receiver_id }) =>
+        services.actionReceiptOutputDataService.fromJSON(
+          receiptId,
+          data_id,
+          receiver_id,
         ),
       ),
     });

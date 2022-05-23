@@ -5,6 +5,8 @@ import config from './config';
 import {
   ActionReceipt,
   ActionReceiptAction,
+  ActionReceiptInputData,
+  ActionReceiptOutputData,
   Block,
   Chunk,
   DataReceipt,
@@ -25,6 +27,8 @@ export const AppDataSource = new DataSource({
   entities: [
     ActionReceipt,
     ActionReceiptAction,
+    ActionReceiptInputData,
+    ActionReceiptOutputData,
     Block,
     Chunk,
     DataReceipt,
