@@ -84,7 +84,10 @@ export default class App {
 
       await services.chunkService.store(block, shards);
 
-      await services.transactionService.store(block, shards);
+      await Promise.all([
+        services.transactionService.store(block, shards),
+        services.receiptService.store(block, shards),
+      ]);
     });
   }
 

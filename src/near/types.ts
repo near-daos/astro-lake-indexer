@@ -1,5 +1,6 @@
 import { Action } from './action';
 import { ExecutionStatus } from './execution-status';
+import { Receipt } from './receipt';
 
 export type Amount = string | number;
 
@@ -24,12 +25,6 @@ export interface Block {
   author: string;
   chunks: ChunkHeader[];
   header: BlockHeader;
-}
-
-export interface Receipt {
-  predecessor_id: string;
-  receipt_id: string;
-  receiver_id: string;
 }
 
 export interface Outcome {
