@@ -18,7 +18,7 @@ class DataReceiptService {
     return this.repository.create({
       receipt_id: receiptId,
       data_id: data_id,
-      data: Buffer.from(data, 'base64'),
+      data: data !== null ? Buffer.from(data, 'base64') : null,
     });
   }
 }

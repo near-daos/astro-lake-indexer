@@ -1,5 +1,6 @@
-import { Entity, Index, JoinColumn, PrimaryColumn } from 'typeorm';
+import { Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { ExecutionOutcome } from './execution-outcome';
+import { Receipt } from './receipt';
 
 @Entity('execution_outcome_receipts')
 export class ExecutionOutcomeReceipt {
@@ -13,13 +14,14 @@ export class ExecutionOutcomeReceipt {
   @Index()
   produced_receipt_id: string;
 
-  /* TODO: @ManyToOne(() => Receipt)
+  @ManyToOne(() => Receipt)
   @JoinColumn({
     name: 'executed_receipt_id',
     referencedColumnName: 'receipt_id',
   })
-  executedReceipt: Receipt;*/
+  executedReceipt: Receipt;
 
+  @ManyToOne(() => ExecutionOutcome)
   @JoinColumn({
     name: 'executed_receipt_id',
     referencedColumnName: 'receipt_id',

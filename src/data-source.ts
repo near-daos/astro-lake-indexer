@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import config from './config';
 import {
   ActionReceipt,
@@ -16,6 +15,7 @@ import {
   Transaction,
   TransactionAction,
 } from './entities';
+import { CustomNamingStrategy } from './naming-strategy';
 
 export const AppDataSource = new DataSource({
   type: config.DATABASE_TYPE,
@@ -42,5 +42,5 @@ export const AppDataSource = new DataSource({
   ],
   migrations: [],
   subscribers: [],
-  namingStrategy: new SnakeNamingStrategy(),
+  namingStrategy: new CustomNamingStrategy(),
 });

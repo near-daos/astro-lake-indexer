@@ -20,7 +20,7 @@ export interface ActionReceipt {
 export interface DataReceipt {
   [ReceiptTypes.Data]: {
     data_id: string;
-    data: string;
+    data: string | null;
   };
 }
 
