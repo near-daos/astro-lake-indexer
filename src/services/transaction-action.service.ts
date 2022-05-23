@@ -14,30 +14,12 @@ class TransactionActionService {
     ),
   ) {}
 
-  parseActionKind(action: Near.ActionKindType) {
-    if (typeof action === 'object') {
-      const [actionKind] = Object.keys(action) as Near.ActionKind[];
-      return actionKind;
-    } else {
-      return action as Near.ActionKind;
-    }
-  }
-
-  parsePermissionKind(permission: Near.PermissionKindType) {
-    if (typeof permission === 'object') {
-      const [permissionKind] = Object.keys(permission) as Near.PermissionKind[];
-      return permissionKind;
-    } else {
-      return permission as Near.PermissionKindType;
-    }
-  }
-
   fromJSON(
     transactionHash: string,
     indexInTransaction: number,
     action: Near.ActionKindType,
   ) {
-    const actionKind = this.parseActionKind(action);
+    const actionKind = Near.parseKind<Near.ActionKind>(action);
 
     let actionArgs: Record<string, unknown> | undefined;
 
@@ -104,7 +86,7 @@ class TransactionActionService {
           },
         } = action as Near.ActionKindAddKey;
 
-        const permissionKind = this.parsePermissionKind(permission);
+        const permissionKind = Near.parseKind<Near.PermissionKind>(permission);
 
         switch (permissionKind) {
           case Near.PermissionKind.FullAccess: {
