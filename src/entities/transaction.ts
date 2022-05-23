@@ -7,10 +7,10 @@ import {
   PrimaryColumn,
   OneToMany,
 } from 'typeorm';
-import * as transformers from '../transformers';
 import { Chunk } from './chunk';
 import { Block } from './block';
 import { TransactionAction } from './transaction-action';
+import * as transformers from '../transformers';
 
 export enum TransactionStatus {
   Unknown = 'UNKNOWN',
@@ -22,7 +22,7 @@ export enum TransactionStatus {
 @Entity('transactions')
 @Index(['block_timestamp', 'index_in_chunk'])
 export class Transaction {
-  @PrimaryColumn('text', { primary: true })
+  @PrimaryColumn('text')
   transaction_hash: string;
 
   @ManyToOne(() => Block)

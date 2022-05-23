@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Transaction } from './transaction';
 
-export enum TransactionActionEnum {
+export enum ActionKind {
   CreateAccount = 'CREATE_ACCOUNT',
   DeployContract = 'DEPLOY_CONTRACT',
   FunctionCall = 'FUNCTION_CALL',
@@ -19,7 +19,7 @@ export enum TransactionActionEnum {
   DeleteAccount = 'DELETE_ACCOUNT',
 }
 
-export enum PermissionTypeEnum {
+export enum PermissionType {
   FullAccess = 'FULL_ACCESS',
   FunctionCall = 'FUNCTION_CALL',
 }
@@ -39,9 +39,9 @@ export class TransactionAction {
   @PrimaryColumn('int')
   index_in_transaction: number;
 
-  @Column('enum', { enum: TransactionActionEnum })
+  @Column('enum', { enum: ActionKind })
   @Index()
-  action_kind: TransactionActionEnum;
+  action_kind: ActionKind;
 
   @Column('jsonb')
   args: Record<string, unknown>;

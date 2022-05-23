@@ -1,4 +1,4 @@
-import { ActionKindType } from './action-kind';
+import { Action } from './action';
 
 export type Amount = string | number;
 
@@ -60,7 +60,7 @@ export interface ReceiptExecutionOutcome {
 }
 
 export interface Transaction {
-  actions: ActionKindType[];
+  actions: Action[];
   hash: string;
   nonce: number;
   public_key: string;

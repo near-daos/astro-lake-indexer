@@ -80,8 +80,10 @@ class TransactionService {
   }
 
   shouldTrack(tx: Near.TransactionWithOutcome) {
-    return matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
+    return (
+      matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
+    );
   }
 }
 

@@ -1,11 +1,7 @@
 import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
-import {
-  PermissionTypeEnum,
-  TransactionAction,
-  TransactionActionEnum,
-} from '../entities';
+import { ActionKind, PermissionType, TransactionAction } from '../entities';
 
 class TransactionActionService {
   constructor(
@@ -17,32 +13,32 @@ class TransactionActionService {
   fromJSON(
     transactionHash: string,
     indexInTransaction: number,
-    action: Near.ActionKindType,
+    action: Near.Action,
   ) {
-    const actionKind = Near.parseKind<Near.ActionKind>(action);
+    const actionKind = Near.parseKind<Near.Actions>(action);
 
     let actionArgs: Record<string, unknown> | undefined;
 
     switch (actionKind) {
-      case Near.ActionKind.CreateAccount: {
+      case Near.Actions.CreateAccount: {
         actionArgs = {};
         break;
       }
 
-      case Near.ActionKind.DeployContract: {
+      case Near.Actions.DeployContract: {
         const {
           DeployContract: { code },
-        } = action as Near.ActionKindDeployContract;
+        } = action as Near.ActionDeployContract;
         actionArgs = {
           code_sha256: Buffer.from(code, 'base64').toString('hex'),
         };
         break;
       }
 
-      case Near.ActionKind.FunctionCall: {
+      case Near.Actions.FunctionCall: {
         const {
           FunctionCall: { method_name, args, gas, deposit },
-        } = action as Near.ActionKindFunctionCall;
+        } = action as Near.ActionFunctionCall;
         actionArgs = {
           method_name,
           args_base64: args,
@@ -57,20 +53,20 @@ class TransactionActionService {
         break;
       }
 
-      case Near.ActionKind.Transfer: {
+      case Near.Actions.Transfer: {
         const {
           Transfer: { deposit },
-        } = action as Near.ActionKindTransfer;
+        } = action as Near.ActionTransfer;
         actionArgs = {
           deposit,
         };
         break;
       }
 
-      case Near.ActionKind.Stake: {
+      case Near.Actions.Stake: {
         const {
           Stake: { stake, public_key },
-        } = action as Near.ActionKindStake;
+        } = action as Near.ActionStake;
         actionArgs = {
           stake,
           public_key,
@@ -78,40 +74,40 @@ class TransactionActionService {
         break;
       }
 
-      case Near.ActionKind.AddKey: {
+      case Near.Actions.AddKey: {
         const {
           AddKey: {
             public_key,
             access_key: { nonce, permission },
           },
-        } = action as Near.ActionKindAddKey;
+        } = action as Near.ActionAddKey;
 
-        const permissionKind = Near.parseKind<Near.PermissionKind>(permission);
+        const permissionKind = Near.parseKind<Near.Permissions>(permission);
 
         switch (permissionKind) {
-          case Near.PermissionKind.FullAccess: {
+          case Near.Permissions.FullAccess: {
             actionArgs = {
               public_key,
               access_key: {
                 nonce,
                 permission: {
-                  permission_type: PermissionTypeEnum.FullAccess,
+                  permission_type: PermissionType.FullAccess,
                 },
               },
             };
             break;
           }
 
-          case Near.PermissionKind.FunctionCall: {
+          case Near.Permissions.FunctionCall: {
             const {
               FunctionCall: { allowance, method_names, receiver_id },
-            } = permission as Near.PermissionKindFunctionCall;
+            } = permission as Near.PermissionFunctionCall;
             actionArgs = {
               public_key,
               access_key: {
                 nonce,
                 permission: {
-                  permission_type: PermissionTypeEnum.FunctionCall,
+                  permission_type: PermissionType.FunctionCall,
                   permission_details: {
                     allowance,
                     method_names,
@@ -126,20 +122,20 @@ class TransactionActionService {
         break;
       }
 
-      case Near.ActionKind.DeleteKey: {
+      case Near.Actions.DeleteKey: {
         const {
           DeleteKey: { public_key },
-        } = action as Near.ActionKindDeleteKey;
+        } = action as Near.ActionDeleteKey;
         actionArgs = {
           public_key,
         };
         break;
       }
 
-      case Near.ActionKind.DeleteAccount: {
+      case Near.Actions.DeleteAccount: {
         const {
           DeleteAccount: { beneficiary_id },
-        } = action as Near.ActionKindDeleteAccount;
+        } = action as Near.ActionDeleteAccount;
         actionArgs = {
           beneficiary_id,
         };
@@ -150,7 +146,7 @@ class TransactionActionService {
     return this.repository.create({
       transaction_hash: transactionHash,
       index_in_transaction: indexInTransaction,
-      action_kind: TransactionActionEnum[actionKind],
+      action_kind: ActionKind[actionKind],
       args: actionArgs,
     });
   }
