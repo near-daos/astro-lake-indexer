@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import config from './config';
 import {
+  ActionReceipt,
   Block,
   Chunk,
   DataReceipt,
@@ -21,6 +22,7 @@ export const AppDataSource = new DataSource({
   synchronize: true,
   logging: false,
   entities: [
+    ActionReceipt,
     Block,
     Chunk,
     DataReceipt,

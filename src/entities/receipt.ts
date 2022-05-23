@@ -7,6 +7,7 @@ import {
   PrimaryColumn,
   OneToOne,
 } from 'typeorm';
+import { ActionReceipt } from './action-receipt';
 import { Block } from './block';
 import { Chunk } from './chunk';
 import { DataReceipt } from './data-receipt';
@@ -67,6 +68,9 @@ export class Receipt {
   @Column('text', { nullable: true })
   @Index()
   originated_from_transaction_hash: string;
+
+  @OneToOne(() => ActionReceipt, { nullable: true, cascade: true })
+  action: ActionReceipt | null;
 
   @OneToOne(() => DataReceipt, { nullable: true, cascade: true })
   data: DataReceipt | null;

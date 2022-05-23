@@ -2,7 +2,7 @@ import { DeepPartial, Repository } from 'typeorm';
 import * as Near from '../near';
 import { ReceiptTypes } from '../near';
 import { AppDataSource } from '../data-source';
-import { DataReceipt, Receipt, ReceiptKind } from '../entities';
+import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
 import { matchAccounts } from '../utils';
 import * as services from '../services';
 import config from '../config';
@@ -23,9 +23,17 @@ class ReceiptService {
   ) {
     const receiptKind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
 
+    let actionReceipt: DeepPartial<ActionReceipt> | undefined;
     let dataReceipt: DeepPartial<DataReceipt> | undefined;
 
     switch (receiptKind) {
+      case ReceiptTypes.Action:
+        actionReceipt = services.actionReceiptService.fromJSON(
+          receipt.receipt_id,
+          receipt.receipt as Near.ActionReceipt,
+        );
+        break;
+
       case ReceiptTypes.Data:
         dataReceipt = services.dataReceiptService.fromJSON(
           receipt.receipt_id,
@@ -44,6 +52,7 @@ class ReceiptService {
       predecessor_account_id: receipt.predecessor_id,
       receiver_account_id: receipt.receiver_id,
       receipt_kind: ReceiptKind[receiptKind],
+      action: actionReceipt,
       data: dataReceipt,
     });
   }

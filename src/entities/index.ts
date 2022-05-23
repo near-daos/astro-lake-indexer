@@ -1,3 +1,4 @@
+export * from './action-receipt';
 export * from './block';
 export * from './chunk';
 export * from './data-receipt';
