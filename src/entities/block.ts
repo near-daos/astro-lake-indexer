@@ -14,14 +14,14 @@ export class Block {
   @Index()
   prev_block_hash: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
   block_timestamp: bigint;
 
-  @Column('numeric', { precision: 45, transformer: transformers.transformers })
+  @Column('numeric', { precision: 45, transformer: transformers.bigint })
   total_supply: bigint;
 
-  @Column('numeric', { precision: 45, transformer: transformers.transformers })
+  @Column('numeric', { precision: 45, transformer: transformers.bigint })
   gas_price: bigint;
 
   @Column('text')

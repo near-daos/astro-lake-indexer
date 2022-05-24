@@ -23,17 +23,17 @@ export class ExecutionOutcome {
   @Index()
   executed_in_block_hash: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
   executed_in_block_timestamp: bigint;
 
   @Column('int')
   index_in_chunk: number;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   gas_burnt: bigint;
 
-  @Column('numeric', { precision: 45, transformer: transformers.transformers })
+  @Column('numeric', { precision: 45, transformer: transformers.bigint })
   tokens_burnt: bigint;
 
   @Column('text')

@@ -36,7 +36,7 @@ export class Transaction {
   @Column('int')
   index_in_chunk: number;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
   block_timestamp: bigint;
 
@@ -65,10 +65,10 @@ export class Transaction {
   @Index()
   converted_into_receipt_id: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   receipt_conversion_gas_burnt: bigint;
 
-  @Column('numeric', { precision: 45, transformer: transformers.transformers })
+  @Column('numeric', { precision: 45, transformer: transformers.bigint })
   receipt_conversion_tokens_burnt: bigint;
 
   @ManyToOne(() => Block)

@@ -24,10 +24,10 @@ export class Chunk {
   @Column('text')
   signature: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   gas_limit: bigint;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   gas_used: bigint;
 
   @Column('text')

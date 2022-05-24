@@ -31,7 +31,7 @@ export class Receipt {
   @Column('int')
   index_in_chunk: number;
 
-  @Column('numeric', { precision: 20, transformer: transformers.transformers })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
   included_in_block_timestamp: bigint;
 
