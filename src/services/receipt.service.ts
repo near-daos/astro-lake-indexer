@@ -6,9 +6,11 @@ import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
 import { matchAccounts } from '../utils';
 import * as services from '../services';
 import config from '../config';
+import { createLogger } from '../logger';
 
 class ReceiptService {
   constructor(
+    private readonly logger = createLogger('receipt-service'),
     private readonly repository: Repository<Receipt> = AppDataSource.getRepository(
       Receipt,
     ),
@@ -19,6 +21,7 @@ class ReceiptService {
     blockTimestamp: number,
     chunkHash: string,
     indexInChunk: number,
+    transactionHash: string | undefined,
     receipt: Near.Receipt,
   ) {
     const receiptKind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
@@ -45,7 +48,6 @@ class ReceiptService {
         break;
     }
 
-    // TODO: populate originated_from_transaction_hash
     return this.repository.create({
       receipt_id: receipt.receipt_id,
       included_in_block_hash: blockHash,
@@ -55,9 +57,21 @@ class ReceiptService {
       predecessor_account_id: receipt.predecessor_id,
       receiver_account_id: receipt.receiver_id,
       receipt_kind: ReceiptKind[receiptKind],
+      originated_from_transaction_hash: transactionHash,
       action: actionReceipt,
       data: dataReceipt,
     });
+  }
+
+  getTransactionHash(receiptId: string) {
+    const transactionHash = services.receiptsCacheService.get(receiptId);
+
+    if (!transactionHash) {
+      // TODO: handle not found transaction hash
+      this.logger.warn(`Not found parent tx hash for receipt id: ${receiptId}`);
+    }
+
+    return transactionHash;
   }
 
   store(block: Near.Block, shards: Near.Shard[]) {
@@ -71,6 +85,7 @@ class ReceiptService {
             block.header.timestamp,
             chunk.header.chunk_hash,
             chunkIndex,
+            this.getTransactionHash(receipt.receipt_id),
             receipt,
           ),
         ),

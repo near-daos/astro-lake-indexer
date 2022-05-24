@@ -42,6 +42,26 @@ class ExecutionOutcomeService {
     });
   }
 
+  // cache parent transaction hash for the produced receipts
+  cacheTransactionHashesForReceipts(shards: Near.Shard[]) {
+    shards.forEach((shard) => {
+      shard.receipt_execution_outcomes.forEach((outcome) => {
+        const transactionHash = services.receiptsCacheService.get(
+          outcome.execution_outcome.id,
+        );
+
+        if (transactionHash) {
+          // remove it from cache once found as it is not expected to observe the receipt for the second time
+          services.receiptsCacheService.delete(outcome.execution_outcome.id);
+
+          outcome.execution_outcome.outcome.receipt_ids.forEach((receiptId) => {
+            services.receiptsCacheService.set(receiptId, transactionHash);
+          });
+        }
+      });
+    });
+  }
+
   store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard, shardIndex) =>

@@ -74,6 +74,9 @@ export default class App {
   ) {
     this.log(blockHeight, block, shards);
 
+    services.transactionService.cacheTransactionHashesForReceipts(shards);
+    services.executionOutcomeService.cacheTransactionHashesForReceipts(shards);
+
     if (!this.shouldStore(shards)) {
       this.logger.info(`Skipped block ${blockHeight}`);
       return;
@@ -98,7 +101,7 @@ export default class App {
   private log(blockHeight: number, block: Near.Block, shards: Near.Shard[]) {
     shards.forEach((shard) => {
       if (shard.chunk) {
-        this.logger.debug(`Chunk ${shard.shard_id}`);
+        this.logger.debug(`Chunk ${shard.shard_id}:`);
 
         shard.chunk.transactions.forEach((tx) => {
           this.logger.debug(`  TX ${tx.transaction.hash}:`);

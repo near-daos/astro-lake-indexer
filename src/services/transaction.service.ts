@@ -55,6 +55,20 @@ class TransactionService {
     });
   }
 
+  // cache parent transaction hash for the future receipts
+  cacheTransactionHashesForReceipts(shards: Near.Shard[]) {
+    shards
+      .filter((shard) => shard.chunk)
+      .forEach((shard) => {
+        shard.chunk.transactions.forEach((transaction) => {
+          services.receiptsCacheService.set(
+            transaction.outcome.execution_outcome.outcome.receipt_ids[0],
+            transaction.transaction.hash,
+          );
+        });
+      });
+  }
+
   store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard) => shard.chunk)
