@@ -12,8 +12,8 @@ import { Block } from './block';
 import { Chunk } from './chunk';
 import { DataReceipt } from './data-receipt';
 import { Transaction } from './transaction';
-import * as transformers from '../transformers';
 import { ReceiptKind } from './types';
+import * as transformers from '../transformers';
 
 @Entity('receipts')
 export class Receipt {
@@ -31,7 +31,7 @@ export class Receipt {
   @Column('int')
   index_in_chunk: number;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigInt })
+  @Column('numeric', { precision: 20, transformer: transformers.transformers })
   @Index()
   included_in_block_timestamp: bigint;
 

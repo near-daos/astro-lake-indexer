@@ -26,7 +26,7 @@ export class ActionReceipt {
   @Column('text')
   signer_public_key: string;
 
-  @Column('numeric', { precision: 45, transformer: transformers.bigInt })
+  @Column('numeric', { precision: 45, transformer: transformers.transformers })
   gas_price: bigint;
 
   @ManyToOne(() => Receipt)

@@ -7,8 +7,8 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { Receipt } from './receipt';
-import * as transformers from '../transformers';
 import { ActionKind } from './types';
+import * as transformers from '../transformers';
 
 // TODO: add jsonb indices
 @Entity('action_receipt_actions')
@@ -42,7 +42,7 @@ export class ActionReceiptAction {
   @Index()
   receipt_receiver_account_id: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigInt })
+  @Column('numeric', { precision: 20, transformer: transformers.transformers })
   @Index()
   receipt_included_in_block_timestamp: bigint;
 }

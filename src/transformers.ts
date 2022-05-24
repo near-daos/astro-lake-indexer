@@ -3,7 +3,7 @@ export const int = {
   from: (value: string) => parseInt(value),
 };
 
-export const bigInt = {
+export const transformers = {
   to: (value: bigint) => value.toString(),
   from: (value: string) => BigInt(value),
 };
