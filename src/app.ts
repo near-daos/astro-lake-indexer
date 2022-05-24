@@ -72,6 +72,8 @@ export default class App {
     block: Near.Block,
     shards: Near.Shard[],
   ) {
+    this.log(blockHeight, block, shards);
+
     if (!this.shouldStore(shards)) {
       this.logger.info(`Skipped block ${blockHeight}`);
       return;
@@ -90,6 +92,62 @@ export default class App {
       ]);
 
       await services.executionOutcomeService.store(block, shards);
+    });
+  }
+
+  private log(blockHeight: number, block: Near.Block, shards: Near.Shard[]) {
+    shards.forEach((shard) => {
+      if (shard.chunk) {
+        this.logger.debug(`Chunk ${shard.shard_id}`);
+
+        shard.chunk.transactions.forEach((tx) => {
+          this.logger.debug(`  TX ${tx.transaction.hash}:`);
+
+          tx.transaction.actions.forEach((action) => {
+            this.logger.debug(`    Action: ${Near.parseKind(action)}`);
+          });
+
+          this.logger.debug(
+            `    => Receipt: ${tx.outcome.execution_outcome.outcome.receipt_ids[0]}`,
+          );
+        });
+
+        shard.chunk.receipts.forEach((receipt) => {
+          this.logger.debug(`  Receipt ${receipt.receipt_id}:`);
+
+          const kind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
+
+          switch (kind) {
+            case Near.ReceiptTypes.Data:
+              this.logger.debug(
+                `    Data: ${(
+                  receipt.receipt as Near.DataReceipt
+                ).Data.data?.toString()}`,
+              );
+              break;
+
+            case Near.ReceiptTypes.Action:
+              (receipt.receipt as Near.ActionReceipt).Action.actions.forEach(
+                (action) => {
+                  this.logger.debug(`    Action: ${Near.parseKind(action)}`);
+                },
+              );
+              break;
+          }
+        });
+      }
+
+      shard.receipt_execution_outcomes.forEach((outcome) => {
+        this.logger.debug(
+          `  Outcome ${outcome.execution_outcome.id} (${Near.parseKind(
+            outcome.execution_outcome.outcome.status,
+          )}):`,
+        );
+
+        outcome.execution_outcome.outcome.receipt_ids.forEach((id) => {
+          this.logger.debug(`    => Receipt: ${id}`);
+        });
+      });
     });
   }
 
