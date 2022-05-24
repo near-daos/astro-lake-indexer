@@ -25,3 +25,14 @@ export enum ExecutionStatus {
   SuccessValue = 'SUCCESS_VALUE',
   SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
 }
+
+export enum AccountChangeReason {
+  TransactionProcessing = 'TRANSACTION_PROCESSING',
+  ActionReceiptProcessingStarted = 'ACTION_RECEIPT_PROCESSING_STARTED',
+  ActionReceiptGasReward = 'ACTION_RECEIPT_GAS_REWARD',
+  ReceiptProcessing = 'RECEIPT_PROCESSING',
+  PostponedReceipt = 'POSTPONED_RECEIPT',
+  UpdatedDelayedReceipts = 'UPDATED_DELAYED_RECEIPTS',
+  ValidatorAccountsUpdate = 'VALIDATOR_ACCOUNTS_UPDATE',
+  Migration = 'MIGRATION',
+}

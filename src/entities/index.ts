@@ -1,4 +1,5 @@
 export * from './account';
+export * from './account-change';
 export * from './action-receipt';
 export * from './action-receipt-action';
 export * from './action-receipt-input-data';

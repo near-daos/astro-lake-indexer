@@ -1,8 +1,18 @@
 import { Action } from './action';
 import { ExecutionStatus } from './execution-status';
 import { Receipt } from './receipt';
+import { StateChange } from './state-change';
 
 export type Amount = string | number;
+export type StorageUsage = number;
+
+export interface Account {
+  amount: Amount;
+  locked: Amount;
+  code_hash: string;
+  storage_usage: StorageUsage;
+  storage_paid_at: number;
+}
 
 export interface BlockHeader {
   gas_price: Amount;
@@ -64,18 +74,6 @@ export interface Transaction {
 export interface TransactionWithOutcome {
   outcome: ExecutionOutcomeWithoutReceipt;
   transaction: Transaction;
-}
-
-export interface StateChange {
-  cause: {
-    tx_hash: string;
-    type: string;
-  };
-  change: {
-    account_id: string;
-    amount: Amount;
-  };
-  type: string;
 }
 
 export interface Chunk {

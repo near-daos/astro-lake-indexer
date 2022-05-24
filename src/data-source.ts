@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import config from './config';
 import {
   Account,
+  AccountChange,
   ActionReceipt,
   ActionReceiptAction,
   ActionReceiptInputData,
@@ -29,6 +30,7 @@ export const AppDataSource = new DataSource({
   logging: false,
   entities: [
     Account,
+    AccountChange,
     ActionReceipt,
     ActionReceiptAction,
     ActionReceiptInputData,
