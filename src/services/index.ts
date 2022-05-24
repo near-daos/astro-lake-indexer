@@ -1,3 +1,4 @@
+export * from './account.service';
 export * from './action-receipt.service';
 export * from './action-receipt-action.service';
 export * from './action-receipt-input-data.service';

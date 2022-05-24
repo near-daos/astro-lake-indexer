@@ -41,9 +41,14 @@ export interface ExecutionOutcomeWithId {
   outcome: ExecutionOutcome;
 }
 
-export interface ReceiptExecutionOutcome {
+export interface ExecutionOutcomeWithReceipt {
   execution_outcome: ExecutionOutcomeWithId;
-  receipt: Receipt | null;
+  receipt: Receipt;
+}
+
+export interface ExecutionOutcomeWithoutReceipt {
+  execution_outcome: ExecutionOutcomeWithId;
+  receipt: null;
 }
 
 export interface Transaction {
@@ -57,7 +62,7 @@ export interface Transaction {
 }
 
 export interface TransactionWithOutcome {
-  outcome: ReceiptExecutionOutcome;
+  outcome: ExecutionOutcomeWithoutReceipt;
   transaction: Transaction;
 }
 
@@ -82,7 +87,7 @@ export interface Chunk {
 
 export interface Shard {
   chunk: Chunk;
-  receipt_execution_outcomes: ReceiptExecutionOutcome[];
+  receipt_execution_outcomes: ExecutionOutcomeWithReceipt[];
   shard_id: number;
   state_changes: StateChange[];
 }

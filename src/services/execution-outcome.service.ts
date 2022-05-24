@@ -16,7 +16,7 @@ class ExecutionOutcomeService {
     blockTimestamp: number,
     shardId: number,
     indexInChunk: number,
-    outcome: Near.ReceiptExecutionOutcome,
+    outcome: Near.ExecutionOutcomeWithReceipt,
   ) {
     const status = Near.parseKind<Near.ExecutionStatuses>(
       outcome.execution_outcome.outcome.status,

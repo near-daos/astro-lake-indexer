@@ -95,6 +95,8 @@ export default class App {
       await services.receiptService.store(block, shards);
 
       await services.executionOutcomeService.store(block, shards);
+
+      await services.accountService.handle(block, shards);
     });
   }
 
