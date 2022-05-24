@@ -50,14 +50,13 @@ class ExecutionOutcomeService {
           outcome.execution_outcome.id,
         );
 
-        if (transactionHash) {
-          // remove it from cache once found as it is not expected to observe the receipt for the second time
-          services.receiptsCacheService.delete(outcome.execution_outcome.id);
-
-          outcome.execution_outcome.outcome.receipt_ids.forEach((receiptId) => {
-            services.receiptsCacheService.set(receiptId, transactionHash);
-          });
+        if (!transactionHash) {
+          return;
         }
+
+        outcome.execution_outcome.outcome.receipt_ids.forEach((receiptId) => {
+          services.receiptsCacheService.set(receiptId, transactionHash);
+        });
       });
     });
   }

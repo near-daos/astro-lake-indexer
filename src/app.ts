@@ -75,6 +75,7 @@ export default class App {
     this.log(blockHeight, block, shards);
 
     services.transactionService.cacheTransactionHashesForReceipts(shards);
+    services.receiptService.cacheTransactionHashForReceipts(shards);
     services.executionOutcomeService.cacheTransactionHashesForReceipts(shards);
 
     if (!this.shouldStore(shards)) {
@@ -89,10 +90,9 @@ export default class App {
 
       await services.chunkService.store(block, shards);
 
-      await Promise.all([
-        services.transactionService.store(block, shards),
-        services.receiptService.store(block, shards),
-      ]);
+      await services.transactionService.store(block, shards);
+
+      await services.receiptService.store(block, shards);
 
       await services.executionOutcomeService.store(block, shards);
     });
@@ -161,13 +161,13 @@ export default class App {
       if (!shard.chunk) continue;
 
       for (const tx of shard.chunk.transactions) {
-        if (services.transactionService.shouldTrack(tx)) {
+        if (services.transactionService.shouldStore(tx)) {
           return true;
         }
       }
 
       for (const receipt of shard.chunk.receipts) {
-        if (services.receiptService.shouldTrack(receipt)) {
+        if (services.receiptService.shouldStore(receipt)) {
           return true;
         }
       }

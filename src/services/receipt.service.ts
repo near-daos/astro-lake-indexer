@@ -63,12 +63,65 @@ class ReceiptService {
     });
   }
 
-  getTransactionHash(receiptId: string) {
-    const transactionHash = services.receiptsCacheService.get(receiptId);
+  cacheTransactionHashForReceipts(shards: Near.Shard[]) {
+    shards
+      .filter((shard) => shard.chunk)
+      .forEach((shard) => {
+        shard.chunk.receipts.forEach((receipt) => {
+          const receiptType = Near.parseKind<Near.ReceiptTypes>(
+            receipt.receipt,
+          );
+
+          if (receiptType !== ReceiptTypes.Action) {
+            return;
+          }
+
+          const transactionHash = services.receiptsCacheService.get(
+            receipt.receipt_id,
+          );
+
+          if (!transactionHash) {
+            return;
+          }
+
+          const actionReceipt = (receipt.receipt as Near.ActionReceipt).Action;
+
+          // store transaction hash for the future data receipts
+          actionReceipt.output_data_receivers.forEach(({ data_id }) => {
+            services.receiptsCacheService.set(data_id, transactionHash);
+          });
+        });
+      });
+  }
+
+  getTransactionHash(receipt: Near.Receipt) {
+    const receiptType = Near.parseKind(receipt.receipt);
+    let receiptOrDataId;
+
+    // We need to search for parent transaction hash in cache differently
+    // depending on the receipt kind
+    // In case of action receipt we are looking for receipt_id
+    // In case of data receipt we are looking for data_id
+    switch (receiptType) {
+      case Near.ReceiptTypes.Action:
+        receiptOrDataId = receipt.receipt_id;
+        break;
+
+      case Near.ReceiptTypes.Data:
+        receiptOrDataId = (receipt.receipt as Near.DataReceipt).Data.data_id;
+        break;
+
+      default:
+        return;
+    }
+
+    const transactionHash = services.receiptsCacheService.get(receiptOrDataId);
 
     if (!transactionHash) {
       // TODO: handle not found transaction hash
-      this.logger.warn(`Not found parent tx hash for receipt id: ${receiptId}`);
+      this.logger.warn(
+        `Not found parent tx hash for ${receiptType}Receipt Id: ${receiptOrDataId}`,
+      );
     }
 
     return transactionHash;
@@ -85,7 +138,7 @@ class ReceiptService {
             block.header.timestamp,
             chunk.header.chunk_hash,
             chunkIndex,
-            this.getTransactionHash(receipt.receipt_id),
+            this.getTransactionHash(receipt),
             receipt,
           ),
         ),
@@ -95,7 +148,7 @@ class ReceiptService {
     return this.repository.save(entities);
   }
 
-  shouldTrack(receipt: Near.Receipt) {
+  shouldStore(receipt: Near.Receipt) {
     return (
       matchAccounts(receipt.predecessor_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS)
