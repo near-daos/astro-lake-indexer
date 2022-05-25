@@ -100,40 +100,47 @@ export default class App {
   }
 
   private log(blockHeight: number, block: Near.Block, shards: Near.Shard[]) {
+    this.logger.trace(`Block ${block.header.hash} (${blockHeight}):`);
+
     shards.forEach((shard) => {
       if (shard.chunk) {
-        this.logger.debug(`Chunk ${shard.shard_id}:`);
+        this.logger.trace(`  Chunk ${shard.shard_id}:`);
 
         shard.chunk.transactions.forEach((tx) => {
-          this.logger.debug(`  TX ${tx.transaction.hash}:`);
+          this.logger.trace(`    TX ${tx.transaction.hash}:`);
 
           tx.transaction.actions.forEach((action) => {
-            this.logger.debug(`    Action: ${Near.parseKind(action)}`);
+            this.logger.trace(`      Action: ${Near.parseKind(action)}`);
           });
 
-          this.logger.debug(
-            `    => Receipt: ${tx.outcome.execution_outcome.outcome.receipt_ids[0]}`,
+          this.logger.trace(
+            `      => Receipt: ${tx.outcome.execution_outcome.outcome.receipt_ids[0]}`,
           );
         });
 
         shard.chunk.receipts.forEach((receipt) => {
-          this.logger.debug(`  Receipt ${receipt.receipt_id}:`);
+          this.logger.trace(`    Receipt ${receipt.receipt_id}:`);
 
           const kind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
 
           switch (kind) {
             case Near.ReceiptTypes.Data:
-              this.logger.debug(
-                `    Data: ${(
-                  receipt.receipt as Near.DataReceipt
-                ).Data.data?.toString()}`,
+              const {
+                Data: { data },
+              } = receipt.receipt as Near.DataReceipt;
+              this.logger.trace(
+                `      Data: ${
+                  data !== null
+                    ? Buffer.from(data, 'base64').toString()
+                    : 'null'
+                }`,
               );
               break;
 
             case Near.ReceiptTypes.Action:
               (receipt.receipt as Near.ActionReceipt).Action.actions.forEach(
                 (action) => {
-                  this.logger.debug(`    Action: ${Near.parseKind(action)}`);
+                  this.logger.trace(`      Action: ${Near.parseKind(action)}`);
                 },
               );
               break;
@@ -142,14 +149,14 @@ export default class App {
       }
 
       shard.receipt_execution_outcomes.forEach((outcome) => {
-        this.logger.debug(
-          `  Outcome ${outcome.execution_outcome.id} (${Near.parseKind(
+        this.logger.trace(
+          `    Outcome ${outcome.execution_outcome.id} (${Near.parseKind(
             outcome.execution_outcome.outcome.status,
           )}):`,
         );
 
         outcome.execution_outcome.outcome.receipt_ids.forEach((id) => {
-          this.logger.debug(`    => Receipt: ${id}`);
+          this.logger.trace(`      => Receipt: ${id}`);
         });
       });
     });

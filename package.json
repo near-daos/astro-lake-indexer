@@ -8,6 +8,7 @@
       "clean": "tsc --build --clean",
       "start": "ts-node src/index.ts",
       "start:debug": "LOG_LEVEL=debug npm run start",
+      "start:trace": "LOG_LEVEL=trace npm run start",
       "format": "prettier --write \"src/**/*.ts\"",
       "lint": "eslint --ext .ts src/",
       "lint:fix": "eslint --ext .ts src/ --fix",
