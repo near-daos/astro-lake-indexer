@@ -2,6 +2,7 @@ import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Account } from '../entities';
+import * as services from '../services';
 
 class AccountService {
   constructor(
@@ -11,29 +12,12 @@ class AccountService {
   ) {}
 
   async handle(block: Near.Block, shards: Near.Shard[]) {
-    const receipts = shards
-      .map((shard) => shard.receipt_execution_outcomes)
-      .flat()
-      .filter((outcome) => {
-        const status = Near.parseKind<Near.ExecutionStatuses>(
-          outcome.execution_outcome.outcome.status,
-        );
-        return [
-          Near.ExecutionStatuses.SuccessReceiptId,
-          Near.ExecutionStatuses.SuccessValue,
-        ].includes(status);
-      })
-      .map((outcome) => outcome.receipt);
-
-    const actions = receipts
-      .filter((receipt) => {
-        const kind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
-        return kind === Near.ReceiptTypes.Action;
-      })
+    const actions = services.receiptService
+      .getSuccessfulReceiptActions(shards)
       .map(async (receipt) => {
-        const actionReceipt = (receipt.receipt as Near.ActionReceipt).Action;
+        const { actions } = (receipt.receipt as Near.ActionReceipt).Action;
 
-        for (const action of actionReceipt.actions) {
+        for (const action of actions) {
           const actionKind = Near.parseKind<Near.Actions>(action);
 
           switch (actionKind) {
