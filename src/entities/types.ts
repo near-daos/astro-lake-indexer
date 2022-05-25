@@ -36,3 +36,10 @@ export enum AccountChangeReason {
   ValidatorAccountsUpdate = 'VALIDATOR_ACCOUNTS_UPDATE',
   Migration = 'MIGRATION',
 }
+
+export enum TransactionStatus {
+  Unknown = 'UNKNOWN',
+  Failure = 'FAILURE',
+  SuccessValue = 'SUCCESS_VALUE',
+  SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
+}

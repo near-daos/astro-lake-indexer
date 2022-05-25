@@ -10,14 +10,8 @@ import {
 import { Chunk } from './chunk';
 import { Block } from './block';
 import { TransactionAction } from './transaction-action';
+import { TransactionStatus } from './types';
 import * as transformers from '../transformers';
-
-export enum TransactionStatus {
-  Unknown = 'UNKNOWN',
-  Failure = 'FAILURE',
-  SuccessValue = 'SUCCESS_VALUE',
-  SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
-}
 
 @Entity('transactions')
 @Index(['block_timestamp', 'index_in_chunk'])
