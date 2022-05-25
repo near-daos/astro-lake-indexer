@@ -10,7 +10,6 @@ import { Receipt } from './receipt';
 import { ActionKind } from './types';
 import * as transformers from '../transformers';
 
-// TODO: add jsonb indices
 @Entity('action_receipt_actions')
 @Index(['receipt_receiver_account_id', 'receipt_included_in_block_timestamp'])
 export class ActionReceiptAction {

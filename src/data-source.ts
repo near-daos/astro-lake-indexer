@@ -46,7 +46,7 @@ export const AppDataSource = new DataSource({
     Transaction,
     TransactionAction,
   ],
-  migrations: [],
+  migrations: ['src/migrations/**/*.ts'],
   subscribers: [],
   namingStrategy: new CustomNamingStrategy(),
 });

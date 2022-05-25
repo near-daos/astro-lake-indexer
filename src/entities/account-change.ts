@@ -13,7 +13,6 @@ import { Transaction } from './transaction';
 import * as transformers from '../transformers';
 import { AccountChangeReason } from './types';
 
-// TODO: unique indices with condition
 @Entity('account_changes')
 @Index(['changed_in_block_timestamp', 'index_in_block'])
 export class AccountChange {
