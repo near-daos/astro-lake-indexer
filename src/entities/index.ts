@@ -1,3 +1,4 @@
+export * from './access-key';
 export * from './account';
 export * from './account-change';
 export * from './action-receipt';

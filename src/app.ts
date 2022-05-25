@@ -98,6 +98,8 @@ export default class App {
 
       await services.accountService.handle(block, shards);
 
+      await services.accessKeyService.handle(block, shards);
+
       await services.accountChangeService.store(block, shards);
     });
   }

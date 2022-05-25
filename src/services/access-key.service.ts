@@ -1,12 +1,12 @@
 import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
-import { Account } from '../entities';
+import { AccessKey, PermissionType } from '../entities';
 
-class AccountService {
+class AccessKeyService {
   constructor(
-    private readonly repository: Repository<Account> = AppDataSource.getRepository(
-      Account,
+    private readonly repository: Repository<AccessKey> = AppDataSource.getRepository(
+      AccessKey,
     ),
   ) {}
 
@@ -37,37 +37,64 @@ class AccountService {
           const actionKind = Near.parseKind<Near.Actions>(action);
 
           switch (actionKind) {
-            case Near.Actions.CreateAccount: {
+            case Near.Actions.AddKey: {
+              const {
+                AddKey: { public_key, access_key },
+              } = action as Near.ActionAddKey;
+              const permission = Near.parseKind<Near.Permissions>(
+                access_key.permission,
+              );
               return this.repository.insert({
+                public_key,
                 account_id: receipt.receiver_id,
                 created_by_receipt_id: receipt.receipt_id,
+                permission_kind: PermissionType[permission],
                 last_update_block_height: block.header.height,
               });
             }
 
+            case Near.Actions.DeleteKey: {
+              const {
+                DeleteKey: { public_key },
+              } = action as Near.ActionDeleteKey;
+              return this.repository.upsert(
+                {
+                  public_key,
+                  account_id: receipt.receiver_id,
+                  deleted_by_receipt_id: receipt.receipt_id,
+                  last_update_block_height: block.header.height,
+                },
+                ['public_key', 'account_id'],
+              );
+            }
+
             case Near.Actions.Transfer: {
               // check for implicit account ID
-              if (
-                receipt.receipt_id.length !== 64 ||
-                Buffer.from(receipt.receiver_id, 'hex').length !== 32
-              ) {
+              if (receipt.receipt_id.length !== 64) {
+                return;
+              }
+              const publicKey = Buffer.from(receipt.receiver_id, 'hex');
+              if (publicKey.length !== 32) {
                 return;
               }
               return this.repository.insert({
+                public_key: `ed25519:${publicKey.toString('base64')}`,
                 account_id: receipt.receiver_id,
                 created_by_receipt_id: receipt.receipt_id,
+                permission_kind: PermissionType.FullAccess,
                 last_update_block_height: block.header.height,
               });
             }
 
             case Near.Actions.DeleteAccount: {
-              return this.repository.upsert(
+              return this.repository.update(
                 {
                   account_id: receipt.receiver_id,
+                },
+                {
                   deleted_by_receipt_id: receipt.receipt_id,
                   last_update_block_height: block.header.height,
                 },
-                ['account_id'],
               );
             }
           }
@@ -78,4 +105,4 @@ class AccountService {
   }
 }
 
-export const accountService = new AccountService();
+export const accessKeyService = new AccessKeyService();

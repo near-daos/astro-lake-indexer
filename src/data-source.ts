@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import config from './config';
 import {
+  AccessKey,
   Account,
   AccountChange,
   ActionReceipt,
@@ -29,6 +30,7 @@ export const AppDataSource = new DataSource({
   synchronize: true,
   logging: false,
   entities: [
+    AccessKey,
     Account,
     AccountChange,
     ActionReceipt,

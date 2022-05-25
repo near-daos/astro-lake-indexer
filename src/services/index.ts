@@ -1,3 +1,4 @@
+export * from './access-key.service';
 export * from './account.service';
 export * from './account-change.service';
 export * from './action-receipt.service';
