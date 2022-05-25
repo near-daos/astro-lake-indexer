@@ -33,11 +33,11 @@ export class AccountChange {
 
   @Column('text', { nullable: true })
   @Index()
-  caused_by_transaction_hash: string;
+  caused_by_transaction_hash: string | null;
 
   @Column('text', { nullable: true })
   @Index()
-  caused_by_receipt_id: string;
+  caused_by_receipt_id: string | null;
 
   @Column('enum', { enum: AccountChangeReason })
   update_reason: AccountChangeReason;

@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { AccountChange, AccountChangeReason } from '../entities';
@@ -39,13 +40,19 @@ class AccountChangeService {
       case Near.StateChangeTypes.AccountUpdate:
         account = stateChange.change as Near.Account;
         break;
+
+      case Near.StateChangeTypes.AccountDeletion:
+        break;
+
+      default:
+        return;
     }
 
     const reason = Object.keys(Near.StateChangeCauseTypes)[
       Object.values(Near.StateChangeCauseTypes).indexOf(stateChange.cause.type)
     ];
 
-    return this.repository.create({
+    return {
       affected_account_id: stateChange.change.account_id,
       changed_in_block_timestamp: BigInt(blockTimestamp),
       changed_in_block_hash: blockHash,
@@ -57,11 +64,11 @@ class AccountChangeService {
       affected_account_staked_balance: BigInt(account?.locked || 0),
       affected_account_storage_usage: BigInt(account?.storage_usage || 0),
       index_in_block: indexInBlock,
-    });
+    };
   }
 
   async store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards
+    const values = shards
       .map((shard) =>
         shard.state_changes
           .filter(this.shouldStore)
@@ -74,9 +81,15 @@ class AccountChangeService {
             ),
           ),
       )
-      .flat();
+      .flat()
+      .filter(Boolean) as QueryDeepPartialEntity<AccountChange>;
 
-    return this.repository.save(entities);
+    return this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(values)
+      .orIgnore()
+      .execute();
   }
 
   shouldStore(stateChange: Near.StateChange) {

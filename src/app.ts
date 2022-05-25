@@ -22,7 +22,7 @@ export default class App {
     const latestBlockHeight =
       await services.blockService.getLatestBlockHeight();
 
-    if (latestBlockHeight && latestBlockHeight > this.lastBlockHeight) {
+    if (latestBlockHeight && latestBlockHeight >= this.lastBlockHeight) {
       this.lastBlockHeight = latestBlockHeight + 1;
     }
 
@@ -100,7 +100,9 @@ export default class App {
   }
 
   private log(blockHeight: number, block: Near.Block, shards: Near.Shard[]) {
-    this.logger.trace(`Block ${block.header.hash} (${blockHeight}):`);
+    this.logger.trace(
+      `Block #${blockHeight} (${block.header.hash}; ${block.header.timestamp}):`,
+    );
 
     shards.forEach((shard) => {
       if (shard.chunk) {
