@@ -36,9 +36,9 @@ export class Transaction {
   @Column('int')
   index_in_chunk: number;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigint })
+  @Column('numeric', { precision: 20, transformer: transformers.int })
   @Index()
-  block_timestamp: bigint;
+  block_timestamp: number;
 
   @Column('text')
   @Index()
@@ -48,7 +48,7 @@ export class Transaction {
   @Index()
   signer_public_key: string;
 
-  @Column('numeric', { precision: 20 })
+  @Column('numeric', { precision: 20, transformer: transformers.int })
   nonce: number;
 
   @Column('text')
@@ -65,8 +65,8 @@ export class Transaction {
   @Index()
   converted_into_receipt_id: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigint })
-  receipt_conversion_gas_burnt: bigint;
+  @Column('numeric', { precision: 20, transformer: transformers.int })
+  receipt_conversion_gas_burnt: number;
 
   @Column('numeric', { precision: 45, transformer: transformers.bigint })
   receipt_conversion_tokens_burnt: bigint;

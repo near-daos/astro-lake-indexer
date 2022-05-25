@@ -3,7 +3,7 @@ import { ExecutionStatus } from './execution-status';
 import { Receipt } from './receipt';
 import { StateChange } from './state-change';
 
-export type Amount = string | number;
+export type Amount = string;
 export type StorageUsage = number;
 
 export interface Account {
@@ -25,8 +25,8 @@ export interface BlockHeader {
 
 export interface ChunkHeader {
   chunk_hash: string;
-  gas_limit: Amount;
-  gas_used: Amount;
+  gas_limit: number;
+  gas_used: number;
   shard_id: number;
   signature: string;
 }
@@ -39,7 +39,7 @@ export interface Block {
 
 export interface ExecutionOutcome {
   executor_id: string;
-  gas_burnt: Amount;
+  gas_burnt: number;
   receipt_ids: string[];
   status: ExecutionStatus;
   tokens_burnt: Amount;

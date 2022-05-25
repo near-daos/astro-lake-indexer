@@ -53,7 +53,7 @@ class ReceiptService {
       included_in_block_hash: blockHash,
       included_in_chunk_hash: chunkHash,
       index_in_chunk: indexInChunk,
-      included_in_block_timestamp: BigInt(blockTimestamp),
+      included_in_block_timestamp: blockTimestamp,
       predecessor_account_id: receipt.predecessor_id,
       receiver_account_id: receipt.receiver_id,
       receipt_kind: ReceiptKind[receiptKind],

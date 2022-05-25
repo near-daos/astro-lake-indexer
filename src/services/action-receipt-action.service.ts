@@ -27,7 +27,7 @@ class ActionReceiptActionService {
       args: actionArgs,
       receipt_predecessor_account_id: predecessorAccountId,
       receipt_receiver_account_id: receiverAccountId,
-      receipt_included_in_block_timestamp: BigInt(blockTimestamp),
+      receipt_included_in_block_timestamp: blockTimestamp,
     });
   }
 }

@@ -17,8 +17,8 @@ class ChunkService {
       chunk_hash: chunk.header.chunk_hash,
       shard_id: chunk.header.shard_id,
       signature: chunk.header.signature,
-      gas_limit: BigInt(chunk.header.gas_limit),
-      gas_used: BigInt(chunk.header.gas_used),
+      gas_limit: chunk.header.gas_limit,
+      gas_used: chunk.header.gas_used,
       author_account_id: chunk.author,
     });
   }

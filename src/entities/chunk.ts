@@ -18,17 +18,17 @@ export class Chunk {
   @PrimaryColumn('text')
   chunk_hash: string;
 
-  @Column('numeric', { precision: 20 })
+  @Column('numeric', { precision: 20, transformer: transformers.int })
   shard_id: number;
 
   @Column('text')
   signature: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigint })
-  gas_limit: bigint;
+  @Column('numeric', { precision: 20, transformer: transformers.int })
+  gas_limit: number;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigint })
-  gas_used: bigint;
+  @Column('numeric', { precision: 20, transformer: transformers.int })
+  gas_used: number;
 
   @Column('text')
   author_account_id: string;

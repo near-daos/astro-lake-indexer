@@ -24,7 +24,7 @@ export class Account {
   @Column('text', { nullable: true })
   deleted_by_receipt_id: string | null;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigint })
+  @Column('numeric', { precision: 20, transformer: transformers.int })
   @Index()
   last_update_block_height: number;
 

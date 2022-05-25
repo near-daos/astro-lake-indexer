@@ -26,9 +26,9 @@ class ExecutionOutcomeService {
     return this.repository.create({
       receipt_id: outcome.execution_outcome.id,
       executed_in_block_hash: blockHash,
-      executed_in_block_timestamp: BigInt(blockTimestamp),
+      executed_in_block_timestamp: blockTimestamp,
       index_in_chunk: indexInChunk,
-      gas_burnt: BigInt(outcome.execution_outcome.outcome.gas_burnt),
+      gas_burnt: outcome.execution_outcome.outcome.gas_burnt,
       tokens_burnt: BigInt(outcome.execution_outcome.outcome.tokens_burnt),
       executor_account_id: outcome.execution_outcome.outcome.executor_id,
       status: ExecutionStatus[status],

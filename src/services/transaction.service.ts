@@ -29,7 +29,7 @@ class TransactionService {
       included_in_block_hash: blockHash,
       included_in_chunk_hash: chunkHash,
       index_in_chunk: indexInChunk,
-      block_timestamp: BigInt(blockTimestamp),
+      block_timestamp: blockTimestamp,
       signer_account_id: transaction.transaction.signer_id,
       signer_public_key: transaction.transaction.public_key,
       nonce: transaction.transaction.nonce,
@@ -38,9 +38,8 @@ class TransactionService {
       status: TransactionStatus[status],
       converted_into_receipt_id:
         transaction.outcome.execution_outcome.outcome.receipt_ids[0],
-      receipt_conversion_gas_burnt: BigInt(
+      receipt_conversion_gas_burnt:
         transaction.outcome.execution_outcome.outcome.gas_burnt,
-      ),
       receipt_conversion_tokens_burnt: BigInt(
         transaction.outcome.execution_outcome.outcome.tokens_burnt,
       ),

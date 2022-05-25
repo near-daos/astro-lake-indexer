@@ -54,7 +54,7 @@ class AccountChangeService {
 
     return {
       affected_account_id: stateChange.change.account_id,
-      changed_in_block_timestamp: BigInt(blockTimestamp),
+      changed_in_block_timestamp: blockTimestamp,
       changed_in_block_hash: blockHash,
       caused_by_transaction_hash: transactionHash,
       caused_by_receipt_id: receiptId,

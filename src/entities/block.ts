@@ -14,9 +14,9 @@ export class Block {
   @Index()
   prev_block_hash: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.bigint })
+  @Column('numeric', { precision: 20, transformer: transformers.int })
   @Index()
-  block_timestamp: bigint;
+  block_timestamp: number;
 
   @Column('numeric', { precision: 45, transformer: transformers.bigint })
   total_supply: bigint;
