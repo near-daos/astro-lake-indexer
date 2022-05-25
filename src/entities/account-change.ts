@@ -15,6 +15,9 @@ import { AccountChangeReason } from './types';
 
 @Entity('account_changes')
 @Index(['changed_in_block_timestamp', 'index_in_block'])
+@Index('account_changes_transaction_uni_idx', { synchronize: false })
+@Index('account_changes_receipt_uni_idx', { synchronize: false })
+@Index('account_changes_null_uni_idx', { synchronize: false })
 export class AccountChange {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;

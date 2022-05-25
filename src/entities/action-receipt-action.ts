@@ -12,6 +12,9 @@ import * as transformers from '../transformers';
 
 @Entity('action_receipt_actions')
 @Index(['receipt_receiver_account_id', 'receipt_included_in_block_timestamp'])
+@Index('action_receipt_actions_args_function_call_idx', { synchronize: false })
+@Index('action_receipt_actions_args_amount_idx', { synchronize: false })
+@Index('action_receipt_actions_args_receiver_id_idx', { synchronize: false })
 export class ActionReceiptAction {
   @PrimaryColumn('text')
   receipt_id: string;
