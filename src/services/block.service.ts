@@ -2,14 +2,16 @@ import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Block } from '../entities';
-import * as services from '../services';
+import { ChunkService } from './chunk.service';
 
-class BlockService {
-  constructor(
-    private readonly repository: Repository<Block> = AppDataSource.getRepository(
-      Block,
-    ),
-  ) {}
+export class BlockService {
+  private readonly repository: Repository<Block>;
+  private readonly chunkService: ChunkService;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(Block);
+    this.chunkService = new ChunkService(manager);
+  }
 
   fromJSON(block: Near.Block) {
     return this.repository.create({
@@ -42,8 +44,6 @@ class BlockService {
   }
 
   shouldStore(shards: Near.Shard[]) {
-    return shards.some(services.chunkService.shouldStore);
+    return shards.some((shard) => this.chunkService.shouldStore(shard));
   }
 }
-
-export const blockService = new BlockService();

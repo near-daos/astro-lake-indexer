@@ -1,24 +1,26 @@
 import { Repository } from 'typeorm';
+import { ExecutionOutcomeService } from './execution-outcome.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { AccessKey, PermissionType } from '../entities';
-import * as services from '../services';
 import { matchAccounts } from '../utils';
 import config from '../config';
 
-class AccessKeyService {
-  constructor(
-    private readonly repository: Repository<AccessKey> = AppDataSource.getRepository(
-      AccessKey,
-    ),
-  ) {}
+export class AccessKeyService {
+  private readonly repository: Repository<AccessKey>;
+  private readonly executionOutcomeService: ExecutionOutcomeService;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(AccessKey);
+    this.executionOutcomeService = new ExecutionOutcomeService(manager);
+  }
 
   async handle(block: Near.Block, shards: Near.Shard[]) {
-    const actions = services.executionOutcomeService
+    const actions = this.executionOutcomeService
       .getSuccessfulReceiptActions(
         shards.map((shard) => shard.receipt_execution_outcomes).flat(),
       )
-      .filter(this.shouldStore)
+      .filter((receipt) => this.shouldStore(receipt))
       .map(async (receipt) => {
         const { actions } = (receipt.receipt as Near.ActionReceipt).Action;
 
@@ -97,5 +99,3 @@ class AccessKeyService {
     return matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS);
   }
 }
-
-export const accessKeyService = new AccessKeyService();

@@ -3,12 +3,12 @@ import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { ActionKind, ActionReceiptAction } from '../entities';
 
-class ActionReceiptActionService {
-  constructor(
-    private readonly repository: Repository<ActionReceiptAction> = AppDataSource.getRepository(
-      ActionReceiptAction,
-    ),
-  ) {}
+export class ActionReceiptActionService {
+  private readonly repository: Repository<ActionReceiptAction>;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(ActionReceiptAction);
+  }
 
   fromJSON(
     blockTimestamp: number,
@@ -31,5 +31,3 @@ class ActionReceiptActionService {
     });
   }
 }
-
-export const actionReceiptActionService = new ActionReceiptActionService();

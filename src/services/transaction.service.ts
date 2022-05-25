@@ -1,17 +1,20 @@
 import { Repository } from 'typeorm';
+import { receiptsCacheService } from './receipts-cache.service';
+import { TransactionActionService } from './transaction-action.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Transaction, TransactionStatus } from '../entities';
-import * as services from '../services';
 import { matchAccounts } from '../utils';
 import config from '../config';
 
-class TransactionService {
-  constructor(
-    private readonly repository: Repository<Transaction> = AppDataSource.getRepository(
-      Transaction,
-    ),
-  ) {}
+export class TransactionService {
+  private readonly repository: Repository<Transaction>;
+  private readonly transactionActionService: TransactionActionService;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(Transaction);
+    this.transactionActionService = new TransactionActionService(manager);
+  }
 
   fromJSON(
     blockHash: string,
@@ -44,7 +47,7 @@ class TransactionService {
         transaction.outcome.execution_outcome.outcome.tokens_burnt,
       ),
       actions: transaction.transaction.actions.map((action, index) =>
-        services.transactionActionService.fromJSON(
+        this.transactionActionService.fromJSON(
           transaction.transaction.hash,
           index,
           action,
@@ -59,7 +62,7 @@ class TransactionService {
       .filter((shard) => shard.chunk)
       .forEach((shard) => {
         shard.chunk.transactions.forEach((transaction) => {
-          services.receiptsCacheService.set(
+          receiptsCacheService.set(
             transaction.outcome.execution_outcome.outcome.receipt_ids[0],
             transaction.transaction.hash,
           );
@@ -73,7 +76,7 @@ class TransactionService {
       .filter((chunk) => chunk)
       .map((chunk, chunkIndex) =>
         chunk.transactions
-          .filter(this.shouldStore)
+          .filter((transaction) => this.shouldStore(transaction))
           .map((transaction) =>
             this.fromJSON(
               block.header.hash,
@@ -96,5 +99,3 @@ class TransactionService {
     );
   }
 }
-
-export const transactionService = new TransactionService();

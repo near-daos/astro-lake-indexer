@@ -3,12 +3,12 @@ import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { ActionKind, TransactionAction } from '../entities';
 
-class TransactionActionService {
-  constructor(
-    private readonly repository: Repository<TransactionAction> = AppDataSource.getRepository(
-      TransactionAction,
-    ),
-  ) {}
+export class TransactionActionService {
+  private readonly repository: Repository<TransactionAction>;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(TransactionAction);
+  }
 
   fromJSON(
     transactionHash: string,
@@ -25,5 +25,3 @@ class TransactionActionService {
     });
   }
 }
-
-export const transactionActionService = new TransactionActionService();

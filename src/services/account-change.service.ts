@@ -6,12 +6,12 @@ import { AccountChange, AccountChangeReason } from '../entities';
 import { matchAccounts } from '../utils';
 import config from '../config';
 
-class AccountChangeService {
-  constructor(
-    private readonly repository: Repository<AccountChange> = AppDataSource.getRepository(
-      AccountChange,
-    ),
-  ) {}
+export class AccountChangeService {
+  private readonly repository: Repository<AccountChange>;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(AccountChange);
+  }
 
   fromJSON(
     blockHash: string,
@@ -71,7 +71,7 @@ class AccountChangeService {
     const values = shards
       .map((shard) =>
         shard.state_changes
-          .filter(this.shouldStore)
+          .filter((stateChange) => this.shouldStore(stateChange))
           .map((stateChange, index) =>
             this.fromJSON(
               block.header.hash,
@@ -96,5 +96,3 @@ class AccountChangeService {
     return matchAccounts(stateChange.change.account_id, config.TRACK_ACCOUNTS);
   }
 }
-
-export const accountChangeService = new AccountChangeService();

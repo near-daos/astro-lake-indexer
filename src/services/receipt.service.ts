@@ -1,20 +1,27 @@
 import { DeepPartial, Repository } from 'typeorm';
+import { ActionReceiptService } from './action-receipt.service';
+import { DataReceiptService } from './data-receipt.service';
+import { receiptsCacheService } from './receipts-cache.service';
 import * as Near from '../near';
-import { ReceiptTypes } from '../near';
 import { AppDataSource } from '../data-source';
 import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
 import { matchAccounts } from '../utils';
-import * as services from '../services';
-import config from '../config';
 import { createLogger } from '../logger';
+import config from '../config';
 
-class ReceiptService {
+export class ReceiptService {
+  private readonly repository: Repository<Receipt>;
+  private readonly actionReceiptService: ActionReceiptService;
+  private readonly dataReceiptService: DataReceiptService;
+
   constructor(
+    private readonly manager = AppDataSource.manager,
     private readonly logger = createLogger('receipt-service'),
-    private readonly repository: Repository<Receipt> = AppDataSource.getRepository(
-      Receipt,
-    ),
-  ) {}
+  ) {
+    this.repository = manager.getRepository(Receipt);
+    this.actionReceiptService = new ActionReceiptService(manager);
+    this.dataReceiptService = new DataReceiptService(manager);
+  }
 
   fromJSON(
     blockHash: string,
@@ -30,8 +37,8 @@ class ReceiptService {
     let dataReceipt: DeepPartial<DataReceipt> | undefined;
 
     switch (receiptKind) {
-      case ReceiptTypes.Action:
-        actionReceipt = services.actionReceiptService.fromJSON(
+      case Near.ReceiptTypes.Action:
+        actionReceipt = this.actionReceiptService.fromJSON(
           blockTimestamp,
           receipt.predecessor_id,
           receipt.receiver_id,
@@ -40,8 +47,8 @@ class ReceiptService {
         );
         break;
 
-      case ReceiptTypes.Data:
-        dataReceipt = services.dataReceiptService.fromJSON(
+      case Near.ReceiptTypes.Data:
+        dataReceipt = this.dataReceiptService.fromJSON(
           receipt.receipt_id,
           receipt.receipt as Near.DataReceipt,
         );
@@ -72,13 +79,11 @@ class ReceiptService {
             receipt.receipt,
           );
 
-          if (receiptType !== ReceiptTypes.Action) {
+          if (receiptType !== Near.ReceiptTypes.Action) {
             return;
           }
 
-          const transactionHash = services.receiptsCacheService.get(
-            receipt.receipt_id,
-          );
+          const transactionHash = receiptsCacheService.get(receipt.receipt_id);
 
           if (!transactionHash) {
             return;
@@ -88,7 +93,7 @@ class ReceiptService {
 
           // store transaction hash for the future data receipts
           actionReceipt.output_data_receivers.forEach(({ data_id }) => {
-            services.receiptsCacheService.set(data_id, transactionHash);
+            receiptsCacheService.set(data_id, transactionHash);
           });
         });
       });
@@ -115,7 +120,7 @@ class ReceiptService {
         return;
     }
 
-    const transactionHash = services.receiptsCacheService.get(receiptOrDataId);
+    const transactionHash = receiptsCacheService.get(receiptOrDataId);
 
     if (!transactionHash) {
       // TODO: handle not found transaction hash
@@ -133,7 +138,7 @@ class ReceiptService {
       .filter((chunk) => chunk)
       .map((chunk, chunkIndex) =>
         chunk.receipts
-          .filter(this.shouldStore)
+          .filter((receipt) => this.shouldStore(receipt))
           .map((receipt) =>
             this.fromJSON(
               block.header.hash,
@@ -157,5 +162,3 @@ class ReceiptService {
     );
   }
 }
-
-export const receiptService = new ReceiptService();

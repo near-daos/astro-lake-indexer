@@ -1,17 +1,22 @@
 import { Repository } from 'typeorm';
+import { ExecutionOutcomeReceiptService } from './execution-outcome-receipt.service';
+import { receiptsCacheService } from './receipts-cache.service';
 import { AppDataSource } from '../data-source';
 import { ExecutionOutcome, ExecutionStatus } from '../entities';
 import * as Near from '../near';
-import * as services from '../services';
 import { matchAccounts } from '../utils';
 import config from '../config';
 
-class ExecutionOutcomeService {
-  constructor(
-    private readonly repository: Repository<ExecutionOutcome> = AppDataSource.getRepository(
-      ExecutionOutcome,
-    ),
-  ) {}
+export class ExecutionOutcomeService {
+  private readonly repository: Repository<ExecutionOutcome>;
+  private readonly executionOutcomeReceiptService: ExecutionOutcomeReceiptService;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(ExecutionOutcome);
+    this.executionOutcomeReceiptService = new ExecutionOutcomeReceiptService(
+      manager,
+    );
+  }
 
   fromJSON(
     blockHash: string,
@@ -35,7 +40,7 @@ class ExecutionOutcomeService {
       shard_id: shardId,
       receipts: outcome.execution_outcome.outcome.receipt_ids.map(
         (receiptId, index) =>
-          services.executionOutcomeReceiptService.fromJSON(
+          this.executionOutcomeReceiptService.fromJSON(
             outcome.execution_outcome.id,
             index,
             receiptId,
@@ -48,7 +53,7 @@ class ExecutionOutcomeService {
   cacheTransactionHashesForReceipts(shards: Near.Shard[]) {
     shards.forEach((shard) => {
       shard.receipt_execution_outcomes.forEach((outcome) => {
-        const transactionHash = services.receiptsCacheService.get(
+        const transactionHash = receiptsCacheService.get(
           outcome.execution_outcome.id,
         );
 
@@ -57,7 +62,7 @@ class ExecutionOutcomeService {
         }
 
         outcome.execution_outcome.outcome.receipt_ids.forEach((receiptId) => {
-          services.receiptsCacheService.set(receiptId, transactionHash);
+          receiptsCacheService.set(receiptId, transactionHash);
         });
       });
     });
@@ -67,7 +72,7 @@ class ExecutionOutcomeService {
     const entities = shards
       .map((shard, shardIndex) =>
         shard.receipt_execution_outcomes
-          .filter(this.shouldStore)
+          .filter((outcome) => this.shouldStore(outcome))
           .map((outcome, outcomeIndex) =>
             this.fromJSON(
               block.header.hash,
@@ -113,5 +118,3 @@ class ExecutionOutcomeService {
     });
   }
 }
-
-export const executionOutcomeService = new ExecutionOutcomeService();

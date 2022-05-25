@@ -2,12 +2,12 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '../data-source';
 import { ActionReceiptOutputData } from '../entities';
 
-class ActionReceiptOutputDataService {
-  constructor(
-    private readonly repository: Repository<ActionReceiptOutputData> = AppDataSource.getRepository(
-      ActionReceiptOutputData,
-    ),
-  ) {}
+export class ActionReceiptOutputDataService {
+  private readonly repository: Repository<ActionReceiptOutputData>;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(ActionReceiptOutputData);
+  }
 
   fromJSON(receiptId: string, dataId: string, receiverAccountId: string) {
     return this.repository.create({
@@ -17,6 +17,3 @@ class ActionReceiptOutputDataService {
     });
   }
 }
-
-export const actionReceiptOutputDataService =
-  new ActionReceiptOutputDataService();

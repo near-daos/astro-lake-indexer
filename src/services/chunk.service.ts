@@ -1,15 +1,26 @@
 import { Repository } from 'typeorm';
+import { AccountChangeService } from './account-change.service';
+import { ExecutionOutcomeService } from './execution-outcome.service';
+import { ReceiptService } from './receipt.service';
+import { TransactionService } from './transaction.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Chunk } from '../entities';
-import * as services from '../services';
 
-class ChunkService {
-  constructor(
-    private readonly repository: Repository<Chunk> = AppDataSource.getRepository(
-      Chunk,
-    ),
-  ) {}
+export class ChunkService {
+  private readonly repository: Repository<Chunk>;
+  private readonly transactionService: TransactionService;
+  private readonly receiptService: ReceiptService;
+  private readonly executionOutcomeService: ExecutionOutcomeService;
+  private readonly accountChangeService: AccountChangeService;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(Chunk);
+    this.transactionService = new TransactionService(manager);
+    this.receiptService = new ReceiptService(manager);
+    this.executionOutcomeService = new ExecutionOutcomeService(manager);
+    this.accountChangeService = new AccountChangeService(manager);
+  }
 
   fromJSON(blockHash: string, chunk: Near.Chunk) {
     return this.repository.create({
@@ -25,7 +36,7 @@ class ChunkService {
 
   store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
-      .filter(this.shouldStore)
+      .filter((shard) => this.shouldStore(shard))
       .map((shard) => shard.chunk)
       .filter((chunk) => chunk)
       .map((chunk) => this.fromJSON(block.header.hash, chunk));
@@ -40,7 +51,9 @@ class ChunkService {
       // Transaction -> Chunk
       // TransactionAction -> Transaction
       if (
-        shard.chunk.transactions.some(services.transactionService.shouldStore)
+        shard.chunk.transactions.some((transaction) =>
+          this.transactionService.shouldStore(transaction),
+        )
       ) {
         return true;
       }
@@ -53,7 +66,11 @@ class ChunkService {
       // ActionReceiptActions -> ActionReceipt
       // ActionReceiptInputData -> ActionReceipt
       // ActionReceiptOutputData -> ActionReceipt
-      if (shard.chunk.receipts.some(services.receiptService.shouldStore)) {
+      if (
+        shard.chunk.receipts.some((receipt) =>
+          this.receiptService.shouldStore(receipt),
+        )
+      ) {
         return true;
       }
     }
@@ -61,8 +78,8 @@ class ChunkService {
     // check if we have execution outcomes to store
     // ExecutionOutcome -> Block
     if (
-      shard.receipt_execution_outcomes.some(
-        services.executionOutcomeService.shouldStore,
+      shard.receipt_execution_outcomes.some((outcome) =>
+        this.executionOutcomeService.shouldStore(outcome),
       )
     ) {
       return true;
@@ -70,12 +87,14 @@ class ChunkService {
 
     // Check if we have account changes to store
     // AccountChange => Block
-    if (shard.state_changes.some(services.accountChangeService.shouldStore)) {
+    if (
+      shard.state_changes.some((stateChange) =>
+        this.accountChangeService.shouldStore(stateChange),
+      )
+    ) {
       return true;
     }
 
     return false;
   }
 }
-
-export const chunkService = new ChunkService();

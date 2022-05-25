@@ -4,23 +4,35 @@ import config from './config';
 import { sleep } from './utils';
 import * as Near from './near';
 import { createLogger } from './logger';
-import * as services from './services';
 import { AppDataSource } from './data-source';
+import {
+  AccessKeyService,
+  AccountChangeService,
+  AccountService,
+  BlockService,
+  ChunkService,
+  ExecutionOutcomeService,
+  ReceiptService,
+  TransactionService,
+} from './services';
 
 export default class App {
   private running = false;
 
   constructor(
+    private lastBlockHeight = config.START_BLOCK_HEIGHT,
     private readonly logger = createLogger('app'),
     private readonly fetcher = new S3Fetcher(),
-    private lastBlockHeight = config.START_BLOCK_HEIGHT,
+    private readonly blockService = new BlockService(),
+    private readonly transactionService = new TransactionService(),
+    private readonly receiptService = new ReceiptService(),
+    private readonly executionOutcomeService = new ExecutionOutcomeService(),
   ) {}
 
   async start() {
     this.running = true;
 
-    const latestBlockHeight =
-      await services.blockService.getLatestBlockHeight();
+    const latestBlockHeight = await this.blockService.getLatestBlockHeight();
 
     if (latestBlockHeight && latestBlockHeight >= this.lastBlockHeight) {
       this.lastBlockHeight = latestBlockHeight + 1;
@@ -74,28 +86,28 @@ export default class App {
   ) {
     this.log(blockHeight, block, shards);
 
-    services.transactionService.cacheTransactionHashesForReceipts(shards);
-    services.receiptService.cacheTransactionHashForReceipts(shards);
-    services.executionOutcomeService.cacheTransactionHashesForReceipts(shards);
+    this.transactionService.cacheTransactionHashesForReceipts(shards);
+    this.receiptService.cacheTransactionHashForReceipts(shards);
+    this.executionOutcomeService.cacheTransactionHashesForReceipts(shards);
 
     this.logger.info(`Processing block ${blockHeight}...`);
 
-    await AppDataSource.transaction(async () => {
-      await services.blockService.store(block, shards);
+    await AppDataSource.transaction(async (manager) => {
+      await new BlockService(manager).store(block, shards);
 
-      await services.chunkService.store(block, shards);
+      await new ChunkService(manager).store(block, shards);
 
-      await services.transactionService.store(block, shards);
+      await new TransactionService(manager).store(block, shards);
 
-      await services.receiptService.store(block, shards);
+      await new ReceiptService(manager).store(block, shards);
 
-      await services.executionOutcomeService.store(block, shards);
+      await new ExecutionOutcomeService(manager).store(block, shards);
 
-      await services.accountService.handle(block, shards);
+      await new AccountService(manager).handle(block, shards);
 
-      await services.accessKeyService.handle(block, shards);
+      await new AccessKeyService(manager).handle(block, shards);
 
-      await services.accountChangeService.store(block, shards);
+      await new AccountChangeService(manager).store(block, shards);
     });
   }
 

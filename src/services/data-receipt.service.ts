@@ -3,12 +3,12 @@ import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { DataReceipt } from '../entities';
 
-class DataReceiptService {
-  constructor(
-    private readonly repository: Repository<DataReceipt> = AppDataSource.getRepository(
-      DataReceipt,
-    ),
-  ) {}
+export class DataReceiptService {
+  private readonly repository: Repository<DataReceipt>;
+
+  constructor(private readonly manager = AppDataSource.manager) {
+    this.repository = manager.getRepository(DataReceipt);
+  }
 
   fromJSON(receiptId: string, dataReceipt: Near.DataReceipt) {
     const {
@@ -22,5 +22,3 @@ class DataReceiptService {
     });
   }
 }
-
-export const dataReceiptService = new DataReceiptService();
