@@ -78,7 +78,7 @@ export default class App {
     services.receiptService.cacheTransactionHashForReceipts(shards);
     services.executionOutcomeService.cacheTransactionHashesForReceipts(shards);
 
-    this.logger.info(`Storing block ${blockHeight}...`);
+    this.logger.info(`Processing block ${blockHeight}...`);
 
     await AppDataSource.transaction(async () => {
       await services.blockService.store(block, shards);
