@@ -2,6 +2,7 @@ import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Block } from '../entities';
+import * as services from '../services';
 
 class BlockService {
   constructor(
@@ -22,7 +23,10 @@ class BlockService {
     });
   }
 
-  async store(block: Near.Block) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
+    if (!this.shouldStore(shards)) {
+      return;
+    }
     const entity = this.fromJSON(block);
     return this.repository.save(entity);
   }
@@ -35,6 +39,10 @@ class BlockService {
       .getOne();
 
     return entity?.block_height;
+  }
+
+  shouldStore(shards: Near.Shard[]) {
+    return shards.some(services.chunkService.shouldStore);
   }
 }
 

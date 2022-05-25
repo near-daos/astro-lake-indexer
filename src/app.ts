@@ -78,15 +78,10 @@ export default class App {
     services.receiptService.cacheTransactionHashForReceipts(shards);
     services.executionOutcomeService.cacheTransactionHashesForReceipts(shards);
 
-    if (!this.shouldStore(shards)) {
-      this.logger.info(`Skipped block ${blockHeight}`);
-      return;
-    }
-
     this.logger.info(`Storing block ${blockHeight}...`);
 
     await AppDataSource.transaction(async () => {
-      await services.blockService.store(block);
+      await services.blockService.store(block, shards);
 
       await services.chunkService.store(block, shards);
 
@@ -158,25 +153,5 @@ export default class App {
         });
       });
     });
-  }
-
-  private shouldStore(shards: Near.Shard[]) {
-    return true; // TODO
-
-    for (const shard of shards) {
-      if (!shard.chunk) continue;
-
-      for (const tx of shard.chunk.transactions) {
-        if (services.transactionService.shouldStore(tx)) {
-          return true;
-        }
-      }
-
-      for (const receipt of shard.chunk.receipts) {
-        if (services.receiptService.shouldStore(receipt)) {
-          return true;
-        }
-      }
-    }
   }
 }

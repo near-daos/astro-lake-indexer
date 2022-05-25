@@ -132,16 +132,18 @@ class ReceiptService {
       .map((shard) => shard.chunk)
       .filter((chunk) => chunk)
       .map((chunk, chunkIndex) =>
-        chunk.receipts.map((receipt) =>
-          this.fromJSON(
-            block.header.hash,
-            block.header.timestamp,
-            chunk.header.chunk_hash,
-            chunkIndex,
-            this.getTransactionHash(receipt),
-            receipt,
+        chunk.receipts
+          .filter(this.shouldStore)
+          .map((receipt) =>
+            this.fromJSON(
+              block.header.hash,
+              block.header.timestamp,
+              chunk.header.chunk_hash,
+              chunkIndex,
+              this.getTransactionHash(receipt),
+              receipt,
+            ),
           ),
-        ),
       )
       .flat();
 
@@ -153,31 +155,6 @@ class ReceiptService {
       matchAccounts(receipt.predecessor_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS)
     );
-  }
-
-  getSuccessfulReceipts(shards: Near.Shard[]) {
-    return shards
-      .map((shard) => shard.receipt_execution_outcomes)
-      .flat()
-      .filter((outcome) => {
-        const status = Near.parseKind<Near.ExecutionStatuses>(
-          outcome.execution_outcome.outcome.status,
-        );
-        return [
-          Near.ExecutionStatuses.SuccessReceiptId,
-          Near.ExecutionStatuses.SuccessValue,
-        ].includes(status);
-      })
-      .map((outcome) => outcome.receipt);
-  }
-
-  getSuccessfulReceiptActions(shards: Near.Shard[]) {
-    return this.getSuccessfulReceipts(shards).filter((receipt) => {
-      return (
-        Near.parseKind<Near.ReceiptTypes>(receipt.receipt) ===
-        Near.ReceiptTypes.Action
-      );
-    });
   }
 }
 

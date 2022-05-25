@@ -2,6 +2,8 @@ import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { AccountChange, AccountChangeReason } from '../entities';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 class AccountChangeService {
   constructor(
@@ -61,18 +63,24 @@ class AccountChangeService {
   async store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard) =>
-        shard.state_changes.map((stateChange, index) =>
-          this.fromJSON(
-            block.header.hash,
-            block.header.timestamp,
-            index,
-            stateChange,
+        shard.state_changes
+          .filter(this.shouldStore)
+          .map((stateChange, index) =>
+            this.fromJSON(
+              block.header.hash,
+              block.header.timestamp,
+              index,
+              stateChange,
+            ),
           ),
-        ),
       )
       .flat();
 
     return this.repository.save(entities);
+  }
+
+  shouldStore(stateChange: Near.StateChange) {
+    return matchAccounts(stateChange.change.account_id, config.TRACK_ACCOUNTS);
   }
 }
 

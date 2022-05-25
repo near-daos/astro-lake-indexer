@@ -3,6 +3,8 @@ import { AppDataSource } from '../data-source';
 import { ExecutionOutcome, ExecutionStatus } from '../entities';
 import * as Near from '../near';
 import * as services from '../services';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 class ExecutionOutcomeService {
   constructor(
@@ -64,19 +66,51 @@ class ExecutionOutcomeService {
   store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard, shardIndex) =>
-        shard.receipt_execution_outcomes.map((outcome, outcomeIndex) =>
-          this.fromJSON(
-            block.header.hash,
-            block.header.timestamp,
-            shardIndex,
-            outcomeIndex,
-            outcome,
+        shard.receipt_execution_outcomes
+          .filter(this.shouldStore)
+          .map((outcome, outcomeIndex) =>
+            this.fromJSON(
+              block.header.hash,
+              block.header.timestamp,
+              shardIndex,
+              outcomeIndex,
+              outcome,
+            ),
           ),
-        ),
       )
       .flat();
 
     return this.repository.save(entities);
+  }
+
+  shouldStore(outcome: Near.ExecutionOutcomeWithReceipt) {
+    return matchAccounts(
+      outcome.execution_outcome.outcome.executor_id,
+      config.TRACK_ACCOUNTS,
+    );
+  }
+
+  getSuccessfulReceipts(outcomes: Near.ExecutionOutcomeWithReceipt[]) {
+    return outcomes
+      .filter((outcome) => {
+        const status = Near.parseKind<Near.ExecutionStatuses>(
+          outcome.execution_outcome.outcome.status,
+        );
+        return [
+          Near.ExecutionStatuses.SuccessReceiptId,
+          Near.ExecutionStatuses.SuccessValue,
+        ].includes(status);
+      })
+      .map((outcome) => outcome.receipt);
+  }
+
+  getSuccessfulReceiptActions(outcomes: Near.ExecutionOutcomeWithReceipt[]) {
+    return this.getSuccessfulReceipts(outcomes).filter((receipt) => {
+      return (
+        Near.parseKind<Near.ReceiptTypes>(receipt.receipt) ===
+        Near.ReceiptTypes.Action
+      );
+    });
   }
 }
 

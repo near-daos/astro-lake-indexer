@@ -5,7 +5,6 @@ import { Transaction, TransactionStatus } from '../entities';
 import * as services from '../services';
 import { matchAccounts } from '../utils';
 import config from '../config';
-import { ExecutionStatuses } from '../near';
 
 class TransactionService {
   constructor(
@@ -21,7 +20,7 @@ class TransactionService {
     indexInChunk: number,
     transaction: Near.TransactionWithOutcome,
   ) {
-    const status = Near.parseKind<ExecutionStatuses>(
+    const status = Near.parseKind<Near.ExecutionStatuses>(
       transaction.outcome.execution_outcome.outcome.status,
     );
 
@@ -74,15 +73,17 @@ class TransactionService {
       .map((shard) => shard.chunk)
       .filter((chunk) => chunk)
       .map((chunk, chunkIndex) =>
-        chunk.transactions.map((transaction) =>
-          this.fromJSON(
-            block.header.hash,
-            block.header.timestamp,
-            chunk.header.chunk_hash,
-            chunkIndex,
-            transaction,
+        chunk.transactions
+          .filter(this.shouldStore)
+          .map((transaction) =>
+            this.fromJSON(
+              block.header.hash,
+              block.header.timestamp,
+              chunk.header.chunk_hash,
+              chunkIndex,
+              transaction,
+            ),
           ),
-        ),
       )
       .flat();
 

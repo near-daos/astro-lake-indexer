@@ -3,6 +3,8 @@ import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { AccessKey, PermissionType } from '../entities';
 import * as services from '../services';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 class AccessKeyService {
   constructor(
@@ -12,8 +14,11 @@ class AccessKeyService {
   ) {}
 
   async handle(block: Near.Block, shards: Near.Shard[]) {
-    const actions = services.receiptService
-      .getSuccessfulReceiptActions(shards)
+    const actions = services.executionOutcomeService
+      .getSuccessfulReceiptActions(
+        shards.map((shard) => shard.receipt_execution_outcomes).flat(),
+      )
+      .filter(this.shouldStore)
       .map(async (receipt) => {
         const { actions } = (receipt.receipt as Near.ActionReceipt).Action;
 
@@ -86,6 +91,10 @@ class AccessKeyService {
       });
 
     return Promise.all(actions);
+  }
+
+  shouldStore(receipt: Near.Receipt) {
+    return matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS);
   }
 }
 
