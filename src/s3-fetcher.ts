@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk';
 import config from './config';
 import { createLogger } from './logger';
-import { formatBlockHeight, sleep } from './utils';
+import { formatBlockHeight } from './utils';
 import * as Near from './near';
 
 export default class S3Fetcher {
@@ -15,7 +15,7 @@ export default class S3Fetcher {
 
     this.logger.debug(`Fetching blocks since ${startAfter}`);
 
-    const result: AWS.S3.ListObjectsV2Output = await this.s3
+    const result = await this.s3
       .listObjectsV2({
         Bucket: config.AWS_BUCKET,
         MaxKeys: config.FETCH_MAX_KEYS,
@@ -37,19 +37,13 @@ export default class S3Fetcher {
 
     this.logger.debug(`Fetching block ${key}`);
 
-    let result: AWS.S3.GetObjectOutput | undefined;
-
-    try {
-      result = await this.s3
-        .getObject({
-          Bucket: config.AWS_BUCKET,
-          Key: key,
-          RequestPayer: 'requester',
-        })
-        .promise();
-    } catch (err) {
-      this.logger.debug(`Failed to get ${key}, retrying immediately...`);
-    }
+    const result = await this.s3
+      .getObject({
+        Bucket: config.AWS_BUCKET,
+        Key: key,
+        RequestPayer: 'requester',
+      })
+      .promise();
 
     return JSON.parse(result?.Body?.toString() || '') as Near.Block;
   }
@@ -59,20 +53,13 @@ export default class S3Fetcher {
 
     this.logger.debug(`Fetching shard ${key}`);
 
-    let result: AWS.S3.GetObjectOutput | undefined;
-
-    try {
-      result = await this.s3
-        .getObject({
-          Bucket: config.AWS_BUCKET,
-          Key: key,
-          RequestPayer: 'requester',
-        })
-        .promise();
-    } catch (err) {
-      this.logger.debug(`Failed to get ${key}, retrying in 1s...`);
-      await sleep(1000);
-    }
+    const result = await this.s3
+      .getObject({
+        Bucket: config.AWS_BUCKET,
+        Key: key,
+        RequestPayer: 'requester',
+      })
+      .promise();
 
     return JSON.parse(result?.Body?.toString() || '') as Near.Shard;
   }

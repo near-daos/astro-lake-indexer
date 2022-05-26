@@ -1,7 +1,7 @@
 import { PromisePool } from '@supercharge/promise-pool';
+import { retry, RetryConfig, wait } from 'ts-retry-promise';
 import S3Fetcher from './s3-fetcher';
 import config from './config';
-import { sleep } from './utils';
 import * as Near from './near';
 import { createLogger } from './logger';
 import { AppDataSource } from './data-source';
@@ -27,6 +27,11 @@ export default class App {
     private readonly transactionService = new TransactionService(),
     private readonly receiptService = new ReceiptService(),
     private readonly executionOutcomeService = new ExecutionOutcomeService(),
+    private readonly retryConfig: Partial<RetryConfig<unknown>> = {
+      retries: 10,
+      delay: 1000,
+      logger: (msg: string) => this.logger.warn(msg),
+    },
   ) {}
 
   async start() {
@@ -48,21 +53,34 @@ export default class App {
 
   private async poll() {
     while (this.running) {
-      const blocks = await this.fetcher.listBlocks(this.lastBlockHeight);
+      const blocks = await retry(
+        () => this.fetcher.listBlocks(this.lastBlockHeight),
+        this.retryConfig,
+      );
 
       if (!blocks.length) {
         this.logger.info('Waiting for new blocks...');
-        await sleep(config.WAIT_FOR_NEW_BLOCKS);
+        await wait(config.WAIT_FOR_NEW_BLOCKS);
         continue;
       }
 
       const { results } = await PromisePool.for(blocks)
         .withConcurrency(10)
+        .handleError((err) => {
+          throw err;
+        })
         .process(async (blockHeight) => {
-          const block = await this.fetcher.getBlock(blockHeight);
+          const block = await retry(
+            () => this.fetcher.getBlock(blockHeight),
+            this.retryConfig,
+          );
+
           const shards = await Promise.all(
             block.chunks.map((chunk) =>
-              this.fetcher.getShard(blockHeight, chunk.shard_id),
+              retry(
+                () => this.fetcher.getShard(blockHeight, chunk.shard_id),
+                this.retryConfig,
+              ),
             ),
           );
 
