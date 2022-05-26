@@ -2,6 +2,7 @@ import { DeepPartial, Repository } from 'typeorm';
 import { ActionReceiptService } from './action-receipt.service';
 import { DataReceiptService } from './data-receipt.service';
 import { receiptsCacheService } from './receipts-cache.service';
+import { TransactionService } from './transaction.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
@@ -13,6 +14,7 @@ export class ReceiptService {
   private readonly repository: Repository<Receipt>;
   private readonly actionReceiptService: ActionReceiptService;
   private readonly dataReceiptService: DataReceiptService;
+  private readonly transactionService: TransactionService;
 
   constructor(
     private readonly manager = AppDataSource.manager,
@@ -21,6 +23,7 @@ export class ReceiptService {
     this.repository = manager.getRepository(Receipt);
     this.actionReceiptService = new ActionReceiptService(manager);
     this.dataReceiptService = new DataReceiptService(manager);
+    this.transactionService = new TransactionService(manager);
   }
 
   fromJSON(
@@ -99,7 +102,7 @@ export class ReceiptService {
       });
   }
 
-  getTransactionHash(receipt: Near.Receipt) {
+  async getTransactionHash(receipt: Near.Receipt) {
     const receiptType = Near.parseKind(receipt.receipt);
     let receiptOrDataId;
 
@@ -120,7 +123,14 @@ export class ReceiptService {
         return;
     }
 
-    const transactionHash = receiptsCacheService.get(receiptOrDataId);
+    let transactionHash = receiptsCacheService.get(receiptOrDataId);
+
+    if (!transactionHash) {
+      transactionHash =
+        await this.transactionService.findTransactionHashByReceiptId(
+          receiptOrDataId,
+        );
+    }
 
     if (!transactionHash) {
       // TODO: handle not found transaction hash
@@ -132,25 +142,28 @@ export class ReceiptService {
     return transactionHash;
   }
 
-  store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards
+  async store(block: Near.Block, shards: Near.Shard[]) {
+    const promises = shards
       .map((shard) => shard.chunk)
       .filter((chunk) => chunk)
       .map((chunk, chunkIndex) =>
         chunk.receipts
           .filter((receipt) => this.shouldStore(receipt))
-          .map((receipt) =>
-            this.fromJSON(
+          .map(async (receipt) => {
+            const transactionHash = await this.getTransactionHash(receipt);
+            return this.fromJSON(
               block.header.hash,
               block.header.timestamp,
               chunk.header.chunk_hash,
               chunkIndex,
-              this.getTransactionHash(receipt),
+              transactionHash,
               receipt,
-            ),
-          ),
+            );
+          }),
       )
       .flat();
+
+    const entities = await Promise.all(promises);
 
     return this.repository.save(entities);
   }

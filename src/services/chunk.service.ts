@@ -34,7 +34,7 @@ export class ChunkService {
     });
   }
 
-  store(block: Near.Block, shards: Near.Shard[]) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .filter((shard) => this.shouldStore(shard))
       .map((shard) => shard.chunk)

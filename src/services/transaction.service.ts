@@ -70,7 +70,7 @@ export class TransactionService {
       });
   }
 
-  store(block: Near.Block, shards: Near.Shard[]) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard) => shard.chunk)
       .filter((chunk) => chunk)
@@ -97,5 +97,12 @@ export class TransactionService {
       matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
     );
+  }
+
+  async findTransactionHashByReceiptId(receiptId: string) {
+    const transaction = await this.repository.findOneBy({
+      converted_into_receipt_id: receiptId,
+    });
+    return transaction?.transaction_hash;
   }
 }

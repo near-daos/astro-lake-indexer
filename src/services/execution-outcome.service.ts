@@ -68,7 +68,7 @@ export class ExecutionOutcomeService {
     });
   }
 
-  store(block: Near.Block, shards: Near.Shard[]) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard, shardIndex) =>
         shard.receipt_execution_outcomes
