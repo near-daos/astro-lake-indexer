@@ -43,3 +43,15 @@ export enum TransactionStatus {
   SuccessValue = 'SUCCESS_VALUE',
   SuccessReceiptId = 'SUCCESS_RECEIPT_ID',
 }
+
+export enum FtEventKind {
+  Mint = 'MINT',
+  Transfer = 'TRANSFER',
+  Burn = 'BURN',
+}
+
+export enum NftEventKind {
+  Mint = 'MINT',
+  Transfer = 'TRANSFER',
+  Burn = 'BURN',
+}

@@ -10,6 +10,8 @@ export * from './chunk.service';
 export * from './data-receipt.service';
 export * from './execution-outcome.service';
 export * from './execution-outcome-receipt.service';
+export * from './ft-event.service';
+export * from './nft-event.service';
 export * from './receipt.service';
 export * from './receipts-cache.service';
 export * from './transaction.service';

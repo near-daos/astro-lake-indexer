@@ -39,6 +39,7 @@ export interface Block {
 
 export interface ExecutionOutcome {
   executor_id: string;
+  logs: string[];
   gas_burnt: number;
   receipt_ids: string[];
   status: ExecutionStatus;

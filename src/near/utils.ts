@@ -1,4 +1,5 @@
 import * as Near from './index';
+import { Event, EventStandards, NEP141Event, NEP171Event } from './event';
 import { PermissionType } from '../entities';
 
 export const parseKind = <T extends string>(kind: object | string) => {
@@ -139,4 +140,26 @@ export const parseAction = (action: Near.Action) => {
   }
 
   return { actionKind, actionArgs };
+};
+
+export const parseLogEvent = (log: string): Event | undefined => {
+  if (log.indexOf(Near.EVENT_PREFIX) !== 0) {
+    return;
+  }
+
+  let data;
+
+  try {
+    data = JSON.parse(log.substring(Near.EVENT_PREFIX.length)) as Event;
+  } catch (err) {
+    return;
+  }
+
+  switch (data.standard) {
+    case EventStandards.NEP141:
+      return data as NEP141Event;
+
+    case EventStandards.NEP171:
+      return data as NEP171Event;
+  }
 };

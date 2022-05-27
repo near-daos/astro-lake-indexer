@@ -45,6 +45,10 @@ export default class S3Fetcher {
       })
       .promise();
 
+    // TODO: fix block timestamp parsing
+    // JSON.parse('{"timestamp":1650385597015896197}')
+    // > { timestamp: 1650385597015896300 }
+
     return JSON.parse(result?.Body?.toString() || '') as Near.Block;
   }
 

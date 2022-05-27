@@ -12,6 +12,8 @@ import {
   BlockService,
   ChunkService,
   ExecutionOutcomeService,
+  FtEventService,
+  NftEventService,
   ReceiptService,
   TransactionService,
 } from './services';
@@ -126,6 +128,11 @@ export default class App {
       await new AccessKeyService(manager).handle(block, shards);
 
       await new AccountChangeService(manager).store(block, shards);
+
+      await Promise.all([
+        new FtEventService(manager).store(block, shards),
+        new NftEventService(manager).store(block, shards),
+      ]);
     });
   }
 
