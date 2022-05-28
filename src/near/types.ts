@@ -19,7 +19,7 @@ export interface BlockHeader {
   hash: string;
   height: number;
   prev_hash: string;
-  timestamp: number;
+  timestamp: bigint;
   total_supply: Amount;
 }
 

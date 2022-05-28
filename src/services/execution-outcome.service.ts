@@ -20,7 +20,7 @@ export class ExecutionOutcomeService {
 
   fromJSON(
     blockHash: string,
-    blockTimestamp: number,
+    blockTimestamp: bigint,
     shardId: number,
     indexInChunk: number,
     outcome: Near.ExecutionOutcomeWithReceipt,

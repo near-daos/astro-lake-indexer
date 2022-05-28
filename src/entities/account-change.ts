@@ -26,9 +26,9 @@ export class AccountChange {
   @Index()
   affected_account_id: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.int })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
-  changed_in_block_timestamp: number;
+  changed_in_block_timestamp: bigint;
 
   @Column('text')
   @Index()

@@ -11,7 +11,7 @@ export class ActionReceiptActionService {
   }
 
   fromJSON(
-    blockTimestamp: number,
+    blockTimestamp: bigint,
     predecessorAccountId: string,
     receiverAccountId: string,
     receiptId: string,

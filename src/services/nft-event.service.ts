@@ -11,7 +11,7 @@ export class NftEventService {
   }
 
   fromJSON(
-    blockTimestamp: number,
+    blockTimestamp: bigint,
     shardId: number,
     eventsWithOutcomes: {
       event: Near.NEP171Event;

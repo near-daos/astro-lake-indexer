@@ -14,7 +14,7 @@ export class FtEventService {
   }
 
   fromJSON(
-    blockTimestamp: number,
+    blockTimestamp: bigint,
     shardId: number,
     eventsWithOutcomes: {
       event: Near.NEP141Event;

@@ -23,9 +23,9 @@ export class ExecutionOutcome {
   @Index()
   executed_in_block_hash: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.int })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
-  executed_in_block_timestamp: number;
+  executed_in_block_timestamp: bigint;
 
   @Column('int')
   index_in_chunk: number;

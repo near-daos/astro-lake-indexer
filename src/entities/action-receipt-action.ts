@@ -44,7 +44,7 @@ export class ActionReceiptAction {
   @Index()
   receipt_receiver_account_id: string;
 
-  @Column('numeric', { precision: 20, transformer: transformers.int })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
-  receipt_included_in_block_timestamp: number;
+  receipt_included_in_block_timestamp: bigint;
 }

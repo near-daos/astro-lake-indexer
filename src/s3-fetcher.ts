@@ -1,8 +1,11 @@
 import * as AWS from 'aws-sdk';
+import JSONbig from 'json-bigint';
 import config from './config';
 import { createLogger } from './logger';
 import { formatBlockHeight } from './utils';
 import * as Near from './near';
+
+const JSONParser = JSONbig({ useNativeBigInt: true });
 
 export default class S3Fetcher {
   constructor(
@@ -45,11 +48,7 @@ export default class S3Fetcher {
       })
       .promise();
 
-    // TODO: fix block timestamp parsing
-    // JSON.parse('{"timestamp":1650385597015896197}')
-    // > { timestamp: 1650385597015896300 }
-
-    return JSON.parse(result?.Body?.toString() || '') as Near.Block;
+    return JSONParser.parse(result?.Body?.toString() || '') as Near.Block;
   }
 
   async getShard(blockHeight: number, shardId: number) {
@@ -65,6 +64,6 @@ export default class S3Fetcher {
       })
       .promise();
 
-    return JSON.parse(result?.Body?.toString() || '') as Near.Shard;
+    return JSONParser.parse(result?.Body?.toString() || '') as Near.Shard;
   }
 }

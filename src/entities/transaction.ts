@@ -30,9 +30,9 @@ export class Transaction {
   @Column('int')
   index_in_chunk: number;
 
-  @Column('numeric', { precision: 20, transformer: transformers.int })
+  @Column('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
-  block_timestamp: number;
+  block_timestamp: bigint;
 
   @Column('text')
   @Index()

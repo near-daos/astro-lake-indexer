@@ -15,7 +15,7 @@ export class AccountChangeService {
 
   fromJSON(
     blockHash: string,
-    blockTimestamp: number,
+    blockTimestamp: bigint,
     indexInBlock: number,
     stateChange: Near.StateChange,
   ) {

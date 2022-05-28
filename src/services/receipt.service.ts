@@ -28,7 +28,7 @@ export class ReceiptService {
 
   fromJSON(
     blockHash: string,
-    blockTimestamp: number,
+    blockTimestamp: bigint,
     chunkHash: string,
     indexInChunk: number,
     transactionHash: string | undefined,

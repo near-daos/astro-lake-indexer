@@ -21,9 +21,9 @@ export class FtEvent {
   @PrimaryColumn('text')
   emitted_for_receipt_id: string;
 
-  @PrimaryColumn('numeric', { precision: 20, transformer: transformers.int })
+  @PrimaryColumn('numeric', { precision: 20, transformer: transformers.bigint })
   @Index()
-  emitted_at_block_timestamp: number;
+  emitted_at_block_timestamp: bigint;
 
   @PrimaryColumn('numeric', { precision: 20, transformer: transformers.int })
   emitted_in_shard_id: number;

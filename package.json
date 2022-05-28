@@ -30,6 +30,7 @@
       "node": ">=16.0.0"
    },
    "devDependencies": {
+      "@types/json-bigint": "1.0.1",
       "@types/log4js": "2.3.5",
       "@types/nconf": "0.10.2",
       "@types/node": "16.11.36",
@@ -46,6 +47,7 @@
       "@supercharge/promise-pool": "2.1.0",
       "aws-sdk": "2.1137.0",
       "dotenv": "16.0.1",
+      "json-bigint": "1.0.0",
       "log4js": "6.4.7",
       "lru-cache": "7.10.1",
       "nconf": "0.12.0",

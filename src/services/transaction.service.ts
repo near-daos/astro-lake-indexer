@@ -18,7 +18,7 @@ export class TransactionService {
 
   fromJSON(
     blockHash: string,
-    blockTimestamp: number,
+    blockTimestamp: bigint,
     chunkHash: string,
     indexInChunk: number,
     transaction: Near.TransactionWithOutcome,
