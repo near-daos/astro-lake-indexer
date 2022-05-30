@@ -3,6 +3,9 @@ import { ExecutionOutcomeService } from './execution-outcome.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { FtEvent, FtEventKind } from '../entities';
+import { NEP141Event, NEP141Events } from '../near';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 export class FtEventService {
   private readonly repository: Repository<FtEvent>;
@@ -104,6 +107,7 @@ export class FtEventService {
             const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
               .map(Near.parseLogEvent)
               .filter(Near.isNEP141Event)
+              .filter(this.shouldStore)
               .map((event) => ({ event, outcome }));
 
             return this.fromJSON(
@@ -117,5 +121,26 @@ export class FtEventService {
       .flat();
 
     return this.repository.save(entities);
+  }
+
+  shouldStore(event: NEP141Event) {
+    switch (event.event) {
+      case NEP141Events.Mint:
+        return event.data.some(({ owner_id }) =>
+          matchAccounts(owner_id, config.TRACK_ACCOUNTS),
+        );
+
+      case NEP141Events.Transfer:
+        return event.data.some(
+          ({ old_owner_id, new_owner_id }) =>
+            matchAccounts(old_owner_id, config.TRACK_ACCOUNTS) ||
+            matchAccounts(new_owner_id, config.TRACK_ACCOUNTS),
+        );
+
+      case NEP141Events.Burn:
+        return event.data.some(({ owner_id }) =>
+          matchAccounts(owner_id, config.TRACK_ACCOUNTS),
+        );
+    }
   }
 }

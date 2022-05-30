@@ -1,7 +1,10 @@
 import { Repository } from 'typeorm';
 import * as Near from '../near';
+import { NEP171Event, NEP171Events } from '../near';
 import { AppDataSource } from '../data-source';
 import { NftEvent, NftEventKind } from '../entities';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 export class NftEventService {
   private readonly repository: Repository<NftEvent>;
@@ -118,6 +121,7 @@ export class NftEventService {
             const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
               .map(Near.parseLogEvent)
               .filter(Near.isNEP171Event)
+              .filter(this.shouldStore)
               .map((event) => ({ event, outcome }));
 
             return this.fromJSON(
@@ -131,5 +135,29 @@ export class NftEventService {
       .flat();
 
     return this.repository.save(entities);
+  }
+
+  shouldStore(event: NEP171Event) {
+    switch (event.event) {
+      case NEP171Events.Mint:
+        return event.data.some(({ owner_id }) =>
+          matchAccounts(owner_id, config.TRACK_ACCOUNTS),
+        );
+
+      case NEP171Events.Transfer:
+        return event.data.some(
+          ({ old_owner_id, new_owner_id, authorized_id }) =>
+            matchAccounts(old_owner_id, config.TRACK_ACCOUNTS) ||
+            matchAccounts(new_owner_id, config.TRACK_ACCOUNTS) ||
+            matchAccounts(authorized_id, config.TRACK_ACCOUNTS),
+        );
+
+      case NEP171Events.Burn:
+        return event.data.some(
+          ({ owner_id, authorized_id }) =>
+            matchAccounts(owner_id, config.TRACK_ACCOUNTS) ||
+            matchAccounts(authorized_id, config.TRACK_ACCOUNTS),
+        );
+    }
   }
 }

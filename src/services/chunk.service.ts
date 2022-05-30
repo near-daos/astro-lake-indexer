@@ -1,6 +1,4 @@
 import { Repository } from 'typeorm';
-import { AccountChangeService } from './account-change.service';
-import { ExecutionOutcomeService } from './execution-outcome.service';
 import { ReceiptService } from './receipt.service';
 import { TransactionService } from './transaction.service';
 import * as Near from '../near';
@@ -11,15 +9,11 @@ export class ChunkService {
   private readonly repository: Repository<Chunk>;
   private readonly transactionService: TransactionService;
   private readonly receiptService: ReceiptService;
-  private readonly executionOutcomeService: ExecutionOutcomeService;
-  private readonly accountChangeService: AccountChangeService;
 
   constructor(private readonly manager = AppDataSource.manager) {
     this.repository = manager.getRepository(Chunk);
     this.transactionService = new TransactionService(manager);
     this.receiptService = new ReceiptService(manager);
-    this.executionOutcomeService = new ExecutionOutcomeService(manager);
-    this.accountChangeService = new AccountChangeService(manager);
   }
 
   fromJSON(blockHash: string, chunk: Near.Chunk) {
@@ -73,26 +67,6 @@ export class ChunkService {
       ) {
         return true;
       }
-    }
-
-    // check if we have execution outcomes to store
-    // ExecutionOutcome -> Block
-    if (
-      shard.receipt_execution_outcomes.some((outcome) =>
-        this.executionOutcomeService.shouldStore(outcome),
-      )
-    ) {
-      return true;
-    }
-
-    // Check if we have account changes to store
-    // AccountChange => Block
-    if (
-      shard.state_changes.some((stateChange) =>
-        this.accountChangeService.shouldStore(stateChange),
-      )
-    ) {
-      return true;
     }
 
     return false;
