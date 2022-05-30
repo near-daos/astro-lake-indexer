@@ -9,6 +9,8 @@ export class Config {
     this.provider.env();
     this.provider.defaults({
       LOG_LEVEL: 'info',
+      FETCH_MAX_KEYS: 100,
+      WAIT_FOR_NEW_BLOCKS: 2000,
     });
     this.provider.required([
       'LOG_LEVEL',
@@ -23,6 +25,9 @@ export class Config {
       'DATABASE_PASSWORD',
       'DATABASE_NAME',
       'START_BLOCK_HEIGHT',
+      'FETCH_MAX_KEYS',
+      'WAIT_FOR_NEW_BLOCKS',
+      'BRIDGE_TOKEN_FACTORY',
     ]);
   }
 
@@ -86,6 +91,10 @@ export class Config {
     return (this.provider.get('TRACK_ACCOUNTS') as string)
       .split(',')
       .map((account) => account.trim());
+  }
+
+  get BRIDGE_TOKEN_FACTORY(): string {
+    return this.provider.get('BRIDGE_TOKEN_FACTORY');
   }
 }
 

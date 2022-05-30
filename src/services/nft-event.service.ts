@@ -160,4 +160,36 @@ export class NftEventService {
         );
     }
   }
+
+  shouldStoreReceipt(receipt: Near.Receipt) {
+    const kind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
+
+    if (kind !== Near.ReceiptTypes.Action) {
+      return false;
+    }
+
+    const actionReceipt = receipt.receipt as Near.ActionReceipt;
+
+    return actionReceipt.Action.actions.some((action) => {
+      const { actionKind, actionArgs } = Near.parseAction(action);
+
+      if (actionKind !== Near.Actions.FunctionCall) {
+        return false;
+      }
+
+      const { method_name, args_json } =
+        actionArgs as unknown as Near.ActionFunctionCallArgs;
+
+      // ownership change
+      if (
+        method_name.indexOf('nft_') === 0 &&
+        args_json &&
+        matchAccounts(args_json.receiver_id, config.TRACK_ACCOUNTS)
+      ) {
+        return true;
+      }
+
+      return false;
+    });
+  }
 }

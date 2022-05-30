@@ -1,6 +1,8 @@
 import { DeepPartial, Repository } from 'typeorm';
 import { ActionReceiptService } from './action-receipt.service';
 import { DataReceiptService } from './data-receipt.service';
+import { FtEventService } from './ft-event.service';
+import { NftEventService } from './nft-event.service';
 import { receiptsCacheService } from './receipts-cache.service';
 import { TransactionService } from './transaction.service';
 import * as Near from '../near';
@@ -15,6 +17,8 @@ export class ReceiptService {
   private readonly actionReceiptService: ActionReceiptService;
   private readonly dataReceiptService: DataReceiptService;
   private readonly transactionService: TransactionService;
+  private readonly ftEventService: FtEventService;
+  private readonly nftEventService: NftEventService;
 
   constructor(
     private readonly manager = AppDataSource.manager,
@@ -24,6 +28,8 @@ export class ReceiptService {
     this.actionReceiptService = new ActionReceiptService(manager);
     this.dataReceiptService = new DataReceiptService(manager);
     this.transactionService = new TransactionService(manager);
+    this.ftEventService = new FtEventService(manager);
+    this.nftEventService = new NftEventService(manager);
   }
 
   fromJSON(
@@ -171,7 +177,11 @@ export class ReceiptService {
   shouldStore(receipt: Near.Receipt) {
     return (
       matchAccounts(receipt.predecessor_id, config.TRACK_ACCOUNTS) ||
-      matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS)
+      matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS) ||
+      // contains ft call
+      this.ftEventService.shouldStoreReceipt(receipt) ||
+      // contains nft call
+      this.nftEventService.shouldStoreReceipt(receipt)
     );
   }
 }
