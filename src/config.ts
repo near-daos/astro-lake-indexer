@@ -10,6 +10,7 @@ export class Config {
     this.provider.defaults({
       LOG_LEVEL: 'info',
       FETCH_MAX_KEYS: 100,
+      BLOCKS_DL_CONCURRENCY: 10,
       WAIT_FOR_NEW_BLOCKS: 2000,
     });
     this.provider.required([
@@ -29,6 +30,7 @@ export class Config {
 
       'START_BLOCK_HEIGHT',
       'FETCH_MAX_KEYS',
+      'BLOCKS_DL_CONCURRENCY',
       'WAIT_FOR_NEW_BLOCKS',
 
       'TRACK_ACCOUNTS',
@@ -86,6 +88,10 @@ export class Config {
 
   get FETCH_MAX_KEYS(): number {
     return parseInt(this.provider.get('FETCH_MAX_KEYS'));
+  }
+
+  get BLOCKS_DL_CONCURRENCY(): number {
+    return parseInt(this.provider.get('BLOCKS_DL_CONCURRENCY'));
   }
 
   get WAIT_FOR_NEW_BLOCKS(): number {

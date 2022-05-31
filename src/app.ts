@@ -41,7 +41,8 @@ export default class App {
   async start() {
     this.running = true;
 
-    const latestBlockHeight = await this.processedBlockService.getLatestBlockHeight();
+    const latestBlockHeight =
+      await this.processedBlockService.getLatestBlockHeight();
 
     if (latestBlockHeight && latestBlockHeight >= this.lastBlockHeight) {
       this.lastBlockHeight = latestBlockHeight + 1;
@@ -69,7 +70,7 @@ export default class App {
       }
 
       const { results } = await PromisePool.for(blocks)
-        .withConcurrency(10)
+        .withConcurrency(config.BLOCKS_DL_CONCURRENCY)
         .handleError((err) => {
           throw err;
         })
@@ -116,22 +117,18 @@ export default class App {
 
     await AppDataSource.transaction(async (manager) => {
       await new BlockService(manager).store(block, shards);
-
       await new ChunkService(manager).store(block, shards);
-
       await new TransactionService(manager).store(block, shards);
-
       await new ReceiptService(manager).store(block, shards);
 
-      await new ExecutionOutcomeService(manager).store(block, shards);
-
-      await new AccountService(manager).handle(block, shards);
-
-      await new AccessKeyService(manager).handle(block, shards);
-
-      await new AccountChangeService(manager).store(block, shards);
+      await Promise.all([
+        new ExecutionOutcomeService(manager).store(block, shards),
+        new AccountService(manager).handle(block, shards),
+      ]);
 
       await Promise.all([
+        new AccessKeyService(manager).handle(block, shards),
+        new AccountChangeService(manager).store(block, shards),
         new FtEventService(manager).store(block, shards),
         new NftEventService(manager).store(block, shards),
       ]);
