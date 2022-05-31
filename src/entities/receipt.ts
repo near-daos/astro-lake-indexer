@@ -64,7 +64,10 @@ export class Receipt {
   })
   chunk: Chunk;
 
-  @ManyToOne(() => Transaction, { nullable: true })
+  @ManyToOne(() => Transaction, {
+    // TODO: we may store receipts with transaction hash not presented in transactions (ft, nft events)
+    createForeignKeyConstraints: false,
+  })
   @JoinColumn({
     name: 'originated_from_transaction_hash',
     referencedColumnName: 'transaction_hash',

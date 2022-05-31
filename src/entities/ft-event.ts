@@ -51,9 +51,8 @@ export class FtEvent {
   @PrimaryColumn('text')
   event_memo: string;
 
-  // TODO: add constraint
   @ManyToOne(() => Receipt, {
-    nullable: true,
+    // TODO: we may store event with receipt id not presented in receipts
     createForeignKeyConstraints: false,
   })
   @JoinColumn({

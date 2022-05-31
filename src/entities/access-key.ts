@@ -38,12 +38,12 @@ export class AccessKey {
     name: 'created_by_receipt_id',
     referencedColumnName: 'receipt_id',
   })
-  createdByReceipt: Receipt;
+  createdByReceipt: Receipt | null;
 
   @ManyToOne(() => Receipt)
   @JoinColumn({
     name: 'deleted_by_receipt_id',
     referencedColumnName: 'receipt_id',
   })
-  deletedByReceipt: Receipt;
+  deletedByReceipt: Receipt | null;
 }

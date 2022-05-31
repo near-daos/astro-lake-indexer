@@ -57,13 +57,15 @@ export class AccountChange {
   @Column('int')
   index_in_block: number;
 
-  // TODO: add constraint
-  @ManyToOne(() => Account, { createForeignKeyConstraints: false })
+  @ManyToOne(() => Account, {
+    // TODO: we may store account change with account id not presented in accounts
+    createForeignKeyConstraints: false,
+  })
   @JoinColumn({
     name: 'affected_account_id',
     referencedColumnName: 'account_id',
   })
-  account: Account;
+  account: Account | null;
 
   @ManyToOne(() => Block)
   @JoinColumn({
@@ -77,12 +79,12 @@ export class AccountChange {
     name: 'caused_by_transaction_hash',
     referencedColumnName: 'transaction_hash',
   })
-  transaction: Transaction;
+  transaction: Transaction | null;
 
   @ManyToOne(() => Receipt)
   @JoinColumn({
     name: 'caused_by_receipt_id',
     referencedColumnName: 'receipt_id',
   })
-  receipt: Receipt;
+  receipt: Receipt | null;
 }

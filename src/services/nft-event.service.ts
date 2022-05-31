@@ -184,10 +184,13 @@ export class NftEventService {
       if (
         method_name.indexOf('nft_') === 0 &&
         args_json &&
+        args_json.receiver_id &&
         matchAccounts(args_json.receiver_id, config.TRACK_ACCOUNTS)
       ) {
         return true;
       }
+
+      // TODO: mint event?
 
       return false;
     });
