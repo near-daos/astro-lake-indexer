@@ -12,6 +12,7 @@ export * from './execution-outcome';
 export * from './execution-outcome-receipt';
 export * from './ft-event';
 export * from './nft-event';
+export * from './processed-block';
 export * from './receipt';
 export * from './transaction';
 export * from './transaction-action';

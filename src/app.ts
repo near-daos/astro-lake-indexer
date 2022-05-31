@@ -14,6 +14,7 @@ import {
   ExecutionOutcomeService,
   FtEventService,
   NftEventService,
+  ProcessedBlockService,
   ReceiptService,
   TransactionService,
 } from './services';
@@ -29,6 +30,7 @@ export default class App {
     private readonly transactionService = new TransactionService(),
     private readonly receiptService = new ReceiptService(),
     private readonly executionOutcomeService = new ExecutionOutcomeService(),
+    private readonly processedBlockService = new ProcessedBlockService(),
     private readonly retryConfig: Partial<RetryConfig<unknown>> = {
       retries: 10,
       delay: 1000,
@@ -39,7 +41,7 @@ export default class App {
   async start() {
     this.running = true;
 
-    const latestBlockHeight = await this.blockService.getLatestBlockHeight();
+    const latestBlockHeight = await this.processedBlockService.getLatestBlockHeight();
 
     if (latestBlockHeight && latestBlockHeight >= this.lastBlockHeight) {
       this.lastBlockHeight = latestBlockHeight + 1;
@@ -133,6 +135,8 @@ export default class App {
         new FtEventService(manager).store(block, shards),
         new NftEventService(manager).store(block, shards),
       ]);
+
+      await new ProcessedBlockService(manager).store(block);
     });
   }
 

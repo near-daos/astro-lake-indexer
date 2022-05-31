@@ -45,16 +45,6 @@ export class BlockService {
     return this.repository.save(entity);
   }
 
-  async getLatestBlockHeight() {
-    const entity = await this.repository
-      .createQueryBuilder()
-      .orderBy('block_height', 'DESC')
-      .limit(1)
-      .getOne();
-
-    return entity?.block_height;
-  }
-
   shouldStore(shards: Near.Shard[]) {
     // check if we have chunks to store
     // Chunk -> Block
