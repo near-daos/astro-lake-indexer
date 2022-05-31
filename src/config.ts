@@ -14,19 +14,24 @@ export class Config {
     });
     this.provider.required([
       'LOG_LEVEL',
+
       'AWS_ACCESS_KEY_ID',
       'AWS_SECRET_ACCESS_KEY',
       'AWS_REGION',
       'AWS_BUCKET',
+
       'DATABASE_TYPE',
       'DATABASE_HOST',
       'DATABASE_PORT',
       'DATABASE_USERNAME',
       'DATABASE_PASSWORD',
       'DATABASE_NAME',
+
       'START_BLOCK_HEIGHT',
       'FETCH_MAX_KEYS',
       'WAIT_FOR_NEW_BLOCKS',
+
+      'TRACK_ACCOUNTS',
       'BRIDGE_TOKEN_FACTORY',
     ]);
   }
