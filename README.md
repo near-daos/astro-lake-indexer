@@ -30,3 +30,11 @@ npm run start
 ```
 
 You can use `npm run start:debug` or `npm run start:trace` for verbose output.
+
+### CLI helper
+
+To download and output raw block data in JSON format:
+
+```
+npm run cli 12345
+```
