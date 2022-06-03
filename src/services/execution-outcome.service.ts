@@ -1,18 +1,19 @@
 import { Repository } from 'typeorm';
 import { ExecutionOutcomeReceiptService } from './execution-outcome-receipt.service';
+import { ReceiptService } from './receipt.service';
 import { receiptsCacheService } from './receipts-cache.service';
 import { AppDataSource } from '../data-source';
 import { ExecutionOutcome, ExecutionStatus } from '../entities';
 import * as Near from '../near';
-import { matchAccounts } from '../utils';
-import config from '../config';
 
 export class ExecutionOutcomeService {
   private readonly repository: Repository<ExecutionOutcome>;
+  private readonly receiptService: ReceiptService;
   private readonly executionOutcomeReceiptService: ExecutionOutcomeReceiptService;
 
   constructor(private readonly manager = AppDataSource.manager) {
     this.repository = manager.getRepository(ExecutionOutcome);
+    this.receiptService = new ReceiptService(manager);
     this.executionOutcomeReceiptService = new ExecutionOutcomeReceiptService(
       manager,
     );
@@ -89,10 +90,7 @@ export class ExecutionOutcomeService {
   }
 
   shouldStore(outcome: Near.ExecutionOutcomeWithReceipt) {
-    return matchAccounts(
-      outcome.execution_outcome.outcome.executor_id,
-      config.TRACK_ACCOUNTS,
-    );
+    return this.receiptService.shouldStore(outcome.receipt);
   }
 
   getSuccessfulReceipts(outcomes: Near.ExecutionOutcomeWithReceipt[]) {
