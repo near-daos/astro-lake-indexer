@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
-import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { DataReceipt } from '../entities';
+import * as Near from '../near';
 
 export class DataReceiptService {
   private readonly repository: Repository<DataReceipt>;

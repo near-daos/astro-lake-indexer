@@ -39,27 +39,15 @@ export class ActionReceipt {
   @OneToMany(() => ActionReceiptAction, (action) => action.receipt, {
     cascade: true,
   })
-  @JoinColumn({
-    name: 'receipt_id',
-    referencedColumnName: 'receipt_id',
-  })
   actions: ActionReceiptAction[];
 
   @OneToMany(() => ActionReceiptInputData, (data) => data.receipt, {
     cascade: true,
   })
-  @JoinColumn({
-    name: 'receipt_id',
-    referencedColumnName: 'input_to_receipt_id',
-  })
   inputData: ActionReceiptInputData[];
 
   @OneToMany(() => ActionReceiptOutputData, (data) => data.receipt, {
     cascade: true,
-  })
-  @JoinColumn({
-    name: 'receipt_id',
-    referencedColumnName: 'output_from_receipt_id',
   })
   outputData: ActionReceiptOutputData[];
 }

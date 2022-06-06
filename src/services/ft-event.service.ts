@@ -1,19 +1,15 @@
 import { Repository } from 'typeorm';
-import { ExecutionOutcomeService } from './execution-outcome.service';
-import * as Near from '../near';
-import { NEP141Event, NEP141Events } from '../near';
+import config from '../config';
 import { AppDataSource } from '../data-source';
 import { FtEvent, FtEventKind } from '../entities';
+import * as Near from '../near';
 import { matchAccounts } from '../utils';
-import config from '../config';
 
 export class FtEventService {
   private readonly repository: Repository<FtEvent>;
-  private readonly executionOutcomeService: ExecutionOutcomeService;
 
   constructor(private readonly manager = AppDataSource.manager) {
     this.repository = manager.getRepository(FtEvent);
-    this.executionOutcomeService = new ExecutionOutcomeService(manager);
   }
 
   fromJSON(
@@ -123,21 +119,21 @@ export class FtEventService {
     return this.repository.save(entities);
   }
 
-  shouldStore(event: NEP141Event) {
+  shouldStore(event: Near.NEP141Event) {
     switch (event.event) {
-      case NEP141Events.Mint:
+      case Near.NEP141Events.Mint:
         return event.data.some(({ owner_id }) =>
           matchAccounts(owner_id, config.TRACK_ACCOUNTS),
         );
 
-      case NEP141Events.Transfer:
+      case Near.NEP141Events.Transfer:
         return event.data.some(
           ({ old_owner_id, new_owner_id }) =>
             matchAccounts(old_owner_id, config.TRACK_ACCOUNTS) ||
             matchAccounts(new_owner_id, config.TRACK_ACCOUNTS),
         );
 
-      case NEP141Events.Burn:
+      case Near.NEP141Events.Burn:
         return event.data.some(({ owner_id }) =>
           matchAccounts(owner_id, config.TRACK_ACCOUNTS),
         );

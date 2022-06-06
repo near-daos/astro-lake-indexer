@@ -65,9 +65,5 @@ export class ExecutionOutcome {
     (receipt) => receipt.executionOutcome,
     { cascade: true },
   )
-  @JoinColumn({
-    name: 'receipt_id',
-    referencedColumnName: 'executed_receipt_id',
-  })
   receipts: ExecutionOutcomeReceipt[];
 }

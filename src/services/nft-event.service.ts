@@ -1,8 +1,7 @@
 import { Repository } from 'typeorm';
-import * as Near from '../near';
-import { NEP171Event, NEP171Events } from '../near';
 import { AppDataSource } from '../data-source';
 import { NftEvent, NftEventKind } from '../entities';
+import * as Near from '../near';
 import { matchAccounts } from '../utils';
 import config from '../config';
 
@@ -137,14 +136,14 @@ export class NftEventService {
     return this.repository.save(entities);
   }
 
-  shouldStore(event: NEP171Event) {
+  shouldStore(event: Near.NEP171Event) {
     switch (event.event) {
-      case NEP171Events.Mint:
+      case Near.NEP171Events.Mint:
         return event.data.some(({ owner_id }) =>
           matchAccounts(owner_id, config.TRACK_ACCOUNTS),
         );
 
-      case NEP171Events.Transfer:
+      case Near.NEP171Events.Transfer:
         return event.data.some(
           ({ old_owner_id, new_owner_id, authorized_id }) =>
             matchAccounts(old_owner_id, config.TRACK_ACCOUNTS) ||
@@ -152,7 +151,7 @@ export class NftEventService {
             matchAccounts(authorized_id, config.TRACK_ACCOUNTS),
         );
 
-      case NEP171Events.Burn:
+      case Near.NEP171Events.Burn:
         return event.data.some(
           ({ owner_id, authorized_id }) =>
             matchAccounts(owner_id, config.TRACK_ACCOUNTS) ||

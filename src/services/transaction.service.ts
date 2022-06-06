@@ -1,9 +1,9 @@
 import { Repository } from 'typeorm';
 import { receiptsCacheService } from './receipts-cache.service';
 import { TransactionActionService } from './transaction-action.service';
-import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Transaction, TransactionStatus } from '../entities';
+import * as Near from '../near';
 import { matchAccounts } from '../utils';
 import config from '../config';
 
@@ -70,29 +70,15 @@ export class TransactionService {
       });
   }
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards
-      .map((shard) => shard.chunk)
-      .filter((chunk) => chunk)
-      .map((chunk, chunkIndex) =>
-        chunk.transactions
-          .filter((transaction) => this.shouldStore(transaction))
-          .map((transaction) =>
-            this.fromJSON(
-              block.header.hash,
-              block.header.timestamp,
-              chunk.header.chunk_hash,
-              chunkIndex,
-              transaction,
-            ),
-          ),
-      )
-      .flat();
-
-    return this.repository.save(entities);
+  async save(entity: Transaction[]) {
+    return this.repository.save(entity);
   }
 
   shouldStore(tx: Near.TransactionWithOutcome) {
+    return (
+      tx.transaction.hash === '8afQFzT9pjrxboLHz3DU391Gt3SXjKwwZhHa3nPRwS3G'
+    );
+
     return (
       matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)

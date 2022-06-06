@@ -1,5 +1,7 @@
 import { Repository } from 'typeorm';
 import { ExecutionOutcomeReceiptService } from './execution-outcome-receipt.service';
+import { FtEventService } from './ft-event.service';
+import { NftEventService } from './nft-event.service';
 import { ReceiptService } from './receipt.service';
 import { receiptsCacheService } from './receipts-cache.service';
 import { AppDataSource } from '../data-source';
@@ -10,6 +12,8 @@ export class ExecutionOutcomeService {
   private readonly repository: Repository<ExecutionOutcome>;
   private readonly receiptService: ReceiptService;
   private readonly executionOutcomeReceiptService: ExecutionOutcomeReceiptService;
+  private readonly ftEventService: FtEventService;
+  private readonly nftEventService: NftEventService;
 
   constructor(private readonly manager = AppDataSource.manager) {
     this.repository = manager.getRepository(ExecutionOutcome);
@@ -17,6 +21,8 @@ export class ExecutionOutcomeService {
     this.executionOutcomeReceiptService = new ExecutionOutcomeReceiptService(
       manager,
     );
+    this.ftEventService = new FtEventService(manager);
+    this.nftEventService = new NftEventService(manager);
   }
 
   fromJSON(
@@ -69,28 +75,15 @@ export class ExecutionOutcomeService {
     });
   }
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards
-      .map((shard, shardIndex) =>
-        shard.receipt_execution_outcomes
-          .filter((outcome) => this.shouldStore(outcome))
-          .map((outcome, outcomeIndex) =>
-            this.fromJSON(
-              block.header.hash,
-              block.header.timestamp,
-              shardIndex,
-              outcomeIndex,
-              outcome,
-            ),
-          ),
-      )
-      .flat();
-
-    return this.repository.save(entities);
+  async save(entity: ExecutionOutcome[]) {
+    return this.repository.save(entity);
   }
 
   shouldStore(outcome: Near.ExecutionOutcomeWithReceipt) {
-    return this.receiptService.shouldStore(outcome.receipt);
+    const events = outcome.execution_outcome.outcome.logs.map(
+      Near.parseLogEvent,
+    );
+    return events.some(Near.isNEP141Event) || events.some(Near.isNEP171Event);
   }
 
   getSuccessfulReceipts(outcomes: Near.ExecutionOutcomeWithReceipt[]) {

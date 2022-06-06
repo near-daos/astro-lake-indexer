@@ -8,9 +8,7 @@ import { TransactionService } from './transaction.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
-import { matchAccounts } from '../utils';
 import { createLogger } from '../logger';
-import config from '../config';
 
 export class ReceiptService {
   private readonly repository: Repository<Receipt>;
@@ -148,40 +146,23 @@ export class ReceiptService {
     return transactionHash;
   }
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
-    const promises = shards
-      .map((shard) => shard.chunk)
-      .filter((chunk) => chunk)
-      .map((chunk, chunkIndex) =>
-        chunk.receipts
-          .filter((receipt) => this.shouldStore(receipt))
-          .map(async (receipt) => {
-            const transactionHash = await this.getTransactionHash(receipt);
-            return this.fromJSON(
-              block.header.hash,
-              block.header.timestamp,
-              chunk.header.chunk_hash,
-              chunkIndex,
-              transactionHash,
-              receipt,
-            );
-          }),
-      )
-      .flat();
-
-    const entities = await Promise.all(promises);
-
-    return this.repository.save(entities);
+  async save(entity: Receipt[]) {
+    return this.repository.save(entity);
   }
 
   shouldStore(receipt: Near.Receipt) {
+    return false;
     return (
+      receipt.receipt_id === 'DctUW1xPH2UXxUMtWmiyqmJrvKX4pkccsJmMCc2mCE3o'
+    );
+
+    /*    return (
       matchAccounts(receipt.predecessor_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS) ||
       // contains ft call
       this.ftEventService.shouldStoreReceipt(receipt) ||
       // contains nft call
       this.nftEventService.shouldStoreReceipt(receipt)
-    );
+    ); */
   }
 }
