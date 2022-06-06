@@ -4,98 +4,111 @@ import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
 
 export class CacheService {
   constructor(
-    private readonly blockCache = new LRUCache<
+    private readonly transactionsCache = new LRUCache<string, TransactionData>({
+      max: 500,
+    }),
+    private readonly receiptsCache = new LRUCache<string, ReceiptData>({
+      max: 2000,
+    }),
+    private readonly executionOutcomesCache = new LRUCache<
       string,
-      { block: Near.Block; shards: Near.Shard[] }
+      ExecutionOutcomeData
     >({
-      max: 100,
+      max: 2000,
+    }),
+    private readonly transactionHashesCache = new LRUCache<string, string>({
+      max: 2000,
     }),
   ) {}
 
   cacheBlock(block: Near.Block, shards: Near.Shard[]) {
-    this.blockCache.set(block.header.hash, { block, shards });
-  }
+    shards.forEach((shard) => {
+      if (shard.chunk) {
+        // cache transactions
+        shard.chunk.transactions.forEach((transaction, indexInChunk) => {
+          this.transactionsCache.set(transaction.transaction.hash, {
+            block,
+            shard,
+            indexInChunk,
+            transaction,
+          });
 
-  findTransactionByHash(hash: string): TransactionData | undefined {
-    for (const { block, shards } of this.blockCache.values()) {
-      for (const shard of shards) {
-        if (!shard.chunk) {
-          continue;
-        }
+          // store transaction hash for future receipts
+          this.transactionHashesCache.set(
+            transaction.outcome.execution_outcome.outcome.receipt_ids[0],
+            transaction.transaction.hash,
+          );
+        });
 
-        for (const [
-          indexInChunk,
-          transaction,
-        ] of shard.chunk.transactions.entries()) {
-          if (transaction.transaction.hash === hash) {
-            return { block, shard, indexInChunk, transaction };
-          }
-        }
-      }
-    }
-  }
+        // cache receipts
+        shard.chunk.receipts.forEach((receipt, indexInChunk) => {
+          const receiptOrDataId = Near.getReceiptOrDataId(receipt);
 
-  findExecutionOutcomeById(id: string): ExecutionOutcomeData | undefined {
-    for (const { block, shards } of this.blockCache.values()) {
-      for (const shard of shards) {
-        for (const [
-          indexInChunk,
-          executionOutcome,
-        ] of shard.receipt_execution_outcomes.entries()) {
-          if (executionOutcome.execution_outcome.id === id) {
-            return { block, shard, indexInChunk, executionOutcome };
-          }
-        }
-      }
-    }
-  }
+          this.receiptsCache.set(receiptOrDataId, {
+            block,
+            shard,
+            indexInChunk,
+            receipt,
+          });
 
-  findReceiptById(
-    transactionHash: string,
-    receiptOrDataId: string,
-  ): ReceiptData | undefined {
-    for (const { block, shards } of this.blockCache.values()) {
-      for (const shard of shards) {
-        if (!shard.chunk) {
-          continue;
-        }
-
-        for (const [indexInChunk, receipt] of shard.chunk.receipts.entries()) {
           const receiptType = Near.parseKind<Near.ReceiptTypes>(
             receipt.receipt,
           );
 
-          switch (receiptType) {
-            case Near.ReceiptTypes.Action:
-              if (receipt.receipt_id === receiptOrDataId) {
-                return {
-                  block,
-                  shard,
-                  indexInChunk,
-                  transactionHash,
-                  receipt,
-                };
-              }
-              break;
-
-            case Near.ReceiptTypes.Data:
-              if (
-                (receipt.receipt as Near.DataReceipt).Data.data_id ===
-                receiptOrDataId
-              ) {
-                return {
-                  block,
-                  shard,
-                  indexInChunk,
-                  transactionHash,
-                  receipt,
-                };
-              }
-              break;
+          if (receiptType !== Near.ReceiptTypes.Action) {
+            return;
           }
-        }
+
+          const transactionHash =
+            this.transactionHashesCache.get(receiptOrDataId);
+
+          if (!transactionHash) {
+            return;
+          }
+
+          const actionReceipt = (receipt.receipt as Near.ActionReceipt).Action;
+
+          // store transaction hash for the future data receipts
+          actionReceipt.output_data_receivers.forEach(({ data_id }) => {
+            this.transactionHashesCache.set(data_id, transactionHash);
+          });
+        });
       }
-    }
+
+      // cache execution outcomes
+      shard.receipt_execution_outcomes.forEach(
+        (executionOutcome, indexInChunk) => {
+          this.executionOutcomesCache.set(
+            executionOutcome.execution_outcome.id,
+            {
+              block,
+              shard,
+              indexInChunk,
+              executionOutcome,
+            },
+          );
+
+          const transactionHash = this.transactionHashesCache.get(
+            executionOutcome.execution_outcome.id,
+          );
+
+          if (!transactionHash) {
+            return;
+          }
+
+          // store transaction hash for future receipts
+          executionOutcome.execution_outcome.outcome.receipt_ids.forEach(
+            (receiptId) => {
+              this.transactionHashesCache.set(receiptId, transactionHash);
+            },
+          );
+        },
+      );
+    });
+  }
+
+  getTransactionHash(receiptOrDataId: string) {
+    return this.transactionHashesCache.get(receiptOrDataId);
   }
 
   findObjectsByTransactionHash(transactionHash: string) {
@@ -103,7 +116,7 @@ export class CacheService {
     let receipts: ReceiptData[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
-    const transactionsResults = this.findTransactionByHash(transactionHash);
+    const transactionsResults = this.transactionsCache.get(transactionHash);
 
     if (transactionsResults) {
       transactions.push(transactionsResults);
@@ -112,7 +125,6 @@ export class CacheService {
     }
 
     const childReceipts = this.findChildReceipts(
-      transactionHash,
       transactionsResults.transaction.outcome.execution_outcome.outcome
         .receipt_ids[0],
     );
@@ -129,12 +141,12 @@ export class CacheService {
     };
   }
 
-  findChildReceipts(transactionHash: string, receiptId: string) {
+  findChildReceipts(receiptId: string) {
     let receipts: ReceiptData[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
     // find current receipt
-    const receiptResults = this.findReceiptById(transactionHash, receiptId);
+    const receiptResults = this.receiptsCache.get(receiptId);
 
     if (receiptResults) {
       receipts.push(receiptResults);
@@ -152,10 +164,7 @@ export class CacheService {
 
       // include data receipts in results
       actionReceipt.Action.output_data_receivers.forEach(({ data_id }) => {
-        const dataReceiptResults = this.findReceiptById(
-          transactionHash,
-          data_id,
-        );
+        const dataReceiptResults = this.receiptsCache.get(data_id);
 
         if (dataReceiptResults) {
           receipts.push(dataReceiptResults);
@@ -167,7 +176,7 @@ export class CacheService {
     }
 
     // find execution outcome for receipt
-    const executionOutcomeResults = this.findExecutionOutcomeById(
+    const executionOutcomeResults = this.executionOutcomesCache.get(
       receiptResults.receipt.receipt_id,
     );
 
@@ -180,10 +189,7 @@ export class CacheService {
     // find child receipts and execution outcomes
     executionOutcomeResults.executionOutcome.execution_outcome.outcome.receipt_ids.forEach(
       (receiptId) => {
-        const childExecutionOutcomeResults = this.findChildReceipts(
-          transactionHash,
-          receiptId,
-        );
+        const childExecutionOutcomeResults = this.findChildReceipts(receiptId);
 
         if (childExecutionOutcomeResults) {
           receipts = receipts.concat(childExecutionOutcomeResults.receipts);

@@ -1,5 +1,4 @@
 import * as Near from './index';
-import { Event, EventStandards, NEP141Event, NEP171Event } from './event';
 import { PermissionType } from '../entities';
 
 export const parseKind = <T extends string>(kind: object | string) => {
@@ -142,7 +141,20 @@ export const parseAction = (action: Near.Action) => {
   return { actionKind, actionArgs };
 };
 
-export const parseLogEvent = (log: string): Event | undefined => {
+export const getReceiptOrDataId = (receipt: Near.Receipt) => {
+  const receiptType = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
+
+  switch (receiptType) {
+    default:
+    case Near.ReceiptTypes.Action:
+      return receipt.receipt_id;
+
+    case Near.ReceiptTypes.Data:
+      return (receipt.receipt as Near.DataReceipt).Data.data_id;
+  }
+};
+
+export const parseLogEvent = (log: string): Near.Event | undefined => {
   if (log.indexOf(Near.EVENT_PREFIX) !== 0) {
     return;
   }
@@ -150,16 +162,26 @@ export const parseLogEvent = (log: string): Event | undefined => {
   let data;
 
   try {
-    data = JSON.parse(log.substring(Near.EVENT_PREFIX.length)) as Event;
+    data = JSON.parse(log.substring(Near.EVENT_PREFIX.length)) as Near.Event;
   } catch (err) {
     return;
   }
 
   switch (data.standard) {
-    case EventStandards.NEP141:
-      return data as NEP141Event;
+    case Near.EventStandards.NEP141:
+      return data as Near.NEP141Event;
 
-    case EventStandards.NEP171:
-      return data as NEP171Event;
+    case Near.EventStandards.NEP171:
+      return data as Near.NEP171Event;
   }
 };
+
+export const isNEP141Event = (
+  event: Near.Event | undefined,
+): event is Near.NEP141Event =>
+  event !== undefined && event.standard === Near.EventStandards.NEP141;
+
+export const isNEP171Event = (
+  event: Near.Event | undefined,
+): event is Near.NEP171Event =>
+  event !== undefined && event.standard === Near.EventStandards.NEP171;

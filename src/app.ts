@@ -16,7 +16,11 @@ import {
   ReceiptService,
   TransactionService,
 } from './services';
-import { ExecutionOutcomeData, ReceiptData, TransactionData } from './types';
+import {
+  ExecutionOutcomeData,
+  ReceiptDataWithTransactionHash,
+  TransactionData,
+} from './types';
 
 export default class App {
   private running = false;
@@ -121,109 +125,112 @@ export default class App {
   ) {
     this.log(blockHeight, block, shards);
 
-    this.transactionService.cacheTransactionHashesForReceipts(shards);
-    this.receiptService.cacheTransactionHashForReceipts(shards);
-    this.executionOutcomeService.cacheTransactionHashesForReceipts(shards);
-
     this.logger.info(`Processing block ${blockHeight}...`);
 
     this.cacheService.cacheBlock(block, shards);
 
     let transactions: TransactionData[] = [];
-    let receipts: ReceiptData[] = [];
+    let receipts: ReceiptDataWithTransactionHash[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
-    for (const shard of shards) {
-      if (!shard.chunk) continue;
+    shards.forEach((shard) => {
+      if (shard.chunk) {
+        // check if we should save transaction
+        shard.chunk.transactions.forEach((transaction, indexInChunk) => {
+          if (this.transactionService.shouldStore(transaction)) {
+            // mark transaction as always save for future receipts & execution outcomes
+            this.alwaysSaveTransactions.set(transaction.transaction.hash, true);
 
-      // check if we should save transaction
-      for (const [
-        indexInChunk,
-        transaction,
-      ] of shard.chunk.transactions.entries()) {
-        if (this.transactionService.shouldStore(transaction)) {
-          // mark transaction as always save for future receipts & execution outcomes
-          this.alwaysSaveTransactions.set(transaction.transaction.hash, true);
+            transactions.push({ block, shard, indexInChunk, transaction });
+          }
+        });
 
-          transactions.push({ block, shard, indexInChunk, transaction });
-        }
-      }
-
-      for (const [indexInChunk, receipt] of shard.chunk.receipts.entries()) {
-        const transactionHash = await this.receiptService.getTransactionHash(
-          receipt,
-        );
-
-        if (!transactionHash) {
-          // TODO error
-          continue;
-        }
-
-        if (this.alwaysSaveTransactions.has(transactionHash)) {
-          receipts.push({
-            block,
-            shard,
-            indexInChunk,
-            transactionHash,
-            receipt,
-          });
-        }
-
-        if (this.receiptService.shouldStore(receipt)) {
-          // mark transaction as always save for future receipts & execution outcomes
-          this.alwaysSaveTransactions.set(transactionHash, true);
-
-          // find all objects in transaction
-          const results =
-            this.cacheService.findObjectsByTransactionHash(transactionHash);
-
-          transactions = transactions.concat(results.transactions);
-          receipts = receipts.concat(results.receipts);
-          executionOutcomes = executionOutcomes.concat(
-            results.executionOutcomes,
+        // check if we should save receipt
+        shard.chunk.receipts.forEach((receipt, indexInChunk) => {
+          const transactionHash = this.cacheService.getTransactionHash(
+            Near.getReceiptOrDataId(receipt),
           );
-        }
+
+          if (!transactionHash) {
+            // TODO error
+            return;
+          }
+
+          if (this.alwaysSaveTransactions.has(transactionHash)) {
+            receipts.push({
+              block,
+              shard,
+              indexInChunk,
+              transactionHash,
+              receipt,
+            });
+          }
+
+          if (this.receiptService.shouldStore(receipt)) {
+            // mark transaction as always save for future receipts & execution outcomes
+            this.alwaysSaveTransactions.set(transactionHash, true);
+
+            // find all objects in transaction
+            const results =
+              this.cacheService.findObjectsByTransactionHash(transactionHash);
+
+            transactions = transactions.concat(results.transactions);
+            receipts = receipts.concat(
+              results.receipts.map((receipt) => ({
+                ...receipt,
+                transactionHash,
+              })),
+            );
+            executionOutcomes = executionOutcomes.concat(
+              results.executionOutcomes,
+            );
+          }
+        });
       }
 
-      // check execution outcomes
-      for (const [
-        indexInChunk,
-        executionOutcome,
-      ] of shard.receipt_execution_outcomes.entries()) {
-        const transactionHash = await this.receiptService.getTransactionHash(
-          executionOutcome.receipt,
-        );
-
-        if (!transactionHash) {
-          // TODO log error
-          continue;
-        }
-
-        if (this.alwaysSaveTransactions.has(transactionHash)) {
-          executionOutcomes.push({
-            block,
-            shard,
-            indexInChunk,
-            executionOutcome,
-          });
-        }
-
-        if (this.executionOutcomeService.shouldStore(executionOutcome)) {
-          // mark transaction as always save for future receipts & execution outcomes
-          this.alwaysSaveTransactions.set(transactionHash, true);
-
-          // find all objects in transaction
-          const results =
-            this.cacheService.findObjectsByTransactionHash(transactionHash);
-
-          transactions = transactions.concat(results.transactions);
-          receipts = receipts.concat(results.receipts);
-          executionOutcomes = executionOutcomes.concat(
-            results.executionOutcomes,
+      // check if we should save execution outcome
+      shard.receipt_execution_outcomes.forEach(
+        (executionOutcome, indexInChunk) => {
+          const transactionHash = this.cacheService.getTransactionHash(
+            executionOutcome.execution_outcome.id,
           );
-        }
-      }
-    }
+
+          if (!transactionHash) {
+            // TODO log error
+            return;
+          }
+
+          if (this.alwaysSaveTransactions.has(transactionHash)) {
+            executionOutcomes.push({
+              block,
+              shard,
+              indexInChunk,
+              executionOutcome,
+            });
+          }
+
+          if (this.executionOutcomeService.shouldStore(executionOutcome)) {
+            // mark transaction as always save for future receipts & execution outcomes
+            this.alwaysSaveTransactions.set(transactionHash, true);
+
+            // find all objects in transaction
+            const results =
+              this.cacheService.findObjectsByTransactionHash(transactionHash);
+
+            transactions = transactions.concat(results.transactions);
+            receipts = receipts.concat(
+              results.receipts.map((receipt) => ({
+                ...receipt,
+                transactionHash,
+              })),
+            );
+            executionOutcomes = executionOutcomes.concat(
+              results.executionOutcomes,
+            );
+          }
+        },
+      );
+    });
 
     console.log({
       transactions: transactions.map(
@@ -291,7 +298,10 @@ export default class App {
           !this.storedChunks.has(`${block.header.hash}_${shard.shard_id}`),
       )
       .map(({ block, shard }) =>
-        this.chunkService.fromJSON(block.header.hash, shard.chunk),
+        this.chunkService.fromJSON(
+          block.header.hash,
+          shard.chunk as Near.Chunk,
+        ),
       );
 
     const transactionEntities = transactions
@@ -303,7 +313,7 @@ export default class App {
         this.transactionService.fromJSON(
           block.header.hash,
           block.header.timestamp,
-          shard.chunk.header.chunk_hash,
+          (shard.chunk as Near.Chunk).header.chunk_hash,
           indexInChunk,
           transaction,
         ),
@@ -315,7 +325,7 @@ export default class App {
         this.receiptService.fromJSON(
           block.header.hash,
           block.header.timestamp,
-          shard.chunk.header.chunk_hash,
+          (shard.chunk as Near.Chunk).header.chunk_hash,
           indexInChunk,
           transactionHash,
           receipt,

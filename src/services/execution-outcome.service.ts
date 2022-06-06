@@ -3,7 +3,6 @@ import { ExecutionOutcomeReceiptService } from './execution-outcome-receipt.serv
 import { FtEventService } from './ft-event.service';
 import { NftEventService } from './nft-event.service';
 import { ReceiptService } from './receipt.service';
-import { receiptsCacheService } from './receipts-cache.service';
 import { AppDataSource } from '../data-source';
 import { ExecutionOutcome, ExecutionStatus } from '../entities';
 import * as Near from '../near';
@@ -53,25 +52,6 @@ export class ExecutionOutcomeService {
             receiptId,
           ),
       ),
-    });
-  }
-
-  // cache parent transaction hash for the produced receipts
-  cacheTransactionHashesForReceipts(shards: Near.Shard[]) {
-    shards.forEach((shard) => {
-      shard.receipt_execution_outcomes.forEach((outcome) => {
-        const transactionHash = receiptsCacheService.get(
-          outcome.execution_outcome.id,
-        );
-
-        if (!transactionHash) {
-          return;
-        }
-
-        outcome.execution_outcome.outcome.receipt_ids.forEach((receiptId) => {
-          receiptsCacheService.set(receiptId, transactionHash);
-        });
-      });
     });
   }
 

@@ -15,6 +15,5 @@ export * from './ft-event.service';
 export * from './nft-event.service';
 export * from './processed-block.service';
 export * from './receipt.service';
-export * from './receipts-cache.service';
 export * from './transaction.service';
 export * from './transaction-action.service';

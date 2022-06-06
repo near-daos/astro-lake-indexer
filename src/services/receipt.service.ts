@@ -3,12 +3,10 @@ import { ActionReceiptService } from './action-receipt.service';
 import { DataReceiptService } from './data-receipt.service';
 import { FtEventService } from './ft-event.service';
 import { NftEventService } from './nft-event.service';
-import { receiptsCacheService } from './receipts-cache.service';
 import { TransactionService } from './transaction.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
-import { createLogger } from '../logger';
 
 export class ReceiptService {
   private readonly repository: Repository<Receipt>;
@@ -18,10 +16,7 @@ export class ReceiptService {
   private readonly ftEventService: FtEventService;
   private readonly nftEventService: NftEventService;
 
-  constructor(
-    private readonly manager = AppDataSource.manager,
-    private readonly logger = createLogger('receipt-service'),
-  ) {
+  constructor(private readonly manager = AppDataSource.manager) {
     this.repository = manager.getRepository(Receipt);
     this.actionReceiptService = new ActionReceiptService(manager);
     this.dataReceiptService = new DataReceiptService(manager);
@@ -75,75 +70,6 @@ export class ReceiptService {
       action: actionReceipt,
       data: dataReceipt,
     });
-  }
-
-  cacheTransactionHashForReceipts(shards: Near.Shard[]) {
-    shards
-      .filter((shard) => shard.chunk)
-      .forEach((shard) => {
-        shard.chunk.receipts.forEach((receipt) => {
-          const receiptType = Near.parseKind<Near.ReceiptTypes>(
-            receipt.receipt,
-          );
-
-          if (receiptType !== Near.ReceiptTypes.Action) {
-            return;
-          }
-
-          const transactionHash = receiptsCacheService.get(receipt.receipt_id);
-
-          if (!transactionHash) {
-            return;
-          }
-
-          const actionReceipt = (receipt.receipt as Near.ActionReceipt).Action;
-
-          // store transaction hash for the future data receipts
-          actionReceipt.output_data_receivers.forEach(({ data_id }) => {
-            receiptsCacheService.set(data_id, transactionHash);
-          });
-        });
-      });
-  }
-
-  async getTransactionHash(receipt: Near.Receipt) {
-    const receiptType = Near.parseKind(receipt.receipt);
-    let receiptOrDataId;
-
-    // We need to search for parent transaction hash in cache differently
-    // depending on the receipt kind
-    // In case of action receipt we are looking for receipt_id
-    // In case of data receipt we are looking for data_id
-    switch (receiptType) {
-      case Near.ReceiptTypes.Action:
-        receiptOrDataId = receipt.receipt_id;
-        break;
-
-      case Near.ReceiptTypes.Data:
-        receiptOrDataId = (receipt.receipt as Near.DataReceipt).Data.data_id;
-        break;
-
-      default:
-        return;
-    }
-
-    let transactionHash = receiptsCacheService.get(receiptOrDataId);
-
-    if (!transactionHash) {
-      transactionHash =
-        await this.transactionService.findTransactionHashByReceiptId(
-          receiptOrDataId,
-        );
-    }
-
-    if (!transactionHash) {
-      // TODO: handle not found transaction hash
-      this.logger.warn(
-        `Not found parent tx hash for ${receiptType}Receipt Id: ${receiptOrDataId}`,
-      );
-    }
-
-    return transactionHash;
   }
 
   async save(entity: Receipt[]) {

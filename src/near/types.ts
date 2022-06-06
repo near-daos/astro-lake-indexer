@@ -85,7 +85,7 @@ export interface Chunk {
 }
 
 export interface Shard {
-  chunk: Chunk;
+  chunk: Chunk | null;
   receipt_execution_outcomes: ExecutionOutcomeWithReceipt[];
   shard_id: number;
   state_changes: StateChange[];

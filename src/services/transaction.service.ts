@@ -1,5 +1,4 @@
 import { Repository } from 'typeorm';
-import { receiptsCacheService } from './receipts-cache.service';
 import { TransactionActionService } from './transaction-action.service';
 import { AppDataSource } from '../data-source';
 import { Transaction, TransactionStatus } from '../entities';
@@ -54,20 +53,6 @@ export class TransactionService {
         ),
       ),
     });
-  }
-
-  // cache parent transaction hash for the future receipts
-  cacheTransactionHashesForReceipts(shards: Near.Shard[]) {
-    shards
-      .filter((shard) => shard.chunk)
-      .forEach((shard) => {
-        shard.chunk.transactions.forEach((transaction) => {
-          receiptsCacheService.set(
-            transaction.outcome.execution_outcome.outcome.receipt_ids[0],
-            transaction.transaction.hash,
-          );
-        });
-      });
   }
 
   async save(entity: Transaction[]) {

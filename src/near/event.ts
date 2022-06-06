@@ -95,9 +95,3 @@ export type NEP171Event =
   | NEP171EventBurn;
 
 export type Event = NEP141Event | NEP171Event;
-
-export const isNEP141Event = (event: Event | undefined): event is NEP141Event =>
-  event !== undefined && event.standard === EventStandards.NEP141;
-
-export const isNEP171Event = (event: Event | undefined): event is NEP171Event =>
-  event !== undefined && event.standard === EventStandards.NEP171;
