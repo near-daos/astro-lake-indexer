@@ -13,7 +13,7 @@ export interface ReceiptData {
   indexInChunk: number;
   receipt: Near.Receipt;
 }
-export interface ReceiptDataWithTransactionHash extends ReceiptData{
+export interface ReceiptDataWithTransactionHash extends ReceiptData {
   transactionHash: string;
 }
 

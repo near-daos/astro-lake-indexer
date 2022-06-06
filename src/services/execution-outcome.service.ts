@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ExecutionOutcomeReceiptService } from './execution-outcome-receipt.service';
 import { FtEventService } from './ft-event.service';
 import { NftEventService } from './nft-event.service';
@@ -55,8 +56,17 @@ export class ExecutionOutcomeService {
     });
   }
 
-  async save(entity: ExecutionOutcome[]) {
-    return this.repository.save(entity);
+  async insert(entities: ExecutionOutcome[]) {
+    await this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities as QueryDeepPartialEntity<ExecutionOutcome>[])
+      .orIgnore()
+      .execute();
+
+    const receipts = entities.map((entity) => entity.receipts).flat();
+
+    return this.executionOutcomeReceiptService.insert(receipts);
   }
 
   shouldStore(outcome: Near.ExecutionOutcomeWithReceipt) {

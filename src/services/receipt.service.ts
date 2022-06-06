@@ -1,4 +1,5 @@
 import { DeepPartial, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ActionReceiptService } from './action-receipt.service';
 import { DataReceiptService } from './data-receipt.service';
 import { FtEventService } from './ft-event.service';
@@ -6,7 +7,12 @@ import { NftEventService } from './nft-event.service';
 import { TransactionService } from './transaction.service';
 import * as Near from '../near';
 import { AppDataSource } from '../data-source';
-import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
+import {
+  ActionReceipt,
+  DataReceipt,
+  Receipt,
+  ReceiptKind,
+} from '../entities';
 
 export class ReceiptService {
   private readonly repository: Repository<Receipt>;
@@ -72,8 +78,26 @@ export class ReceiptService {
     });
   }
 
-  async save(entity: Receipt[]) {
-    return this.repository.save(entity);
+  async insert(entities: Receipt[]) {
+    await this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities as QueryDeepPartialEntity<Receipt>[])
+      .orIgnore()
+      .execute();
+
+    const actions = entities
+      .map((entity) => entity.action)
+      .filter((action) => action) as ActionReceipt[];
+
+    const datas = entities
+      .map((entity) => entity.data)
+      .filter((data) => data) as DataReceipt[];
+
+    await Promise.all([
+      this.actionReceiptService.insert(actions),
+      this.dataReceiptService.insert(datas),
+    ]);
   }
 
   shouldStore(receipt: Near.Receipt) {

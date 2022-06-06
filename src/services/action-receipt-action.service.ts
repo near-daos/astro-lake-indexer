@@ -1,7 +1,8 @@
 import { Repository } from 'typeorm';
-import * as Near from '../near';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { AppDataSource } from '../data-source';
 import { ActionKind, ActionReceiptAction } from '../entities';
+import * as Near from '../near';
 
 export class ActionReceiptActionService {
   private readonly repository: Repository<ActionReceiptAction>;
@@ -29,5 +30,14 @@ export class ActionReceiptActionService {
       receipt_receiver_account_id: receiverAccountId,
       receipt_included_in_block_timestamp: blockTimestamp,
     });
+  }
+
+  async insert(entities: ActionReceiptAction[]) {
+    return this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities as QueryDeepPartialEntity<ActionReceiptAction>[])
+      .orIgnore()
+      .execute();
   }
 }

@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TransactionActionService } from './transaction-action.service';
 import { AppDataSource } from '../data-source';
 import { Transaction, TransactionStatus } from '../entities';
@@ -55,8 +56,17 @@ export class TransactionService {
     });
   }
 
-  async save(entity: Transaction[]) {
-    return this.repository.save(entity);
+  async insert(entities: Transaction[]) {
+    await this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities as QueryDeepPartialEntity<Transaction>[])
+      .orIgnore()
+      .execute();
+
+    const actions = entities.map((entity) => entity.actions).flat();
+
+    await this.transactionActionService.insert(actions);
   }
 
   shouldStore(tx: Near.TransactionWithOutcome) {
@@ -68,12 +78,5 @@ export class TransactionService {
       matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
     );
-  }
-
-  async findTransactionHashByReceiptId(receiptId: string) {
-    const transaction = await this.repository.findOneBy({
-      converted_into_receipt_id: receiptId,
-    });
-    return transaction?.transaction_hash;
   }
 }

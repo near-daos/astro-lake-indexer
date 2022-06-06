@@ -46,12 +46,6 @@ export default class App {
     private readonly alwaysSaveTransactions = new LRUCache({
       max: 100,
     }),
-
-    private readonly storedBlocks = new LRUCache({ max: 100 }),
-    private readonly storedChunks = new LRUCache({ max: 500 }),
-    private readonly storedTransactions = new LRUCache({ max: 2000 }),
-    private readonly storedReceipts = new LRUCache({ max: 5000 }),
-    private readonly storedExecutionOutcomes = new LRUCache({ max: 5000 }),
   ) {}
 
   async start() {
@@ -288,28 +282,16 @@ export default class App {
         b.executionOutcome.execution_outcome.id,
     );
 
-    const blockEntities = blocks
-      .filter((block) => !this.storedBlocks.has(block.header.hash))
-      .map((block) => this.blockService.fromJSON(block));
+    const blockEntities = blocks.map((block) =>
+      this.blockService.fromJSON(block),
+    );
 
-    const chunkEntities = blockShards
-      .filter(
-        ({ block, shard }) =>
-          !this.storedChunks.has(`${block.header.hash}_${shard.shard_id}`),
-      )
-      .map(({ block, shard }) =>
-        this.chunkService.fromJSON(
-          block.header.hash,
-          shard.chunk as Near.Chunk,
-        ),
-      );
+    const chunkEntities = blockShards.map(({ block, shard }) =>
+      this.chunkService.fromJSON(block.header.hash, shard.chunk as Near.Chunk),
+    );
 
-    const transactionEntities = transactions
-      .filter(
-        ({ transaction }) =>
-          !this.storedTransactions.has(transaction.transaction.hash),
-      )
-      .map(({ block, shard, indexInChunk, transaction }) =>
+    const transactionEntities = transactions.map(
+      ({ block, shard, indexInChunk, transaction }) =>
         this.transactionService.fromJSON(
           block.header.hash,
           block.header.timestamp,
@@ -317,11 +299,10 @@ export default class App {
           indexInChunk,
           transaction,
         ),
-      );
+    );
 
-    const receiptEntities = receipts
-      .filter(({ receipt }) => !this.storedReceipts.has(receipt.receipt_id))
-      .map(({ block, shard, indexInChunk, transactionHash, receipt }) =>
+    const receiptEntities = receipts.map(
+      ({ block, shard, indexInChunk, transactionHash, receipt }) =>
         this.receiptService.fromJSON(
           block.header.hash,
           block.header.timestamp,
@@ -330,16 +311,10 @@ export default class App {
           transactionHash,
           receipt,
         ),
-      );
+    );
 
-    const executionOutcomeEntities = executionOutcomes
-      .filter(
-        ({ executionOutcome }) =>
-          !this.storedExecutionOutcomes.has(
-            executionOutcome.execution_outcome.id,
-          ),
-      )
-      .map(({ block, shard, indexInChunk, executionOutcome }) =>
+    const executionOutcomeEntities = executionOutcomes.map(
+      ({ block, shard, indexInChunk, executionOutcome }) =>
         this.executionOutcomeService.fromJSON(
           block.header.hash,
           block.header.timestamp,
@@ -347,7 +322,7 @@ export default class App {
           indexInChunk,
           executionOutcome,
         ),
-      );
+    );
 
     console.log({
       blockEntities: blockEntities.map((block) => block.block_hash),
@@ -362,30 +337,14 @@ export default class App {
     });
 
     await AppDataSource.transaction(async (manager) => {
-      await new BlockService(manager).save(blockEntities);
-      await new ChunkService(manager).save(chunkEntities);
-      await new TransactionService(manager).save(transactionEntities);
-      await new ReceiptService(manager).save(receiptEntities);
-      await new ExecutionOutcomeService(manager).save(executionOutcomeEntities);
+      await new BlockService(manager).insert(blockEntities);
+      await new ChunkService(manager).insert(chunkEntities);
+      await new TransactionService(manager).insert(transactionEntities);
+      await new ReceiptService(manager).insert(receiptEntities);
+      await new ExecutionOutcomeService(manager).insert(
+        executionOutcomeEntities,
+      );
     });
-
-    // cache stored object so we don't try store them again in the future
-    blocks.forEach((block) => this.storedBlocks.set(block.header.hash, true));
-    blockShards.forEach(({ block, shard }) =>
-      this.storedChunks.set(`${block.header.hash}_${shard.shard_id}`, true),
-    );
-    transactions.forEach(({ transaction }) =>
-      this.storedTransactions.set(transaction.transaction.hash, true),
-    );
-    receipts.forEach(({ receipt }) =>
-      this.storedReceipts.set(receipt.receipt_id, true),
-    );
-    executionOutcomes.forEach(({ executionOutcome }) =>
-      this.storedExecutionOutcomes.set(
-        executionOutcome.execution_outcome.id,
-        true,
-      ),
-    );
 
     /*await AppDataSource.transaction(async (manager) => {
       await new BlockService(manager).store(block, shards);

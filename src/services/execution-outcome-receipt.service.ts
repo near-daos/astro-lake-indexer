@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { AppDataSource } from '../data-source';
 import { ExecutionOutcomeReceipt } from '../entities';
 
@@ -19,5 +20,14 @@ export class ExecutionOutcomeReceiptService {
       index_in_execution_outcome: indexInExecutionOutcome,
       produced_receipt_id: producedReceiptId,
     });
+  }
+
+  async insert(entities: ExecutionOutcomeReceipt[]) {
+    return this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities as QueryDeepPartialEntity<ExecutionOutcomeReceipt>[])
+      .orIgnore()
+      .execute();
   }
 }

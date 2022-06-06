@@ -22,7 +22,12 @@ export class ChunkService {
     });
   }
 
-  async save(entity: Chunk[]) {
-    return this.repository.save(entity);
+  async insert(entities: Chunk[]) {
+    return this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities)
+      .orIgnore()
+      .execute();
   }
 }

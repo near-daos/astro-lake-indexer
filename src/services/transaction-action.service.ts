@@ -1,7 +1,8 @@
 import { Repository } from 'typeorm';
-import * as Near from '../near';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { AppDataSource } from '../data-source';
 import { ActionKind, TransactionAction } from '../entities';
+import * as Near from '../near';
 
 export class TransactionActionService {
   private readonly repository: Repository<TransactionAction>;
@@ -23,5 +24,14 @@ export class TransactionActionService {
       action_kind: ActionKind[actionKind],
       args: actionArgs,
     });
+  }
+
+  async insert(entities: TransactionAction[]) {
+    return await this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities as QueryDeepPartialEntity<TransactionAction>[])
+      .orIgnore()
+      .execute();
   }
 }

@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ActionReceiptActionService } from './action-receipt-action.service';
 import { ActionReceiptInputDataService } from './action-receipt-input-data.service';
 import { ActionReceiptOutputDataService } from './action-receipt-output-data.service';
@@ -41,7 +42,7 @@ export class ActionReceiptService {
       },
     } = actionReceipt;
 
-    return this.repository.create({
+    return {
       receipt_id: receiptId,
       signer_account_id: signer_id,
       signer_public_key: signer_public_key,
@@ -66,6 +67,25 @@ export class ActionReceiptService {
           receiver_id,
         ),
       ),
-    });
+    };
+  }
+
+  async insert(entities: ActionReceipt[]) {
+    await this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities as QueryDeepPartialEntity<ActionReceipt>[])
+      .orIgnore()
+      .execute();
+
+    const actions = entities.map((entity) => entity.actions).flat();
+    const inputDatas = entities.map((entity) => entity.inputData).flat();
+    const outputDatas = entities.map((entity) => entity.outputData).flat();
+
+    await Promise.all([
+      this.actionReceiptActionService.insert(actions),
+      this.actionReceiptInputDataService.insert(inputDatas),
+      this.actionReceiptOutputDataService.insert(outputDatas),
+    ]);
   }
 }

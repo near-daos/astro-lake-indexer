@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
-import * as Near from '../near';
 import { AppDataSource } from '../data-source';
 import { Block } from '../entities';
+import * as Near from '../near';
 
 export class BlockService {
   private readonly repository: Repository<Block>;
@@ -22,7 +22,12 @@ export class BlockService {
     });
   }
 
-  async save(entity: Block[]) {
-    return this.repository.save(entity);
+  async insert(entities: Block[]) {
+    return this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(entities)
+      .orIgnore()
+      .execute();
   }
 }

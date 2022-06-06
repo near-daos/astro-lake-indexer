@@ -5,7 +5,7 @@ import {
   Index,
   ManyToOne,
   PrimaryColumn,
-  OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { ActionReceipt } from './action-receipt';
 import { Block } from './block';
@@ -74,13 +74,13 @@ export class Receipt {
   })
   transaction: Transaction | null;
 
-  @OneToMany(() => ActionReceipt, (dataReceipt) => dataReceipt.receipt, {
+  @OneToOne(() => ActionReceipt, (actionReceipt) => actionReceipt.receipt, {
     nullable: true,
     cascade: true,
   })
   action: ActionReceipt | null;
 
-  @OneToMany(() => DataReceipt, (dataReceipt) => dataReceipt.receipt, {
+  @OneToOne(() => DataReceipt, (dataReceipt) => dataReceipt.receipt, {
     nullable: true,
     cascade: true,
   })
