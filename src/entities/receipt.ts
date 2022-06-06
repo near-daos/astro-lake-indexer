@@ -75,8 +75,16 @@ export class Receipt {
   transaction: Transaction | null;
 
   @OneToOne(() => ActionReceipt, { nullable: true, cascade: true })
+  @JoinColumn({
+    name: 'receipt_id',
+    referencedColumnName: 'receipt_id',
+  })
   action: ActionReceipt | null;
 
   @OneToOne(() => DataReceipt, { nullable: true, cascade: true })
+  @JoinColumn({
+    name: 'receipt_id',
+    referencedColumnName: 'receipt_id',
+  })
   data: DataReceipt | null;
 }
