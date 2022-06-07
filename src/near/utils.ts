@@ -173,8 +173,14 @@ export const parseLogEvent = (log: string): Near.Event | undefined => {
 
     case Near.EventStandards.NEP171:
       return data as Near.NEP171Event;
+
+    default:
+      return data as Near.UnknownEvent;
   }
 };
+
+export const isEvent = (event: Near.Event | undefined): event is Near.Event =>
+  event !== undefined;
 
 export const isNEP141Event = (
   event: Near.Event | undefined,

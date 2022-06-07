@@ -10,6 +10,7 @@ import {
   AccountChangeService,
   AccountService,
   CacheService,
+  EventService,
   FtEventService,
   NftEventService,
   ObjectService,
@@ -115,6 +116,7 @@ export default class App {
         new AccountService(manager).store(block, shards),
         new AccessKeyService(manager).store(block, shards),
         new AccountChangeService(manager).store(block, shards),
+        new EventService(manager).store(block, shards),
         new FtEventService(manager).store(block, shards),
         new NftEventService(manager).store(block, shards),
       ]);

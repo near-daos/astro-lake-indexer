@@ -8,6 +8,7 @@ export * from './action-receipt-output-data';
 export * from './block';
 export * from './chunk';
 export * from './data-receipt';
+export * from './event';
 export * from './execution-outcome';
 export * from './execution-outcome-receipt';
 export * from './ft-event';

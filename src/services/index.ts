@@ -9,6 +9,7 @@ export * from './cache.service';
 export * from './block.service';
 export * from './chunk.service';
 export * from './data-receipt.service';
+export * from './event.service';
 export * from './execution-outcome.service';
 export * from './execution-outcome-receipt.service';
 export * from './ft-event.service';

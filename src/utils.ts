@@ -12,7 +12,9 @@ export const jsonMatchAccounts = (
   object: unknown,
   accounts: string[],
 ): boolean => {
-  if (typeof object === 'object') {
+  if (!object) {
+    return false;
+  } else if (typeof object === 'object') {
     return (
       Object.keys(object as object).some((key) =>
         matchAccounts(key, accounts),

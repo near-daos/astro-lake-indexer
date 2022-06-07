@@ -17,7 +17,11 @@ export enum NEP171Events {
   Burn = 'nft_burn',
 }
 
-export interface EventBase {
+export interface UnknownEvent {
+  [k: string]: unknown;
+}
+
+export interface EventBase extends UnknownEvent {
   standard: EventStandards;
   version: string;
   event: NEP141Events | NEP171Events;
@@ -94,4 +98,4 @@ export type NEP171Event =
   | NEP171EventTransfer
   | NEP171EventBurn;
 
-export type Event = NEP141Event | NEP171Event;
+export type Event = UnknownEvent | NEP141Event | NEP171Event;
