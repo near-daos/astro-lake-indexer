@@ -1,5 +1,3 @@
-import LRUCache from 'lru-cache';
-import { uniqWith } from 'lodash';
 import { PromisePool } from '@supercharge/promise-pool';
 import { retry, RetryConfig, wait } from 'ts-retry-promise';
 import S3Fetcher from './s3-fetcher';
@@ -8,19 +6,15 @@ import * as Near from './near';
 import { createLogger } from './logger';
 import { AppDataSource } from './data-source';
 import {
-  BlockService,
+  AccessKeyService,
+  AccountChangeService,
+  AccountService,
   CacheService,
-  ChunkService,
-  ExecutionOutcomeService,
+  FtEventService,
+  NftEventService,
+  ObjectService,
   ProcessedBlockService,
-  ReceiptService,
-  TransactionService,
 } from './services';
-import {
-  ExecutionOutcomeData,
-  ReceiptDataWithTransactionHash,
-  TransactionData,
-} from './types';
 
 export default class App {
   private running = false;
@@ -29,23 +23,14 @@ export default class App {
     private lastBlockHeight = config.START_BLOCK_HEIGHT,
     private readonly logger = createLogger('app'),
     private readonly fetcher = new S3Fetcher(),
-    private readonly blockService = new BlockService(),
-    private readonly chunkService = new ChunkService(),
-    private readonly transactionService = new TransactionService(),
-    private readonly receiptService = new ReceiptService(),
-    private readonly executionOutcomeService = new ExecutionOutcomeService(),
-    private readonly processedBlockService = new ProcessedBlockService(),
     private readonly cacheService = new CacheService(),
+    private readonly processedBlockService = new ProcessedBlockService(),
 
     private readonly retryConfig: Partial<RetryConfig<unknown>> = {
       retries: 10,
       delay: 1000,
       logger: (msg: string) => this.logger.warn(msg),
     },
-
-    private readonly alwaysStoreTransactions = new LRUCache({
-      max: 100,
-    }),
   ) {}
 
   async start() {
@@ -123,245 +108,19 @@ export default class App {
 
     this.cacheService.cacheBlock(block, shards);
 
-    let transactions: TransactionData[] = [];
-    let receipts: ReceiptDataWithTransactionHash[] = [];
-    let executionOutcomes: ExecutionOutcomeData[] = [];
-
-    shards.forEach((shard) => {
-      if (shard.chunk) {
-        // get transaction to store
-        shard.chunk.transactions.forEach((transaction, indexInChunk) => {
-          if (this.transactionService.shouldStore(transaction)) {
-            // mark the whole transaction as always to store for future receipts & execution outcomes
-            this.alwaysStoreTransactions.set(
-              transaction.transaction.hash,
-              true,
-            );
-
-            transactions.push({ block, shard, indexInChunk, transaction });
-          }
-        });
-
-        // get receipts to store
-        shard.chunk.receipts.forEach((receipt, indexInChunk) => {
-          const transactionHash = this.cacheService.getTransactionHash(
-            Near.getReceiptOrDataId(receipt),
-          );
-
-          if (!transactionHash) {
-            // TODO error
-            return;
-          }
-
-          if (this.alwaysStoreTransactions.has(transactionHash)) {
-            // store the whole transaction
-            receipts.push({
-              block,
-              shard,
-              indexInChunk,
-              transactionHash,
-              receipt,
-            });
-          }
-
-          if (this.receiptService.shouldStore(receipt)) {
-            // mark the whole transaction as always to store for future receipts & execution outcomes
-            this.alwaysStoreTransactions.set(transactionHash, true);
-
-            // find all objects in transaction
-            const results =
-              this.cacheService.findObjectsByTransactionHash(transactionHash);
-
-            transactions = transactions.concat(results.transactions);
-            receipts = receipts.concat(
-              results.receipts.map((receipt) => ({
-                ...receipt,
-                transactionHash,
-              })),
-            );
-            executionOutcomes = executionOutcomes.concat(
-              results.executionOutcomes,
-            );
-          }
-        });
-      }
-
-      // check if we should save execution outcome
-      shard.receipt_execution_outcomes.forEach(
-        (executionOutcome, indexInChunk) => {
-          const transactionHash = this.cacheService.getTransactionHash(
-            executionOutcome.execution_outcome.id,
-          );
-
-          if (!transactionHash) {
-            // TODO log error
-            return;
-          }
-
-          //
-          if (this.alwaysStoreTransactions.has(transactionHash)) {
-            // store the whole transaction
-            executionOutcomes.push({
-              block,
-              shard,
-              indexInChunk,
-              executionOutcome,
-            });
-          }
-
-          if (this.executionOutcomeService.shouldStore(executionOutcome)) {
-            // mark transaction as always to store for future receipts & execution outcomes
-            this.alwaysStoreTransactions.set(transactionHash, true);
-
-            // find all objects in transaction
-            const results =
-              this.cacheService.findObjectsByTransactionHash(transactionHash);
-
-            transactions = transactions.concat(results.transactions);
-            receipts = receipts.concat(
-              results.receipts.map((receipt) => ({
-                ...receipt,
-                transactionHash,
-              })),
-            );
-            executionOutcomes = executionOutcomes.concat(
-              results.executionOutcomes,
-            );
-          }
-        },
-      );
-    });
-
-    // extract blocks to store
-    let blocks = [
-      ...transactions.map(({ block }) => block),
-      ...receipts.map(({ block }) => block),
-      ...executionOutcomes.map(({ block }) => block),
-    ];
-
-    // extract shards to store
-    let blockShards = [
-      ...transactions.map(({ block, shard }) => ({ block, shard })),
-      ...receipts.map(({ block, shard }) => ({ block, shard })),
-      ...executionOutcomes.map(({ block, shard }) => ({ block, shard })),
-    ];
-
-    // find unique blocks
-    blocks = uniqWith(blocks, (a, b) => a.header.height === b.header.height);
-
-    // find unique shards
-    blockShards = uniqWith(
-      blockShards,
-      (a, b) =>
-        a.block.header.height === b.block.header.height &&
-        a.shard.shard_id === b.shard.shard_id,
-    );
-
-    // find unique transactions
-    transactions = uniqWith(
-      transactions,
-      (a, b) =>
-        a.transaction.transaction.hash === b.transaction.transaction.hash,
-    );
-
-    // find unique receipts
-    receipts = uniqWith(
-      receipts,
-      (a, b) => a.receipt.receipt_id === b.receipt.receipt_id,
-    );
-
-    // find unique execution outcomes
-    executionOutcomes = uniqWith(
-      executionOutcomes,
-      (a, b) =>
-        a.executionOutcome.execution_outcome.id ===
-        b.executionOutcome.execution_outcome.id,
-    );
-
-    const blockEntities = blocks.map((block) =>
-      this.blockService.fromJSON(block),
-    );
-
-    const chunkEntities = blockShards.map(({ block, shard }) =>
-      this.chunkService.fromJSON(block.header.hash, shard.chunk as Near.Chunk),
-    );
-
-    const transactionEntities = transactions.map(
-      ({ block, shard, indexInChunk, transaction }) =>
-        this.transactionService.fromJSON(
-          block.header.hash,
-          block.header.timestamp,
-          (shard.chunk as Near.Chunk).header.chunk_hash,
-          indexInChunk,
-          transaction,
-        ),
-    );
-
-    const receiptEntities = receipts.map(
-      ({ block, shard, indexInChunk, transactionHash, receipt }) =>
-        this.receiptService.fromJSON(
-          block.header.hash,
-          block.header.timestamp,
-          (shard.chunk as Near.Chunk).header.chunk_hash,
-          indexInChunk,
-          transactionHash,
-          receipt,
-        ),
-    );
-
-    const executionOutcomeEntities = executionOutcomes.map(
-      ({ block, shard, indexInChunk, executionOutcome }) =>
-        this.executionOutcomeService.fromJSON(
-          block.header.hash,
-          block.header.timestamp,
-          shard.shard_id,
-          indexInChunk,
-          executionOutcome,
-        ),
-    );
-
-    console.log({
-      blockEntities: blockEntities.map((block) => block.block_hash),
-      chunkEntities: chunkEntities.map((chunk) => chunk.chunk_hash),
-      transactionEntities: transactionEntities.map(
-        (transaction) => transaction.transaction_hash,
-      ),
-      receiptEntities: receiptEntities.map((receipt) => receipt.receipt_id),
-      executionOutcomeEntities: executionOutcomeEntities.map(
-        (executionOutcome) => executionOutcome.receipt_id,
-      ),
-    });
-
     await AppDataSource.transaction(async (manager) => {
-      await new BlockService(manager).insert(blockEntities);
-      await new ChunkService(manager).insert(chunkEntities);
-      await new TransactionService(manager).insert(transactionEntities);
-      await new ReceiptService(manager).insert(receiptEntities);
-      await new ExecutionOutcomeService(manager).insert(
-        executionOutcomeEntities,
-      );
-    });
-
-    /*await AppDataSource.transaction(async (manager) => {
-      await new BlockService(manager).store(block, shards);
-      await new ChunkService(manager).store(block, shards);
-      await new TransactionService(manager).store(block, shards);
-      await new ReceiptService(manager).store(block, shards);
+      await new ObjectService(this.cacheService, manager).store(block, shards);
 
       await Promise.all([
-        new ExecutionOutcomeService(manager).store(block, shards),
-        new AccountService(manager).handle(block, shards),
-      ]);
-
-      await Promise.all([
-        new AccessKeyService(manager).handle(block, shards),
+        new AccountService(manager).store(block, shards),
+        new AccessKeyService(manager).store(block, shards),
         new AccountChangeService(manager).store(block, shards),
         new FtEventService(manager).store(block, shards),
         new NftEventService(manager).store(block, shards),
       ]);
 
       await new ProcessedBlockService(manager).store(block);
-    });*/
+    });
   }
 
   private log(blockHeight: number, block: Near.Block, shards: Near.Shard[]) {
