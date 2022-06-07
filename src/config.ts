@@ -10,6 +10,7 @@ export class Config {
     this.provider.defaults({
       LOG_LEVEL: 'info',
       FETCH_MAX_KEYS: 100,
+      LOOK_BACK_BLOCKS: 20,
       BLOCKS_DL_CONCURRENCY: 10,
       WAIT_FOR_NEW_BLOCKS: 2000,
     });
@@ -29,6 +30,7 @@ export class Config {
       'DATABASE_NAME',
 
       'START_BLOCK_HEIGHT',
+      'LOOK_BACK_BLOCKS',
       'FETCH_MAX_KEYS',
       'BLOCKS_DL_CONCURRENCY',
       'WAIT_FOR_NEW_BLOCKS',

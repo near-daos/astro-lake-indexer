@@ -1,5 +1,4 @@
 import { uniqWith } from 'lodash';
-import LRUCache from 'lru-cache';
 import { BlockService } from './block.service';
 import { CacheService } from './cache.service';
 import { ChunkService } from './chunk.service';
@@ -252,7 +251,7 @@ export class ObjectService {
         ),
     );
 
-    console.log({
+    /* console.log({
       blockEntities: blockEntities.map((block) => block.block_hash),
       chunkEntities: chunkEntities.map((chunk) => chunk.chunk_hash),
       transactionEntities: transactionEntities.map(
@@ -262,7 +261,7 @@ export class ObjectService {
       executionOutcomeEntities: executionOutcomeEntities.map(
         (executionOutcome) => executionOutcome.receipt_id,
       ),
-    });
+    }); */
 
     await this.blockService.insert(blockEntities);
     await this.chunkService.insert(chunkEntities);
