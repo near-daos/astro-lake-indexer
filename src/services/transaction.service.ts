@@ -3,8 +3,8 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { TransactionActionService } from './transaction-action.service';
 import { AppDataSource } from '../data-source';
 import { Transaction, TransactionStatus } from '../entities';
+import { jsonMatchAccounts, matchAccounts } from '../utils';
 import * as Near from '../near';
-import { matchAccounts } from '../utils';
 import config from '../config';
 
 export class TransactionService {
@@ -70,13 +70,18 @@ export class TransactionService {
   }
 
   shouldStore(tx: Near.TransactionWithOutcome) {
-    return (
-      tx.transaction.hash === '8afQFzT9pjrxboLHz3DU391Gt3SXjKwwZhHa3nPRwS3G'
-    );
-
-    return (
+    // store if receiver or signer is tracked account
+    if (
       matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
       matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
-    );
+    ) {
+      return true;
+    }
+
+    // store if some action args contains tracked account
+    return tx.transaction.actions.some((action) => {
+      const { actionArgs } = Near.parseAction(action);
+      return jsonMatchAccounts(actionArgs, config.TRACK_ACCOUNTS);
+    });
   }
 }

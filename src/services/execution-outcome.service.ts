@@ -1,19 +1,17 @@
 import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ExecutionOutcomeReceiptService } from './execution-outcome-receipt.service';
-import { FtEventService } from './ft-event.service';
-import { NftEventService } from './nft-event.service';
 import { ReceiptService } from './receipt.service';
 import { AppDataSource } from '../data-source';
 import { ExecutionOutcome, ExecutionStatus } from '../entities';
 import * as Near from '../near';
+import { matchAccounts } from '../utils';
+import config from '../config';
 
 export class ExecutionOutcomeService {
   private readonly repository: Repository<ExecutionOutcome>;
   private readonly receiptService: ReceiptService;
   private readonly executionOutcomeReceiptService: ExecutionOutcomeReceiptService;
-  private readonly ftEventService: FtEventService;
-  private readonly nftEventService: NftEventService;
 
   constructor(private readonly manager = AppDataSource.manager) {
     this.repository = manager.getRepository(ExecutionOutcome);
@@ -21,8 +19,6 @@ export class ExecutionOutcomeService {
     this.executionOutcomeReceiptService = new ExecutionOutcomeReceiptService(
       manager,
     );
-    this.ftEventService = new FtEventService(manager);
-    this.nftEventService = new NftEventService(manager);
   }
 
   fromJSON(
@@ -70,10 +66,15 @@ export class ExecutionOutcomeService {
   }
 
   shouldStore(outcome: Near.ExecutionOutcomeWithReceipt) {
-    const events = outcome.execution_outcome.outcome.logs.map(
-      Near.parseLogEvent,
+    // store execution outcome for previous receipt
+    if (this.receiptService.shouldStore(outcome.receipt)) {
+      return true;
+    }
+
+    // store if some log entry contains tracked account
+    return outcome.execution_outcome.outcome.logs.some((log) =>
+      matchAccounts(log, config.TRACK_ACCOUNTS),
     );
-    return events.some(Near.isNEP141Event) || events.some(Near.isNEP171Event);
   }
 
   getSuccessfulReceipts(outcomes: Near.ExecutionOutcomeWithReceipt[]) {

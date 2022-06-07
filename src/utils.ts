@@ -2,10 +2,28 @@ export const formatBlockHeight = (blockHeight: number) => {
   return String(blockHeight).padStart(12, '0');
 };
 
-export const matchAccount = (account: string, match: string) => {
-  return account === match || account.includes(`.${match}`);
+export const matchAccounts = (string: string, accounts: string[]) => {
+  return accounts.some(
+    (account) => string === account || string.includes(`.${account}`),
+  );
 };
 
-export const matchAccounts = (account: string, matches: string[]) => {
-  return matches.some((match) => matchAccount(account, match));
+export const jsonMatchAccounts = (
+  object: unknown,
+  accounts: string[],
+): boolean => {
+  if (typeof object === 'object') {
+    return (
+      Object.keys(object as object).some((key) =>
+        matchAccounts(key, accounts),
+      ) ||
+      Object.values(object as object).some((value) =>
+        jsonMatchAccounts(value, accounts),
+      )
+    );
+  } else if (Array.isArray(object)) {
+    return object.some((value) => matchAccounts(value, accounts));
+  } else {
+    return matchAccounts(String(object), accounts);
+  }
 };

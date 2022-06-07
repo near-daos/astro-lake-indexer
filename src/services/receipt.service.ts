@@ -2,33 +2,21 @@ import { DeepPartial, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ActionReceiptService } from './action-receipt.service';
 import { DataReceiptService } from './data-receipt.service';
-import { FtEventService } from './ft-event.service';
-import { NftEventService } from './nft-event.service';
-import { TransactionService } from './transaction.service';
-import * as Near from '../near';
 import { AppDataSource } from '../data-source';
-import {
-  ActionReceipt,
-  DataReceipt,
-  Receipt,
-  ReceiptKind,
-} from '../entities';
+import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
+import { jsonMatchAccounts, matchAccounts } from '../utils';
+import * as Near from '../near';
+import config from '../config';
 
 export class ReceiptService {
   private readonly repository: Repository<Receipt>;
   private readonly actionReceiptService: ActionReceiptService;
   private readonly dataReceiptService: DataReceiptService;
-  private readonly transactionService: TransactionService;
-  private readonly ftEventService: FtEventService;
-  private readonly nftEventService: NftEventService;
 
   constructor(private readonly manager = AppDataSource.manager) {
     this.repository = manager.getRepository(Receipt);
     this.actionReceiptService = new ActionReceiptService(manager);
     this.dataReceiptService = new DataReceiptService(manager);
-    this.transactionService = new TransactionService(manager);
-    this.ftEventService = new FtEventService(manager);
-    this.nftEventService = new NftEventService(manager);
   }
 
   fromJSON(
@@ -101,18 +89,26 @@ export class ReceiptService {
   }
 
   shouldStore(receipt: Near.Receipt) {
-    return false;
-    return (
-      receipt.receipt_id === 'DctUW1xPH2UXxUMtWmiyqmJrvKX4pkccsJmMCc2mCE3o'
-    );
-
-    /*    return (
+    // store if predecessor or receiver is tracked account
+    if (
       matchAccounts(receipt.predecessor_id, config.TRACK_ACCOUNTS) ||
-      matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS) ||
-      // contains ft call
-      this.ftEventService.shouldStoreReceipt(receipt) ||
-      // contains nft call
-      this.nftEventService.shouldStoreReceipt(receipt)
-    ); */
+      matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS)
+    ) {
+      return true;
+    }
+
+    const kind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
+
+    if (kind !== Near.ReceiptTypes.Action) {
+      return false;
+    }
+
+    const actionReceipt = receipt.receipt as Near.ActionReceipt;
+
+    // store if some action args contains tracked account
+    return actionReceipt.Action.actions.some((action) => {
+      const { actionArgs } = Near.parseAction(action);
+      return jsonMatchAccounts(actionArgs, config.TRACK_ACCOUNTS);
+    });
   }
 }

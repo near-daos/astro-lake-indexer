@@ -43,7 +43,7 @@ export default class App {
       logger: (msg: string) => this.logger.warn(msg),
     },
 
-    private readonly alwaysSaveTransactions = new LRUCache({
+    private readonly alwaysStoreTransactions = new LRUCache({
       max: 100,
     }),
   ) {}
@@ -129,17 +129,20 @@ export default class App {
 
     shards.forEach((shard) => {
       if (shard.chunk) {
-        // check if we should save transaction
+        // get transaction to store
         shard.chunk.transactions.forEach((transaction, indexInChunk) => {
           if (this.transactionService.shouldStore(transaction)) {
-            // mark transaction as always save for future receipts & execution outcomes
-            this.alwaysSaveTransactions.set(transaction.transaction.hash, true);
+            // mark the whole transaction as always to store for future receipts & execution outcomes
+            this.alwaysStoreTransactions.set(
+              transaction.transaction.hash,
+              true,
+            );
 
             transactions.push({ block, shard, indexInChunk, transaction });
           }
         });
 
-        // check if we should save receipt
+        // get receipts to store
         shard.chunk.receipts.forEach((receipt, indexInChunk) => {
           const transactionHash = this.cacheService.getTransactionHash(
             Near.getReceiptOrDataId(receipt),
@@ -150,7 +153,8 @@ export default class App {
             return;
           }
 
-          if (this.alwaysSaveTransactions.has(transactionHash)) {
+          if (this.alwaysStoreTransactions.has(transactionHash)) {
+            // store the whole transaction
             receipts.push({
               block,
               shard,
@@ -161,8 +165,8 @@ export default class App {
           }
 
           if (this.receiptService.shouldStore(receipt)) {
-            // mark transaction as always save for future receipts & execution outcomes
-            this.alwaysSaveTransactions.set(transactionHash, true);
+            // mark the whole transaction as always to store for future receipts & execution outcomes
+            this.alwaysStoreTransactions.set(transactionHash, true);
 
             // find all objects in transaction
             const results =
@@ -194,7 +198,9 @@ export default class App {
             return;
           }
 
-          if (this.alwaysSaveTransactions.has(transactionHash)) {
+          //
+          if (this.alwaysStoreTransactions.has(transactionHash)) {
+            // store the whole transaction
             executionOutcomes.push({
               block,
               shard,
@@ -204,8 +210,8 @@ export default class App {
           }
 
           if (this.executionOutcomeService.shouldStore(executionOutcome)) {
-            // mark transaction as always save for future receipts & execution outcomes
-            this.alwaysSaveTransactions.set(transactionHash, true);
+            // mark transaction as always to store for future receipts & execution outcomes
+            this.alwaysStoreTransactions.set(transactionHash, true);
 
             // find all objects in transaction
             const results =
@@ -224,16 +230,6 @@ export default class App {
           }
         },
       );
-    });
-
-    console.log({
-      transactions: transactions.map(
-        ({ transaction }) => transaction.transaction.hash,
-      ),
-      receipts: receipts.map(({ receipt }) => receipt.receipt_id),
-      executionOutcomes: executionOutcomes.map(
-        ({ executionOutcome }) => executionOutcome.execution_outcome.id,
-      ),
     });
 
     // extract blocks to store

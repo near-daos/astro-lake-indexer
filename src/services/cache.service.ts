@@ -1,6 +1,6 @@
 import LRUCache from 'lru-cache';
-import * as Near from '../near';
 import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
+import * as Near from '../near';
 
 export class CacheService {
   constructor(
@@ -116,18 +116,20 @@ export class CacheService {
     let receipts: ReceiptData[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
-    const transactionsResults = this.transactionsCache.get(transactionHash);
+    // find transaction data
+    const transactionData = this.transactionsCache.get(transactionHash);
 
-    if (transactionsResults) {
-      transactions.push(transactionsResults);
+    if (transactionData) {
+      transactions.push(transactionData);
     } else {
       return { transactions, receipts, executionOutcomes };
     }
 
-    const childReceipts = this.findChildReceipts(
-      transactionsResults.transaction.outcome.execution_outcome.outcome
-        .receipt_ids[0],
-    );
+    const [convertedIntoReceiptId] =
+      transactionData.transaction.outcome.execution_outcome.outcome.receipt_ids;
+
+    // find child receipts
+    const childReceipts = this.findChildReceipts(convertedIntoReceiptId);
 
     receipts = receipts.concat(childReceipts.receipts);
     executionOutcomes = executionOutcomes.concat(
@@ -146,28 +148,27 @@ export class CacheService {
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
     // find current receipt
-    const receiptResults = this.receiptsCache.get(receiptId);
+    const receiptData = this.receiptsCache.get(receiptId);
 
-    if (receiptResults) {
-      receipts.push(receiptResults);
+    if (receiptData) {
+      receipts.push(receiptData);
     } else {
       return { receipts, executionOutcomes };
     }
 
     const receiptType = Near.parseKind<Near.ReceiptTypes>(
-      receiptResults.receipt.receipt,
+      receiptData.receipt.receipt,
     );
 
     if (receiptType === Near.ReceiptTypes.Action) {
-      const actionReceipt = receiptResults.receipt
-        .receipt as Near.ActionReceipt;
+      const actionReceipt = receiptData.receipt.receipt as Near.ActionReceipt;
 
       // include data receipts in results
       actionReceipt.Action.output_data_receivers.forEach(({ data_id }) => {
-        const dataReceiptResults = this.receiptsCache.get(data_id);
+        const dataReceiptData = this.receiptsCache.get(data_id);
 
-        if (dataReceiptResults) {
-          receipts.push(dataReceiptResults);
+        if (dataReceiptData) {
+          receipts.push(dataReceiptData);
         }
       });
     } else {
@@ -176,25 +177,25 @@ export class CacheService {
     }
 
     // find execution outcome for receipt
-    const executionOutcomeResults = this.executionOutcomesCache.get(
-      receiptResults.receipt.receipt_id,
+    const executionOutcomeData = this.executionOutcomesCache.get(
+      receiptData.receipt.receipt_id,
     );
 
-    if (executionOutcomeResults) {
-      executionOutcomes.push(executionOutcomeResults);
+    if (executionOutcomeData) {
+      executionOutcomes.push(executionOutcomeData);
     } else {
       return { receipts, executionOutcomes };
     }
 
     // find child receipts and execution outcomes
-    executionOutcomeResults.executionOutcome.execution_outcome.outcome.receipt_ids.forEach(
+    executionOutcomeData.executionOutcome.execution_outcome.outcome.receipt_ids.forEach(
       (receiptId) => {
-        const childExecutionOutcomeResults = this.findChildReceipts(receiptId);
+        const childExecutionOutcomeData = this.findChildReceipts(receiptId);
 
-        if (childExecutionOutcomeResults) {
-          receipts = receipts.concat(childExecutionOutcomeResults.receipts);
+        if (childExecutionOutcomeData) {
+          receipts = receipts.concat(childExecutionOutcomeData.receipts);
           executionOutcomes = executionOutcomes.concat(
-            childExecutionOutcomeResults.executionOutcomes,
+            childExecutionOutcomeData.executionOutcomes,
           );
         }
       },

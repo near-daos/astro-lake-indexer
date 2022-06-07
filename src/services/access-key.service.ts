@@ -15,7 +15,7 @@ export class AccessKeyService {
     this.executionOutcomeService = new ExecutionOutcomeService(manager);
   }
 
-  async handle(block: Near.Block, shards: Near.Shard[]) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
     const actions = this.executionOutcomeService
       .getSuccessfulReceiptActions(
         shards.map((shard) => shard.receipt_execution_outcomes).flat(),
