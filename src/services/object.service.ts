@@ -26,9 +26,6 @@ export class ObjectService {
     private readonly cacheService: CacheService,
     private readonly manager = AppDataSource.manager,
     private readonly logger = createLogger('object-service'),
-    private readonly alwaysStoreTransactions = new LRUCache({
-      max: 100,
-    }),
   ) {
     this.blockService = new BlockService(manager);
     this.chunkService = new ChunkService(manager);
@@ -48,9 +45,8 @@ export class ObjectService {
         shard.chunk.transactions.forEach((transaction, indexInChunk) => {
           if (this.transactionService.shouldStore(transaction)) {
             // mark the whole transaction as always to store for future receipts & execution outcomes
-            this.alwaysStoreTransactions.set(
+            this.cacheService.alwaysStoreTransaction(
               transaction.transaction.hash,
-              true,
             );
 
             transactions.push({ block, shard, indexInChunk, transaction });
@@ -71,7 +67,7 @@ export class ObjectService {
 
           if (
             transactionHash &&
-            this.alwaysStoreTransactions.has(transactionHash)
+            this.cacheService.isAlwaysStoreTransaction(transactionHash)
           ) {
             // store the whole transaction
             receipts.push({
@@ -92,7 +88,7 @@ export class ObjectService {
             }
 
             // mark the whole transaction as always to store for future receipts & execution outcomes
-            this.alwaysStoreTransactions.set(transactionHash, true);
+            this.cacheService.alwaysStoreTransaction(transactionHash);
 
             // find all objects in transaction
             const results =
@@ -127,7 +123,7 @@ export class ObjectService {
 
           if (
             transactionHash &&
-            this.alwaysStoreTransactions.has(transactionHash)
+            this.cacheService.isAlwaysStoreTransaction(transactionHash)
           ) {
             // store the whole transaction
             executionOutcomes.push({
@@ -147,7 +143,7 @@ export class ObjectService {
             }
 
             // mark transaction as always to store for future receipts & execution outcomes
-            this.alwaysStoreTransactions.set(transactionHash, true);
+            this.cacheService.alwaysStoreTransaction(transactionHash);
 
             // find all objects in transaction
             const results =

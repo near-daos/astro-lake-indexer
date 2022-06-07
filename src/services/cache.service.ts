@@ -19,6 +19,9 @@ export class CacheService {
     private readonly transactionHashesCache = new LRUCache<string, string>({
       max: 2000,
     }),
+    private readonly alwaysStoreTransactions = new LRUCache({
+      max: 100,
+    }),
   ) {}
 
   cacheBlock(block: Near.Block, shards: Near.Shard[]) {
@@ -109,6 +112,14 @@ export class CacheService {
 
   getTransactionHash(receiptOrDataId: string) {
     return this.transactionHashesCache.get(receiptOrDataId);
+  }
+
+  alwaysStoreTransaction(transactionHash: string) {
+    this.alwaysStoreTransactions.set(transactionHash, true);
+  }
+
+  isAlwaysStoreTransaction(transactionHash: string) {
+    return this.alwaysStoreTransactions.has(transactionHash);
   }
 
   findObjectsByTransactionHash(transactionHash: string) {
