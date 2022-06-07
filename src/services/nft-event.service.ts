@@ -72,7 +72,7 @@ export class NftEventService {
                       event_kind: NftEventKind.Transfer,
                       token_old_owner_account_id: old_owner_id,
                       token_new_owner_account_id: new_owner_id,
-                      token_authorized_account_id: authorized_id,
+                      token_authorized_account_id: authorized_id || '',
                       event_memo: memo || '',
                     }),
                   );
@@ -98,7 +98,7 @@ export class NftEventService {
                     event_kind: NftEventKind.Burn,
                     token_old_owner_account_id: owner_id,
                     token_new_owner_account_id: '',
-                    token_authorized_account_id: authorized_id,
+                    token_authorized_account_id: authorized_id || '',
                     event_memo: memo || '',
                   }),
                 );
@@ -148,14 +148,16 @@ export class NftEventService {
           ({ old_owner_id, new_owner_id, authorized_id }) =>
             matchAccounts(old_owner_id, config.TRACK_ACCOUNTS) ||
             matchAccounts(new_owner_id, config.TRACK_ACCOUNTS) ||
-            matchAccounts(authorized_id, config.TRACK_ACCOUNTS),
+            (authorized_id &&
+              matchAccounts(authorized_id, config.TRACK_ACCOUNTS)),
         );
 
       case Near.NEP171Events.Burn:
         return event.data.some(
           ({ owner_id, authorized_id }) =>
             matchAccounts(owner_id, config.TRACK_ACCOUNTS) ||
-            matchAccounts(authorized_id, config.TRACK_ACCOUNTS),
+            (authorized_id &&
+              matchAccounts(authorized_id, config.TRACK_ACCOUNTS)),
         );
     }
   }

@@ -35,7 +35,7 @@ export interface NEP141EventBase extends EventBase {
 
 export interface NEP141EventMint extends NEP141EventBase {
   event: NEP141Events.Mint;
-  data: { owner_id: string; amount: string; memo?: string }[];
+  data: { owner_id: string; amount: string; memo?: string | null }[];
 }
 
 export interface NEP141EventTransfer extends NEP141EventBase {
@@ -44,7 +44,7 @@ export interface NEP141EventTransfer extends NEP141EventBase {
     old_owner_id: string;
     new_owner_id: string;
     amount: string;
-    memo?: string;
+    memo?: string | null;
   }[];
 }
 
@@ -53,7 +53,7 @@ export interface NEP141EventBurn extends NEP141EventBase {
   data: {
     owner_id: string;
     amount: string;
-    memo?: string;
+    memo?: string | null;
   }[];
 }
 
@@ -64,27 +64,27 @@ export interface NEP171EventBase extends EventBase {
 
 export interface NEP171EventMint extends NEP171EventBase {
   event: NEP171Events.Mint;
-  data: { owner_id: string; token_ids: string[]; memo?: string }[];
+  data: { owner_id: string; token_ids: string[]; memo?: string | null }[];
 }
 
 export interface NEP171EventTransfer extends NEP171EventBase {
   event: NEP171Events.Transfer;
   data: {
-    authorized_id: string;
+    authorized_id: string | null;
     old_owner_id: string;
     new_owner_id: string;
     token_ids: string[];
-    memo?: string;
+    memo?: string | null;
   }[];
 }
 
 export interface NEP171EventBurn extends NEP171EventBase {
   event: NEP171Events.Burn;
   data: {
-    authorized_id: string;
+    authorized_id: string | null;
     owner_id: string;
     token_ids: string[];
-    memo?: string;
+    memo?: string | null;
   }[];
 }
 
