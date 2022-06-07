@@ -7,6 +7,7 @@ import { TransactionService } from './transaction.service';
 import { ReceiptService } from './receipt.service';
 import { ExecutionOutcomeService } from './execution-outcome.service';
 import { AppDataSource } from '../data-source';
+import { createLogger } from '../logger';
 import * as Near from '../near';
 import {
   ExecutionOutcomeData,
@@ -24,6 +25,7 @@ export class ObjectService {
   constructor(
     private readonly cacheService: CacheService,
     private readonly manager = AppDataSource.manager,
+    private readonly logger = createLogger('object-service'),
     private readonly alwaysStoreTransactions = new LRUCache({
       max: 100,
     }),
@@ -62,11 +64,15 @@ export class ObjectService {
           );
 
           if (!transactionHash) {
-            // TODO error
-            return;
+            this.logger.warn(
+              `Not found parent tx hash for receipt ${receipt.receipt_id}`,
+            );
           }
 
-          if (this.alwaysStoreTransactions.has(transactionHash)) {
+          if (
+            transactionHash &&
+            this.alwaysStoreTransactions.has(transactionHash)
+          ) {
             // store the whole transaction
             receipts.push({
               block,
@@ -78,6 +84,13 @@ export class ObjectService {
           }
 
           if (this.receiptService.shouldStore(receipt)) {
+            // transaction hash is mandatory
+            if (!transactionHash) {
+              throw new Error(
+                `Not found parent tx hash for receipt ${receipt.receipt_id}`,
+              );
+            }
+
             // mark the whole transaction as always to store for future receipts & execution outcomes
             this.alwaysStoreTransactions.set(transactionHash, true);
 
@@ -107,12 +120,15 @@ export class ObjectService {
           );
 
           if (!transactionHash) {
-            // TODO log error
-            return;
+            this.logger.warn(
+              `Not found parent tx hash for execution outcome ${executionOutcome.execution_outcome.id}`,
+            );
           }
 
-          //
-          if (this.alwaysStoreTransactions.has(transactionHash)) {
+          if (
+            transactionHash &&
+            this.alwaysStoreTransactions.has(transactionHash)
+          ) {
             // store the whole transaction
             executionOutcomes.push({
               block,
@@ -123,6 +139,13 @@ export class ObjectService {
           }
 
           if (this.executionOutcomeService.shouldStore(executionOutcome)) {
+            // transaction hash is mandatory
+            if (!transactionHash) {
+              throw new Error(
+                `Not found parent tx hash for execution outcome ${executionOutcome.execution_outcome.id}`,
+              );
+            }
+
             // mark transaction as always to store for future receipts & execution outcomes
             this.alwaysStoreTransactions.set(transactionHash, true);
 
