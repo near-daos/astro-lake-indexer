@@ -85,6 +85,10 @@ export class Config {
     return parseInt(this.provider.get('START_BLOCK_HEIGHT'));
   }
 
+  get LOOK_BACK_BLOCKS(): number {
+    return parseInt(this.provider.get('LOOK_BACK_BLOCKS'));
+  }
+
   get FETCH_MAX_KEYS(): number {
     return parseInt(this.provider.get('FETCH_MAX_KEYS'));
   }

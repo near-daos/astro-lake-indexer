@@ -19,9 +19,10 @@ import {
 
 export default class App {
   private running = false;
+  private currentBlockHeight: number;
 
   constructor(
-    private lastBlockHeight = config.START_BLOCK_HEIGHT,
+    private startBlockHeight = config.START_BLOCK_HEIGHT,
     private readonly logger = createLogger('app'),
     private readonly fetcher = new S3Fetcher(),
     private readonly cacheService = new CacheService(),
@@ -40,11 +41,14 @@ export default class App {
     const latestBlockHeight =
       await this.processedBlockService.getLatestBlockHeight();
 
-    if (latestBlockHeight && latestBlockHeight >= this.lastBlockHeight) {
-      this.lastBlockHeight = latestBlockHeight + 1;
+    if (latestBlockHeight && latestBlockHeight >= this.startBlockHeight) {
+      this.startBlockHeight = latestBlockHeight + 1;
     }
 
-    this.logger.info(`Last block height ${this.lastBlockHeight}`);
+    this.logger.info(`Start block height ${this.startBlockHeight}`);
+
+    this.currentBlockHeight = this.startBlockHeight - config.LOOK_BACK_BLOCKS;
+
     process.nextTick(() => this.poll());
   }
 
@@ -55,7 +59,7 @@ export default class App {
   private async poll() {
     while (this.running) {
       const blocks = await retry(
-        () => this.fetcher.listBlocks(this.lastBlockHeight),
+        () => this.fetcher.listBlocks(this.currentBlockHeight),
         this.retryConfig,
       );
 
@@ -93,7 +97,7 @@ export default class App {
       for (const { blockHeight, block, shards } of results) {
         await this.processBlock(blockHeight, block, shards);
 
-        this.lastBlockHeight = blockHeight + 1;
+        this.currentBlockHeight = blockHeight + 1;
       }
     }
   }
@@ -105,9 +109,14 @@ export default class App {
   ) {
     this.log(blockHeight, block, shards);
 
-    this.logger.info(`Processing block ${blockHeight}...`);
-
     this.cacheService.cacheBlock(block, shards);
+
+    if (this.currentBlockHeight < this.startBlockHeight) {
+      this.logger.info(`Caching block ${blockHeight}...`);
+      return;
+    } else {
+      this.logger.info(`Processing block ${blockHeight}...`);
+    }
 
     await AppDataSource.transaction(async (manager) => {
       await new ObjectService(this.cacheService, manager).store(block, shards);
