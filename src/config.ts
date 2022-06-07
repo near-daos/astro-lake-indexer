@@ -34,7 +34,6 @@ export class Config {
       'WAIT_FOR_NEW_BLOCKS',
 
       'TRACK_ACCOUNTS',
-      'BRIDGE_TOKEN_FACTORY',
     ]);
   }
 
@@ -102,10 +101,6 @@ export class Config {
     return (this.provider.get('TRACK_ACCOUNTS') as string)
       .split(',')
       .map((account) => account.trim());
-  }
-
-  get BRIDGE_TOKEN_FACTORY(): string {
-    return this.provider.get('BRIDGE_TOKEN_FACTORY');
   }
 }
 
