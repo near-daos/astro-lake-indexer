@@ -131,7 +131,7 @@ export default class App {
 
     this.cacheService.cacheBlock(block, shards);
 
-    if (this.currentBlockHeight < this.startBlockHeight) {
+    if (blockHeight < this.startBlockHeight) {
       this.logger.info(`Caching block ${blockHeight}...`);
       return;
     } else {
