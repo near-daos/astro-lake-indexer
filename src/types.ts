@@ -1,5 +1,11 @@
 import * as Near from './near';
 
+export interface BlockResult {
+  blockHeight: number;
+  block: Near.Block;
+  shards: Near.Shard[];
+}
+
 export interface TransactionData {
   block: Near.Block;
   shard: Near.Shard;

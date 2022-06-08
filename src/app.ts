@@ -16,10 +16,13 @@ import {
   ObjectService,
   ProcessedBlockService,
 } from './services';
+import { BlockResult } from './types';
 
 export default class App {
   private running = false;
   private currentBlockHeight: number;
+  private processedBlocksCounter: number;
+  private reportSpeedTimer: NodeJS.Timer;
 
   constructor(
     private startBlockHeight = config.START_BLOCK_HEIGHT,
@@ -27,7 +30,8 @@ export default class App {
     private readonly fetcher = new S3Fetcher(),
     private readonly cacheService = new CacheService(),
     private readonly processedBlockService = new ProcessedBlockService(),
-
+    private blocksQueue: BlockResult[] = [],
+    private readonly reportSpeedInterval = 10,
     private readonly retryConfig: Partial<RetryConfig<unknown>> = {
       retries: 10,
       delay: 1000,
@@ -37,6 +41,7 @@ export default class App {
 
   async start() {
     this.running = true;
+    this.processedBlocksCounter = 0;
 
     const latestBlockHeight =
       await this.processedBlockService.getLatestBlockHeight();
@@ -49,14 +54,20 @@ export default class App {
 
     this.currentBlockHeight = this.startBlockHeight - config.LOOK_BACK_BLOCKS;
 
-    process.nextTick(() => this.poll());
+    process.nextTick(() => this.download());
+    process.nextTick(() => this.process());
+    this.reportSpeedTimer = setInterval(
+      () => this.reportSpeed(),
+      this.reportSpeedInterval * 1000,
+    );
   }
 
   stop() {
     this.running = false;
+    this.reportSpeedTimer && clearInterval(this.reportSpeedTimer);
   }
 
-  private async poll() {
+  private async download() {
     while (this.running) {
       const blocks = await retry(
         () => this.fetcher.listBlocks(this.currentBlockHeight),
@@ -94,19 +105,28 @@ export default class App {
 
       results.sort((a, b) => a.blockHeight - b.blockHeight);
 
-      for (const { blockHeight, block, shards } of results) {
-        await this.processBlock(blockHeight, block, shards);
+      this.blocksQueue = this.blocksQueue.concat(results);
 
-        this.currentBlockHeight = blockHeight + 1;
-      }
+      this.currentBlockHeight = Math.max(
+        ...results.map(({ blockHeight }) => blockHeight),
+      );
     }
   }
 
-  private async processBlock(
-    blockHeight: number,
-    block: Near.Block,
-    shards: Near.Shard[],
-  ) {
+  private async process() {
+    let result: BlockResult | undefined;
+
+    while (this.running && (result = this.blocksQueue.shift())) {
+      await this.processBlock(result);
+      this.processedBlocksCounter++;
+    }
+
+    if (this.running) {
+      setImmediate(() => this.process());
+    }
+  }
+
+  private async processBlock({ blockHeight, block, shards }: BlockResult) {
     this.log(blockHeight, block, shards);
 
     this.cacheService.cacheBlock(block, shards);
@@ -132,6 +152,15 @@ export default class App {
 
       await new ProcessedBlockService(manager).store(block);
     });
+  }
+
+  private reportSpeed() {
+    this.logger.info(
+      `Speed: ${
+        this.processedBlocksCounter / this.reportSpeedInterval
+      } blocks/sec`,
+    );
+    this.processedBlocksCounter = 0;
   }
 
   private log(blockHeight: number, block: Near.Block, shards: Near.Shard[]) {
