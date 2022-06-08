@@ -9,7 +9,7 @@ npm install
 Create config from example
 
 ```
-cp .env.example .env
+cp .env.testnet.example .env
 ```
 
 Sync database schema:

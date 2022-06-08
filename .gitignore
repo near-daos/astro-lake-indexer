@@ -1,5 +1,6 @@
 .idea
 .env*
-!.env.example
+!.env.testnet.example
+!.env.mainnet.example
 build
 node_modules
