@@ -1,7 +1,7 @@
 {
-   "name": "near-lake-astro-poc",
+   "name": "astro-lake-indexer",
    "version": "1.0.0",
-   "description": "",
+   "description": "near-lake parser into indexer-like database",
    "main": "build/index.js",
    "scripts": {
       "build": "tsc --build",
@@ -54,7 +54,6 @@
       "log4js": "6.4.7",
       "lru-cache": "7.10.1",
       "nconf": "0.12.0",
-      "pg": "8.4.0",
       "reflect-metadata": "0.1.13",
       "ts-retry-promise": "0.6.1",
       "typedi": "0.10.0",
