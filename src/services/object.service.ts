@@ -273,5 +273,23 @@ export class ObjectService {
       manager,
       executionOutcomeEntities,
     );
+
+    blockEntities.length &&
+      this.logger.info('Stored blocks: %d', blockEntities.length);
+
+    chunkEntities.length &&
+      this.logger.info('Stored chunks: %d', chunkEntities.length);
+
+    transactionEntities.length &&
+      this.logger.info('Stored transactions: %d', transactionEntities.length);
+
+    receiptEntities.length &&
+      this.logger.info('Stored receipts: %d', receiptEntities.length);
+
+    executionOutcomeEntities.length &&
+      this.logger.info(
+        'Stored execution outcomes: %d',
+        executionOutcomeEntities.length,
+      );
   }
 }
