@@ -1,8 +1,12 @@
+import 'reflect-metadata';
 import * as AWS from 'aws-sdk';
-import App from './app';
-import config from './config';
+import { Container } from 'typedi';
+import { App } from './app';
+import { Config } from './config';
 import { createLogger } from './logger';
 import { AppDataSource } from './data-source';
+
+const config = Container.get(Config);
 
 AWS.config.update({
   accessKeyId: config.AWS_ACCESS_KEY_ID,
@@ -10,7 +14,7 @@ AWS.config.update({
   region: config.AWS_REGION,
 });
 
-const app = new App();
+const app = Container.get(App);
 const logger = createLogger('main');
 
 const stop = (code = 0) => {

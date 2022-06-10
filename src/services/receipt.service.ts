@@ -1,23 +1,26 @@
-import { DeepPartial, Repository } from 'typeorm';
+import { Inject, Service } from 'typedi';
+import { DeepPartial, EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ActionReceiptService } from './action-receipt.service';
 import { DataReceiptService } from './data-receipt.service';
-import { AppDataSource } from '../data-source';
+import { Config } from '../config';
+import { InjectRepository } from '../decorators';
 import { ActionReceipt, DataReceipt, Receipt, ReceiptKind } from '../entities';
 import { jsonMatchAccounts, matchAccounts } from '../utils';
 import * as Near from '../near';
-import config from '../config';
 
+@Service()
 export class ReceiptService {
-  private readonly repository: Repository<Receipt>;
-  private readonly actionReceiptService: ActionReceiptService;
-  private readonly dataReceiptService: DataReceiptService;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(Receipt);
-    this.actionReceiptService = new ActionReceiptService(manager);
-    this.dataReceiptService = new DataReceiptService(manager);
-  }
+  constructor(
+    @Inject()
+    private readonly config: Config,
+    @InjectRepository(Receipt)
+    private readonly repository: Repository<Receipt>,
+    @Inject()
+    private readonly actionReceiptService: ActionReceiptService,
+    @Inject()
+    private readonly dataReceiptService: DataReceiptService,
+  ) {}
 
   fromJSON(
     blockHash: string,
@@ -66,10 +69,11 @@ export class ReceiptService {
     });
   }
 
-  async insert(entities: Receipt[]) {
-    await this.repository
+  async insert(manager: EntityManager, entities: Receipt[]) {
+    await manager
       .createQueryBuilder()
       .insert()
+      .into(Receipt)
       .values(entities as QueryDeepPartialEntity<Receipt>[])
       .orIgnore()
       .execute();
@@ -83,16 +87,16 @@ export class ReceiptService {
       .filter((data) => data) as DataReceipt[];
 
     await Promise.all([
-      this.actionReceiptService.insert(actions),
-      this.dataReceiptService.insert(datas),
+      this.actionReceiptService.insert(manager, actions),
+      this.dataReceiptService.insert(manager, datas),
     ]);
   }
 
   shouldStore(receipt: Near.Receipt) {
     // store if predecessor or receiver is tracked account
     if (
-      matchAccounts(receipt.predecessor_id, config.TRACK_ACCOUNTS) ||
-      matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS)
+      matchAccounts(receipt.predecessor_id, this.config.TRACK_ACCOUNTS) ||
+      matchAccounts(receipt.receiver_id, this.config.TRACK_ACCOUNTS)
     ) {
       return true;
     }
@@ -108,7 +112,7 @@ export class ReceiptService {
     // store if some action args contains tracked account
     return actionReceipt.Action.actions.some((action) => {
       const { actionArgs } = Near.parseAction(action);
-      return jsonMatchAccounts(actionArgs, config.TRACK_ACCOUNTS);
+      return jsonMatchAccounts(actionArgs, this.config.TRACK_ACCOUNTS);
     });
   }
 }

@@ -1,15 +1,16 @@
-import { Repository } from 'typeorm';
+import { Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { AppDataSource } from '../data-source';
+import { InjectRepository } from '../decorators';
 import { ActionKind, ActionReceiptAction } from '../entities';
 import * as Near from '../near';
 
+@Service()
 export class ActionReceiptActionService {
-  private readonly repository: Repository<ActionReceiptAction>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(ActionReceiptAction);
-  }
+  constructor(
+    @InjectRepository(ActionReceiptAction)
+    private readonly repository: Repository<ActionReceiptAction>,
+  ) {}
 
   fromJSON(
     blockTimestamp: bigint,
@@ -32,10 +33,11 @@ export class ActionReceiptActionService {
     });
   }
 
-  async insert(entities: ActionReceiptAction[]) {
-    return this.repository
+  async insert(manager: EntityManager, entities: ActionReceiptAction[]) {
+    return manager
       .createQueryBuilder()
       .insert()
+      .into(ActionReceiptAction)
       .values(entities as QueryDeepPartialEntity<ActionReceiptAction>[])
       .orIgnore()
       .execute();

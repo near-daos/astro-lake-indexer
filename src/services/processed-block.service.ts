@@ -1,14 +1,15 @@
-import { Repository } from 'typeorm';
+import { Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import * as Near from '../near';
-import { AppDataSource } from '../data-source';
 import { ProcessedBlock } from '../entities';
+import { InjectRepository } from '../decorators';
 
+@Service()
 export class ProcessedBlockService {
-  private readonly repository: Repository<ProcessedBlock>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(ProcessedBlock);
-  }
+  constructor(
+    @InjectRepository(ProcessedBlock)
+    private readonly repository: Repository<ProcessedBlock>,
+  ) {}
 
   async getLatestBlockHeight() {
     const entity = await this.repository
@@ -20,7 +21,7 @@ export class ProcessedBlockService {
     return entity?.block_height;
   }
 
-  async store(block: Near.Block) {
-    return this.repository.save({ block_height: block.header.height });
+  async store(manager: EntityManager, block: Near.Block) {
+    return manager.save(ProcessedBlock, { block_height: block.header.height });
   }
 }

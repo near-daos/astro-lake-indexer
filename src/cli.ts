@@ -1,7 +1,9 @@
+import 'reflect-metadata';
 import * as AWS from 'aws-sdk';
 import JSONbig from 'json-bigint';
-import config from './config';
-import S3Fetcher from './s3-fetcher';
+import { Config } from './config';
+import { S3Fetcher } from './s3-fetcher';
+import { Container } from 'typedi';
 
 const [script, blockNumber] = process.argv.slice(1);
 
@@ -10,6 +12,8 @@ if (!blockNumber) {
   process.exit(1);
 }
 
+const config = Container.get(Config);
+const fetcher = Container.get(S3Fetcher);
 const JSONParser = JSONbig({ useNativeBigInt: true });
 
 AWS.config.update({
@@ -17,8 +21,6 @@ AWS.config.update({
   secretAccessKey: config.AWS_SECRET_ACCESS_KEY,
   region: config.AWS_REGION,
 });
-
-const fetcher = new S3Fetcher();
 
 (async () => {
   const block = await fetcher.getBlock(Number(blockNumber));

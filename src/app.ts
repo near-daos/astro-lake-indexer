@@ -1,10 +1,11 @@
+import { Logger } from 'log4js';
+import { EntityManager } from 'typeorm';
+import { Inject, Service } from 'typedi';
 import { PromisePool } from '@supercharge/promise-pool';
 import { retry, RetryConfig, wait } from 'ts-retry-promise';
-import S3Fetcher from './s3-fetcher';
-import config from './config';
-import * as Near from './near';
-import { createLogger } from './logger';
-import { AppDataSource } from './data-source';
+import { S3Fetcher } from './s3-fetcher';
+import { Config } from './config';
+import { InjectEntityManager, InjectLogger } from './decorators';
 import {
   AccessKeyService,
   AccountChangeService,
@@ -17,27 +18,57 @@ import {
   ProcessedBlockService,
 } from './services';
 import { BlockResult } from './types';
+import * as Near from './near';
 
-export default class App {
+@Service()
+export class App {
   private running = false;
+
+  private startBlockHeight = 0;
   private currentBlockHeight: number;
   private processedBlocksCounter: number;
+
+  private blocksQueue: BlockResult[] = [];
+
   private reportSpeedTimer: NodeJS.Timer;
+  private readonly reportSpeedInterval = 10;
+
+  private readonly retryConfig: Partial<RetryConfig<unknown>> = {
+    retries: 10,
+    delay: 1000,
+    logger: (msg: string) => this.logger.warn(msg),
+  };
 
   constructor(
-    private startBlockHeight = config.START_BLOCK_HEIGHT,
-    private readonly logger = createLogger('app'),
-    private readonly fetcher = new S3Fetcher(),
-    private readonly cacheService = new CacheService(),
-    private readonly processedBlockService = new ProcessedBlockService(),
-    private blocksQueue: BlockResult[] = [],
-    private readonly reportSpeedInterval = 10,
-    private readonly retryConfig: Partial<RetryConfig<unknown>> = {
-      retries: 10,
-      delay: 1000,
-      logger: (msg: string) => this.logger.warn(msg),
-    },
-  ) {}
+    @InjectLogger('app')
+    private readonly logger: Logger,
+    @Inject()
+    private readonly config: Config,
+    @Inject()
+    private readonly fetcher: S3Fetcher,
+    @Inject()
+    private readonly cacheService: CacheService,
+    @Inject()
+    private readonly objectService: ObjectService,
+    @Inject()
+    private readonly accountService: AccountService,
+    @Inject()
+    private readonly accessKeyService: AccessKeyService,
+    @Inject()
+    private readonly accountChangeService: AccountChangeService,
+    @Inject()
+    private readonly eventService: EventService,
+    @Inject()
+    private readonly ftEventService: FtEventService,
+    @Inject()
+    private readonly nftEventService: NftEventService,
+    @Inject()
+    private readonly processedBlockService: ProcessedBlockService,
+    @InjectEntityManager()
+    private readonly manager: EntityManager,
+  ) {
+    this.startBlockHeight = config.START_BLOCK_HEIGHT;
+  }
 
   async start() {
     this.running = true;
@@ -52,7 +83,8 @@ export default class App {
 
     this.logger.info(`Start block height ${this.startBlockHeight}`);
 
-    this.currentBlockHeight = this.startBlockHeight - config.LOOK_BACK_BLOCKS;
+    this.currentBlockHeight =
+      this.startBlockHeight - this.config.LOOK_BACK_BLOCKS;
 
     process.nextTick(() => this.download());
     process.nextTick(() => this.process());
@@ -76,12 +108,12 @@ export default class App {
 
       if (!blocks.length) {
         this.logger.info('Waiting for new blocks...');
-        await wait(config.WAIT_FOR_NEW_BLOCKS);
+        await wait(this.config.WAIT_FOR_NEW_BLOCKS);
         continue;
       }
 
       const { results } = await PromisePool.for(blocks)
-        .withConcurrency(config.BLOCKS_DL_CONCURRENCY)
+        .withConcurrency(this.config.BLOCKS_DL_CONCURRENCY)
         .handleError((err) => {
           throw err;
         })
@@ -138,19 +170,19 @@ export default class App {
       this.logger.info(`Processing block ${blockHeight}...`);
     }
 
-    await AppDataSource.transaction(async (manager) => {
-      await new ObjectService(this.cacheService, manager).store(block, shards);
+    await this.manager.transaction(async (manager) => {
+      await this.objectService.store(manager, block, shards);
 
       await Promise.all([
-        new AccountService(manager).store(block, shards),
-        new AccessKeyService(manager).store(block, shards),
-        new AccountChangeService(manager).store(block, shards),
-        new EventService(manager).store(block, shards),
-        new FtEventService(manager).store(block, shards),
-        new NftEventService(manager).store(block, shards),
+        this.accountService.store(manager, block, shards),
+        this.accessKeyService.store(manager, block, shards),
+        this.accountChangeService.store(manager, block, shards),
+        this.eventService.store(manager, block, shards),
+        this.ftEventService.store(manager, block, shards),
+        this.nftEventService.store(manager, block, shards),
       ]);
 
-      await new ProcessedBlockService(manager).store(block);
+      await this.processedBlockService.store(manager, block);
     });
   }
 

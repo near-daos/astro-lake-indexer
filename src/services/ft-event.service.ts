@@ -1,16 +1,20 @@
-import { Repository } from 'typeorm';
-import config from '../config';
-import { AppDataSource } from '../data-source';
+import { Inject, Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Config } from '../config';
+import { InjectRepository } from '../decorators';
 import { FtEvent, FtEventKind } from '../entities';
 import * as Near from '../near';
 import { matchAccounts } from '../utils';
 
+@Service()
 export class FtEventService {
-  private readonly repository: Repository<FtEvent>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(FtEvent);
-  }
+  constructor(
+    @Inject()
+    private readonly config: Config,
+    @InjectRepository(FtEvent)
+    private readonly repository: Repository<FtEvent>,
+  ) {}
 
   fromJSON(
     blockTimestamp: bigint,
@@ -95,7 +99,7 @@ export class FtEventService {
     return entities;
   }
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
+  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard, shardId) =>
         shard.receipt_execution_outcomes
@@ -116,26 +120,32 @@ export class FtEventService {
       )
       .flat();
 
-    return this.repository.save(entities);
+    return manager
+      .createQueryBuilder()
+      .insert()
+      .into(FtEvent)
+      .values(entities as QueryDeepPartialEntity<FtEvent>[])
+      .orIgnore()
+      .execute();
   }
 
   shouldStore(event: Near.NEP141Event) {
     switch (event.event) {
       case Near.NEP141Events.Mint:
         return event.data.some(({ owner_id }) =>
-          matchAccounts(owner_id, config.TRACK_ACCOUNTS),
+          matchAccounts(owner_id, this.config.TRACK_ACCOUNTS),
         );
 
       case Near.NEP141Events.Transfer:
         return event.data.some(
           ({ old_owner_id, new_owner_id }) =>
-            matchAccounts(old_owner_id, config.TRACK_ACCOUNTS) ||
-            matchAccounts(new_owner_id, config.TRACK_ACCOUNTS),
+            matchAccounts(old_owner_id, this.config.TRACK_ACCOUNTS) ||
+            matchAccounts(new_owner_id, this.config.TRACK_ACCOUNTS),
         );
 
       case Near.NEP141Events.Burn:
         return event.data.some(({ owner_id }) =>
-          matchAccounts(owner_id, config.TRACK_ACCOUNTS),
+          matchAccounts(owner_id, this.config.TRACK_ACCOUNTS),
         );
     }
   }

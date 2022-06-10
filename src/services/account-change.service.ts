@@ -1,17 +1,20 @@
-import { Repository } from 'typeorm';
+import { Inject, Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import * as Near from '../near';
-import { AppDataSource } from '../data-source';
+import { Config } from '../config';
+import { InjectRepository } from '../decorators';
 import { AccountChange, AccountChangeReason } from '../entities';
+import * as Near from '../near';
 import { matchAccounts } from '../utils';
-import config from '../config';
 
+@Service()
 export class AccountChangeService {
-  private readonly repository: Repository<AccountChange>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(AccountChange);
-  }
+  constructor(
+    @Inject()
+    private readonly config: Config,
+    @InjectRepository(AccountChange)
+    private readonly repository: Repository<AccountChange>,
+  ) {}
 
   fromJSON(
     blockHash: string,
@@ -52,7 +55,7 @@ export class AccountChangeService {
       Object.values(Near.StateChangeCauseTypes).indexOf(stateChange.cause.type)
     ];
 
-    return {
+    return this.repository.create({
       affected_account_id: stateChange.change.account_id,
       changed_in_block_timestamp: blockTimestamp,
       changed_in_block_hash: blockHash,
@@ -64,10 +67,10 @@ export class AccountChangeService {
       affected_account_staked_balance: BigInt(account?.locked || 0),
       affected_account_storage_usage: BigInt(account?.storage_usage || 0),
       index_in_block: indexInBlock,
-    };
+    });
   }
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
+  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     const values = shards
       .map((shard) =>
         shard.state_changes
@@ -84,15 +87,19 @@ export class AccountChangeService {
       .flat()
       .filter(Boolean) as QueryDeepPartialEntity<AccountChange>;
 
-    return this.repository
+    return manager
       .createQueryBuilder()
       .insert()
+      .into(AccountChange)
       .values(values)
       .orIgnore()
       .execute();
   }
 
   shouldStore(stateChange: Near.StateChange) {
-    return matchAccounts(stateChange.change.account_id, config.TRACK_ACCOUNTS);
+    return matchAccounts(
+      stateChange.change.account_id,
+      this.config.TRACK_ACCOUNTS,
+    );
   }
 }

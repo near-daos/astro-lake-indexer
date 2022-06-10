@@ -1,14 +1,14 @@
-import { Repository } from 'typeorm';
-import { AppDataSource } from '../data-source';
+import { Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
+import { InjectRepository } from '../decorators';
 import { Chunk } from '../entities';
 import * as Near from '../near';
 
+@Service()
 export class ChunkService {
-  private readonly repository: Repository<Chunk>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(Chunk);
-  }
+  constructor(
+    @InjectRepository(Chunk) private readonly repository: Repository<Chunk>,
+  ) {}
 
   fromJSON(blockHash: string, chunk: Near.Chunk) {
     return this.repository.create({
@@ -22,10 +22,11 @@ export class ChunkService {
     });
   }
 
-  async insert(entities: Chunk[]) {
-    return this.repository
+  async insert(manager: EntityManager, entities: Chunk[]) {
+    return manager
       .createQueryBuilder()
       .insert()
+      .into(Chunk)
       .values(entities)
       .orIgnore()
       .execute();

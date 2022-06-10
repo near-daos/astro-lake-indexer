@@ -1,39 +1,41 @@
+import { Logger } from 'log4js';
 import { uniqWith } from 'lodash';
+import { Inject, Service } from 'typedi';
 import { BlockService } from './block.service';
 import { CacheService } from './cache.service';
 import { ChunkService } from './chunk.service';
 import { TransactionService } from './transaction.service';
 import { ReceiptService } from './receipt.service';
 import { ExecutionOutcomeService } from './execution-outcome.service';
-import { AppDataSource } from '../data-source';
-import { createLogger } from '../logger';
+import { InjectLogger } from '../decorators';
 import * as Near from '../near';
 import {
   ExecutionOutcomeData,
   ReceiptDataWithTransactionHash,
   TransactionData,
 } from '../types';
+import { EntityManager } from 'typeorm';
 
+@Service()
 export class ObjectService {
-  private readonly blockService: BlockService;
-  private readonly chunkService: ChunkService;
-  private readonly transactionService: TransactionService;
-  private readonly receiptService: ReceiptService;
-  private readonly executionOutcomeService: ExecutionOutcomeService;
-
   constructor(
+    @InjectLogger('object-service')
+    private readonly logger: Logger,
+    @Inject()
     private readonly cacheService: CacheService,
-    private readonly manager = AppDataSource.manager,
-    private readonly logger = createLogger('object-service'),
-  ) {
-    this.blockService = new BlockService(manager);
-    this.chunkService = new ChunkService(manager);
-    this.transactionService = new TransactionService(manager);
-    this.receiptService = new ReceiptService(manager);
-    this.executionOutcomeService = new ExecutionOutcomeService(manager);
-  }
+    @Inject()
+    private readonly blockService: BlockService,
+    @Inject()
+    private readonly chunkService: ChunkService,
+    @Inject()
+    private readonly transactionService: TransactionService,
+    @Inject()
+    private readonly receiptService: ReceiptService,
+    @Inject()
+    private readonly executionOutcomeService: ExecutionOutcomeService,
+  ) {}
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
+  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     let transactions: TransactionData[] = [];
     let receipts: ReceiptDataWithTransactionHash[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
@@ -263,10 +265,13 @@ export class ObjectService {
       ),
     }); */
 
-    await this.blockService.insert(blockEntities);
-    await this.chunkService.insert(chunkEntities);
-    await this.transactionService.insert(transactionEntities);
-    await this.receiptService.insert(receiptEntities);
-    await this.executionOutcomeService.insert(executionOutcomeEntities);
+    await this.blockService.insert(manager, blockEntities);
+    await this.chunkService.insert(manager, chunkEntities);
+    await this.transactionService.insert(manager, transactionEntities);
+    await this.receiptService.insert(manager, receiptEntities);
+    await this.executionOutcomeService.insert(
+      manager,
+      executionOutcomeEntities,
+    );
   }
 }
