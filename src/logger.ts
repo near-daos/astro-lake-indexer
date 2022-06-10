@@ -1,10 +1,10 @@
+import { Container } from 'typedi';
 import { Logger, getLogger } from 'log4js';
-import config from './config';
+import { Config } from './config';
 
-const createLogger = (category: string): Logger => {
+export const createLogger = (category: string): Logger => {
+  const config = Container.get(Config);
   const logger = getLogger(category);
   logger.level = config.LOG_LEVEL;
   return logger;
 };
-
-export { Logger, createLogger };

@@ -1,15 +1,16 @@
-import { Repository } from 'typeorm';
+import { Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { AppDataSource } from '../data-source';
+import { InjectRepository } from '../decorators';
 import { DataReceipt } from '../entities';
 import * as Near from '../near';
 
+@Service()
 export class DataReceiptService {
-  private readonly repository: Repository<DataReceipt>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(DataReceipt);
-  }
+  constructor(
+    @InjectRepository(DataReceipt)
+    private readonly repository: Repository<DataReceipt>,
+  ) {}
 
   fromJSON(receiptId: string, dataReceipt: Near.DataReceipt) {
     const {
@@ -23,10 +24,11 @@ export class DataReceiptService {
     });
   }
 
-  async insert(entities: DataReceipt[]) {
-    return this.repository
+  async insert(manager: EntityManager, entities: DataReceipt[]) {
+    return manager
       .createQueryBuilder()
       .insert()
+      .into(DataReceipt)
       .values(entities as QueryDeepPartialEntity<DataReceipt>[])
       .orIgnore()
       .execute();

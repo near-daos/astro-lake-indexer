@@ -1,16 +1,20 @@
-import { Repository } from 'typeorm';
-import config from '../config';
-import { AppDataSource } from '../data-source';
+import { Inject, Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Config } from '../config';
+import { InjectRepository } from '../decorators';
 import { Event } from '../entities';
 import * as Near from '../near';
 import { jsonMatchAccounts } from '../utils';
 
+@Service()
 export class EventService {
-  private readonly repository: Repository<Event>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(Event);
-  }
+  constructor(
+    @Inject()
+    private readonly config: Config,
+    @InjectRepository(Event)
+    private readonly repository: Repository<Event>,
+  ) {}
 
   fromJSON(
     blockTimestamp: bigint,
@@ -20,25 +24,19 @@ export class EventService {
       outcome: Near.ExecutionOutcomeWithReceipt;
     }[],
   ) {
-    const entities: Event[] = [];
-
-    eventsWithOutcomes.forEach(({ event, outcome }) => {
-      entities.push(
-        this.repository.create({
-          emitted_for_receipt_id: outcome.execution_outcome.id,
-          emitted_at_block_timestamp: blockTimestamp,
-          emitted_in_shard_id: shardId,
-          emitted_index_of_event_entry_in_shard: entities.length,
-          emitted_by_contract_id: outcome.receipt.receiver_id,
-          event_json: event,
-        }),
-      );
-    });
-
-    return entities;
+    return eventsWithOutcomes.map(({ event, outcome }, index) =>
+      this.repository.create({
+        emitted_for_receipt_id: outcome.execution_outcome.id,
+        emitted_at_block_timestamp: blockTimestamp,
+        emitted_in_shard_id: shardId,
+        emitted_index_of_event_entry_in_shard: index,
+        emitted_by_contract_id: outcome.receipt.receiver_id,
+        event_json: event,
+      }),
+    );
   }
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
+  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .map((shard, shardId) =>
         shard.receipt_execution_outcomes
@@ -59,10 +57,16 @@ export class EventService {
       )
       .flat();
 
-    return this.repository.save(entities);
+    return manager
+      .createQueryBuilder()
+      .insert()
+      .into(Event)
+      .values(entities as QueryDeepPartialEntity<Event>[])
+      .orIgnore()
+      .execute();
   }
 
   shouldStore(event: Near.Event) {
-    return jsonMatchAccounts(event, config.TRACK_ACCOUNTS);
+    return jsonMatchAccounts(event, this.config.TRACK_ACCOUNTS);
   }
 }

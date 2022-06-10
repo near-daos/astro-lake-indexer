@@ -1,6 +1,7 @@
-import 'reflect-metadata';
+import { Container } from 'typedi';
 import { DataSource } from 'typeorm';
-import config from './config';
+import { Config } from './config';
+import { CustomNamingStrategy } from './naming-strategy';
 import {
   AccessKey,
   Account,
@@ -22,7 +23,8 @@ import {
   Transaction,
   TransactionAction,
 } from './entities';
-import { CustomNamingStrategy } from './naming-strategy';
+
+const config = Container.get(Config);
 
 export const AppDataSource = new DataSource({
   type: config.DATABASE_TYPE,

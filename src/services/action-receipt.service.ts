@@ -1,28 +1,25 @@
-import { Repository } from 'typeorm';
+import { Inject, Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ActionReceiptActionService } from './action-receipt-action.service';
 import { ActionReceiptInputDataService } from './action-receipt-input-data.service';
 import { ActionReceiptOutputDataService } from './action-receipt-output-data.service';
-import * as Near from '../near';
-import { AppDataSource } from '../data-source';
+import { InjectRepository } from '../decorators';
 import { ActionReceipt } from '../entities';
+import * as Near from '../near';
 
+@Service()
 export class ActionReceiptService {
-  private readonly repository: Repository<ActionReceipt>;
-  private readonly actionReceiptActionService: ActionReceiptActionService;
-  private readonly actionReceiptInputDataService: ActionReceiptInputDataService;
-  private readonly actionReceiptOutputDataService: ActionReceiptOutputDataService;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(ActionReceipt);
-    this.actionReceiptActionService = new ActionReceiptActionService(manager);
-    this.actionReceiptInputDataService = new ActionReceiptInputDataService(
-      manager,
-    );
-    this.actionReceiptOutputDataService = new ActionReceiptOutputDataService(
-      manager,
-    );
-  }
+  constructor(
+    @InjectRepository(ActionReceipt)
+    private readonly repository: Repository<ActionReceipt>,
+    @Inject()
+    private readonly actionReceiptActionService: ActionReceiptActionService,
+    @Inject()
+    private readonly actionReceiptInputDataService: ActionReceiptInputDataService,
+    @Inject()
+    private readonly actionReceiptOutputDataService: ActionReceiptOutputDataService,
+  ) {}
 
   fromJSON(
     blockTimestamp: bigint,
@@ -42,7 +39,7 @@ export class ActionReceiptService {
       },
     } = actionReceipt;
 
-    return {
+    return this.repository.create({
       receipt_id: receiptId,
       signer_account_id: signer_id,
       signer_public_key: signer_public_key,
@@ -67,13 +64,14 @@ export class ActionReceiptService {
           receiver_id,
         ),
       ),
-    };
+    });
   }
 
-  async insert(entities: ActionReceipt[]) {
-    await this.repository
+  async insert(manager: EntityManager, entities: ActionReceipt[]) {
+    await manager
       .createQueryBuilder()
       .insert()
+      .into(ActionReceipt)
       .values(entities as QueryDeepPartialEntity<ActionReceipt>[])
       .orIgnore()
       .execute();
@@ -83,9 +81,9 @@ export class ActionReceiptService {
     const outputDatas = entities.map((entity) => entity.outputData).flat();
 
     await Promise.all([
-      this.actionReceiptActionService.insert(actions),
-      this.actionReceiptInputDataService.insert(inputDatas),
-      this.actionReceiptOutputDataService.insert(outputDatas),
+      this.actionReceiptActionService.insert(manager, actions),
+      this.actionReceiptInputDataService.insert(manager, inputDatas),
+      this.actionReceiptOutputDataService.insert(manager, outputDatas),
     ]);
   }
 }

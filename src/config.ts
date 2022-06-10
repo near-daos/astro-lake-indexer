@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import { Provider } from 'nconf';
+import { Service } from 'typedi';
 
+@Service({ global: true })
 export class Config {
   private provider: Provider;
 
@@ -109,5 +111,3 @@ export class Config {
       .map((account) => account.trim());
   }
 }
-
-export default new Config();

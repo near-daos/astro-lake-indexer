@@ -1,16 +1,21 @@
+import { Inject, Service } from 'typedi';
 import * as AWS from 'aws-sdk';
+import { Logger } from 'log4js';
 import JSONbig from 'json-bigint';
-import config from './config';
-import { createLogger } from './logger';
+import { Config } from './config';
+import { InjectLogger } from './decorators';
 import { formatBlockHeight } from './utils';
 import * as Near from './near';
 
-const JSONParser = JSONbig({ useNativeBigInt: true });
-
-export default class S3Fetcher {
+@Service()
+export class S3Fetcher {
   constructor(
+    @Inject()
+    private readonly config: Config,
+    @InjectLogger('s3-fetcher')
+    private readonly logger: Logger,
     private readonly s3 = new AWS.S3(),
-    private readonly logger = createLogger('s3-fetcher'),
+    private readonly json = JSONbig({ useNativeBigInt: true }),
   ) {}
 
   async listBlocks(startBlockHeight: number) {
@@ -20,8 +25,8 @@ export default class S3Fetcher {
 
     const result = await this.s3
       .listObjectsV2({
-        Bucket: config.AWS_BUCKET,
-        MaxKeys: config.FETCH_MAX_KEYS,
+        Bucket: this.config.AWS_BUCKET,
+        MaxKeys: this.config.FETCH_MAX_KEYS,
         Delimiter: '/',
         RequestPayer: 'requester',
         StartAfter: startAfter,
@@ -42,13 +47,13 @@ export default class S3Fetcher {
 
     const result = await this.s3
       .getObject({
-        Bucket: config.AWS_BUCKET,
+        Bucket: this.config.AWS_BUCKET,
         Key: key,
         RequestPayer: 'requester',
       })
       .promise();
 
-    return JSONParser.parse(result?.Body?.toString() || '') as Near.Block;
+    return this.json.parse(result?.Body?.toString() || '') as Near.Block;
   }
 
   async getShard(blockHeight: number, shardId: number) {
@@ -58,12 +63,12 @@ export default class S3Fetcher {
 
     const result = await this.s3
       .getObject({
-        Bucket: config.AWS_BUCKET,
+        Bucket: this.config.AWS_BUCKET,
         Key: key,
         RequestPayer: 'requester',
       })
       .promise();
 
-    return JSONParser.parse(result?.Body?.toString() || '') as Near.Shard;
+    return this.json.parse(result?.Body?.toString() || '') as Near.Shard;
   }
 }

@@ -1,14 +1,15 @@
-import { Repository } from 'typeorm';
+import { Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { AppDataSource } from '../data-source';
+import { InjectRepository } from '../decorators';
 import { ActionReceiptOutputData } from '../entities';
 
+@Service()
 export class ActionReceiptOutputDataService {
-  private readonly repository: Repository<ActionReceiptOutputData>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(ActionReceiptOutputData);
-  }
+  constructor(
+    @InjectRepository(ActionReceiptOutputData)
+    private readonly repository: Repository<ActionReceiptOutputData>,
+  ) {}
 
   fromJSON(receiptId: string, dataId: string, receiverAccountId: string) {
     return this.repository.create({
@@ -18,10 +19,11 @@ export class ActionReceiptOutputDataService {
     });
   }
 
-  async insert(entities: ActionReceiptOutputData[]) {
-    return this.repository
+  async insert(manager: EntityManager, entities: ActionReceiptOutputData[]) {
+    return manager
       .createQueryBuilder()
       .insert()
+      .into(ActionReceiptOutputData)
       .values(entities as QueryDeepPartialEntity<ActionReceiptOutputData>[])
       .orIgnore()
       .execute();

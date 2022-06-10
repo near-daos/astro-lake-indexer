@@ -1,21 +1,23 @@
-import { Repository } from 'typeorm';
+import { Inject, Service } from 'typedi';
+import { EntityManager } from 'typeorm';
 import { ExecutionOutcomeService } from './execution-outcome.service';
-import * as Near from '../near';
-import { AppDataSource } from '../data-source';
+import { Config } from '../config';
 import { Account } from '../entities';
+import * as Near from '../near';
 import { matchAccounts } from '../utils';
-import config from '../config';
 
+@Service()
 export class AccountService {
-  private readonly repository: Repository<Account>;
-  private readonly executionOutcomeService: ExecutionOutcomeService;
+  constructor(
+    @Inject()
+    private readonly config: Config,
+    @Inject()
+    private readonly executionOutcomeService: ExecutionOutcomeService,
+  ) {}
 
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(Account);
-    this.executionOutcomeService = new ExecutionOutcomeService(manager);
-  }
+  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
+    const repository = manager.getRepository(Account);
 
-  async store(block: Near.Block, shards: Near.Shard[]) {
     const actions = this.executionOutcomeService
       .getSuccessfulReceiptActions(
         shards.map((shard) => shard.receipt_execution_outcomes).flat(),
@@ -29,7 +31,7 @@ export class AccountService {
 
           switch (actionKind) {
             case Near.Actions.CreateAccount: {
-              return this.repository.insert({
+              return repository.insert({
                 account_id: receipt.receiver_id,
                 created_by_receipt_id: receipt.receipt_id,
                 last_update_block_height: block.header.height,
@@ -44,7 +46,7 @@ export class AccountService {
               ) {
                 return;
               }
-              return this.repository.insert({
+              return repository.insert({
                 account_id: receipt.receiver_id,
                 created_by_receipt_id: receipt.receipt_id,
                 last_update_block_height: block.header.height,
@@ -52,7 +54,7 @@ export class AccountService {
             }
 
             case Near.Actions.DeleteAccount: {
-              return this.repository.upsert(
+              return repository.upsert(
                 {
                   account_id: receipt.receiver_id,
                   deleted_by_receipt_id: receipt.receipt_id,
@@ -69,6 +71,6 @@ export class AccountService {
   }
 
   shouldStore(receipt: Near.Receipt) {
-    return matchAccounts(receipt.receiver_id, config.TRACK_ACCOUNTS);
+    return matchAccounts(receipt.receiver_id, this.config.TRACK_ACCOUNTS);
   }
 }

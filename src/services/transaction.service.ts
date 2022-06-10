@@ -1,20 +1,23 @@
-import { Repository } from 'typeorm';
+import { Inject, Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TransactionActionService } from './transaction-action.service';
-import { AppDataSource } from '../data-source';
+import { Config } from '../config';
+import { InjectRepository } from '../decorators';
 import { Transaction, TransactionStatus } from '../entities';
 import { jsonMatchAccounts, matchAccounts } from '../utils';
 import * as Near from '../near';
-import config from '../config';
 
+@Service()
 export class TransactionService {
-  private readonly repository: Repository<Transaction>;
-  private readonly transactionActionService: TransactionActionService;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(Transaction);
-    this.transactionActionService = new TransactionActionService(manager);
-  }
+  constructor(
+    @Inject()
+    private readonly config: Config,
+    @InjectRepository(Transaction)
+    private readonly repository: Repository<Transaction>,
+    @Inject()
+    private readonly transactionActionService: TransactionActionService,
+  ) {}
 
   fromJSON(
     blockHash: string,
@@ -56,24 +59,25 @@ export class TransactionService {
     });
   }
 
-  async insert(entities: Transaction[]) {
-    await this.repository
+  async insert(manager: EntityManager, entities: Transaction[]) {
+    await manager
       .createQueryBuilder()
       .insert()
+      .into(Transaction)
       .values(entities as QueryDeepPartialEntity<Transaction>[])
       .orIgnore()
       .execute();
 
     const actions = entities.map((entity) => entity.actions).flat();
 
-    await this.transactionActionService.insert(actions);
+    await this.transactionActionService.insert(manager, actions);
   }
 
   shouldStore(tx: Near.TransactionWithOutcome) {
     // store if receiver or signer is tracked account
     if (
-      matchAccounts(tx.transaction.receiver_id, config.TRACK_ACCOUNTS) ||
-      matchAccounts(tx.transaction.signer_id, config.TRACK_ACCOUNTS)
+      matchAccounts(tx.transaction.receiver_id, this.config.TRACK_ACCOUNTS) ||
+      matchAccounts(tx.transaction.signer_id, this.config.TRACK_ACCOUNTS)
     ) {
       return true;
     }
@@ -81,7 +85,7 @@ export class TransactionService {
     // store if some action args contains tracked account
     return tx.transaction.actions.some((action) => {
       const { actionArgs } = Near.parseAction(action);
-      return jsonMatchAccounts(actionArgs, config.TRACK_ACCOUNTS);
+      return jsonMatchAccounts(actionArgs, this.config.TRACK_ACCOUNTS);
     });
   }
 }

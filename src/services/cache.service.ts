@@ -1,7 +1,9 @@
+import { Service } from 'typedi';
 import LRUCache from 'lru-cache';
 import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
 import * as Near from '../near';
 
+@Service({ global: true })
 export class CacheService {
   constructor(
     private readonly transactionsCache = new LRUCache<string, TransactionData>({

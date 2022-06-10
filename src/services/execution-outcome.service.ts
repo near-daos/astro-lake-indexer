@@ -1,25 +1,26 @@
-import { Repository } from 'typeorm';
+import { Inject, Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ExecutionOutcomeReceiptService } from './execution-outcome-receipt.service';
 import { ReceiptService } from './receipt.service';
-import { AppDataSource } from '../data-source';
+import { Config } from '../config';
+import { InjectRepository } from '../decorators';
 import { ExecutionOutcome, ExecutionStatus } from '../entities';
 import * as Near from '../near';
 import { matchAccounts } from '../utils';
-import config from '../config';
 
+@Service()
 export class ExecutionOutcomeService {
-  private readonly repository: Repository<ExecutionOutcome>;
-  private readonly receiptService: ReceiptService;
-  private readonly executionOutcomeReceiptService: ExecutionOutcomeReceiptService;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(ExecutionOutcome);
-    this.receiptService = new ReceiptService(manager);
-    this.executionOutcomeReceiptService = new ExecutionOutcomeReceiptService(
-      manager,
-    );
-  }
+  constructor(
+    @Inject()
+    private readonly config: Config,
+    @InjectRepository(ExecutionOutcome)
+    private readonly repository: Repository<ExecutionOutcome>,
+    @Inject()
+    private readonly receiptService: ReceiptService,
+    @Inject()
+    private readonly executionOutcomeReceiptService: ExecutionOutcomeReceiptService,
+  ) {}
 
   fromJSON(
     blockHash: string,
@@ -52,17 +53,18 @@ export class ExecutionOutcomeService {
     });
   }
 
-  async insert(entities: ExecutionOutcome[]) {
-    await this.repository
+  async insert(manager: EntityManager, entities: ExecutionOutcome[]) {
+    await manager
       .createQueryBuilder()
       .insert()
+      .into(ExecutionOutcome)
       .values(entities as QueryDeepPartialEntity<ExecutionOutcome>[])
       .orIgnore()
       .execute();
 
     const receipts = entities.map((entity) => entity.receipts).flat();
 
-    return this.executionOutcomeReceiptService.insert(receipts);
+    return this.executionOutcomeReceiptService.insert(manager, receipts);
   }
 
   shouldStore(outcome: Near.ExecutionOutcomeWithReceipt) {
@@ -73,7 +75,7 @@ export class ExecutionOutcomeService {
 
     // store if some log entry contains tracked account
     return outcome.execution_outcome.outcome.logs.some((log) =>
-      matchAccounts(log, config.TRACK_ACCOUNTS),
+      matchAccounts(log, this.config.TRACK_ACCOUNTS),
     );
   }
 

@@ -1,15 +1,16 @@
-import { Repository } from 'typeorm';
+import { Service } from 'typedi';
+import { EntityManager, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { AppDataSource } from '../data-source';
+import { InjectRepository } from '../decorators';
 import { ActionKind, TransactionAction } from '../entities';
 import * as Near from '../near';
 
+@Service()
 export class TransactionActionService {
-  private readonly repository: Repository<TransactionAction>;
-
-  constructor(private readonly manager = AppDataSource.manager) {
-    this.repository = manager.getRepository(TransactionAction);
-  }
+  constructor(
+    @InjectRepository(TransactionAction)
+    private readonly repository: Repository<TransactionAction>,
+  ) {}
 
   fromJSON(
     transactionHash: string,
@@ -26,10 +27,11 @@ export class TransactionActionService {
     });
   }
 
-  async insert(entities: TransactionAction[]) {
-    return await this.repository
+  async insert(manager: EntityManager, entities: TransactionAction[]) {
+    return await manager
       .createQueryBuilder()
       .insert()
+      .into(TransactionAction)
       .values(entities as QueryDeepPartialEntity<TransactionAction>[])
       .orIgnore()
       .execute();
