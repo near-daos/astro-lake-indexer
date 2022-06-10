@@ -28,13 +28,14 @@ jobs:
         run: |
             echo "input was provided: ${{ github.event.inputs.environment }}"
             echo "::set-output name=environment::${{ github.event.inputs.environment }}"
-            echo "::set-output name=namespace::astro-stats-${{ github.event.inputs.environment }}"
             case "${{ github.event.inputs.environment }}" in
               development)
                 echo "::set-output name=docker_env_tag::develop-$GITHUB_SHA"
+                echo "::set-output name=namespace::sputnik-v2-${{ github.event.inputs.environment }}"
               ;;
               production)
                 echo "::set-output name=docker_env_tag::$GITHUB_SHA"
+                echo "::set-output name=namespace::sputnik-v2"
               ;;
               *)
                 echo "Provided environment '${{ github.event.inputs.environment }}' is incorrect"
