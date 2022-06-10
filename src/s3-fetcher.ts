@@ -15,7 +15,7 @@ export class S3Fetcher {
     @InjectLogger('s3-fetcher')
     private readonly logger: Logger,
     private readonly s3 = new AWS.S3(),
-    private readonly jsonParser = JSONbig({ useNativeBigInt: true }),
+    private readonly json = JSONbig({ useNativeBigInt: true }),
   ) {}
 
   async listBlocks(startBlockHeight: number) {
@@ -53,7 +53,7 @@ export class S3Fetcher {
       })
       .promise();
 
-    return this.jsonParser.parse(result?.Body?.toString() || '') as Near.Block;
+    return this.json.parse(result?.Body?.toString() || '') as Near.Block;
   }
 
   async getShard(blockHeight: number, shardId: number) {
@@ -69,6 +69,6 @@ export class S3Fetcher {
       })
       .promise();
 
-    return this.jsonParser.parse(result?.Body?.toString() || '') as Near.Shard;
+    return this.json.parse(result?.Body?.toString() || '') as Near.Shard;
   }
 }

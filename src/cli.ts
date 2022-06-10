@@ -14,7 +14,7 @@ if (!blockNumber) {
 
 const config = Container.get(Config);
 const fetcher = Container.get(S3Fetcher);
-const JSONParser = JSONbig({ useNativeBigInt: true });
+const json = JSONbig({ useNativeBigInt: true });
 
 AWS.config.update({
   accessKeyId: config.AWS_ACCESS_KEY_ID,
@@ -31,5 +31,5 @@ AWS.config.update({
     ),
   );
 
-  console.log(JSONParser.stringify({ block, shards }, null, '\t'));
+  console.log(json.stringify({ block, shards }, null, '\t'));
 })();
