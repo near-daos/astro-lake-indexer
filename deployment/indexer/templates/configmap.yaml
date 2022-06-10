@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: astro-lake-indexer-configmap
 data:
+  NODE_OPTIONS: ' --max-old-space-size={{ include "node.maxOldSpaceSize" . }} '
 {{- range $k, $v := .Values.environment }}
   {{ $k }}: "{{ $v }}"
 {{- end }}
