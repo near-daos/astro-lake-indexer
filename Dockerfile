@@ -3,7 +3,7 @@ FROM node:18-alpine As dependencies
 ARG APP_NAME indexer
 ENV APP_NAME ${APP_NAME}
 
-ARG NODE_ENV=production
+ARG NODE_ENV=development
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /usr/src/app
