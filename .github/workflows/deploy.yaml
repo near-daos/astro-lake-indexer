@@ -65,7 +65,7 @@ jobs:
           command: |
             set -x
             echo "environment:" > env-values.yaml
-            env | grep '^HELM' | sed -e 's/^HELM_//' -e 's/=/: /' -e 's/^/  /' >> env-values.yaml
+            env | grep '^HELM' | sed -e 's/^HELM_//' -e 's/=/: "/' -e 's/^/  /' -e 's/$/"/' >> env-values.yaml
             export CHART_FOLDER=deployment/indexer
             helm lint $CHART_FOLDER
             helm -n ${{ needs.get-environment.outputs.namespace }} \
