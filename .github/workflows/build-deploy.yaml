@@ -31,12 +31,12 @@ jobs:
           if [[ "${{ github.ref }}" =~ ^refs/tags.* ]]
           then
             echo "::set-output name=environment::production"
-            echo "::set-output name=namespace::astro-lake-production"
+            echo "::set-output name=namespace::sputnik-v2"
             echo "::set-output name=docker_env_tag::${GITHUB_REF#refs/*/}"
           elif [[ "${{ github.ref }}" =~ ^refs/heads/develop ]]
           then
             echo "::set-output name=environment::development"
-            echo "::set-output name=namespace::astro-lake-development"
+            echo "::set-output name=namespace::sputnik-v2-development"
             echo "::set-output name=docker_env_tag::develop-$GITHUB_SHA"
           fi
           if [[ "${{ github.event.inputs.environment }}" != "" ]]
