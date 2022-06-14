@@ -92,11 +92,13 @@ export class App {
       () => this.reportStats(),
       this.reportStatsInterval * 1000,
     );
+    this.reportStats();
   }
 
   stop() {
     this.running = false;
     this.reportStatsTimer && clearInterval(this.reportStatsTimer);
+    this.reportStats();
   }
 
   private async download() {
