@@ -83,8 +83,10 @@ export class App {
 
     this.logger.info(`Start block height ${this.startBlockHeight}`);
 
-    this.currentBlockHeight =
-      this.startBlockHeight - this.config.LOOK_BACK_BLOCKS;
+    this.currentBlockHeight = Math.max(
+      this.startBlockHeight - this.config.LOOK_BACK_BLOCKS,
+      1,
+    );
 
     process.nextTick(() => this.download());
     process.nextTick(() => this.process());
@@ -171,7 +173,7 @@ export class App {
       this.logger.info(`Caching block ${blockHeight}...`);
       return;
     } else {
-      this.logger.info(`Processing block ${blockHeight}...`);
+      this.logger.debug(`Processing block ${blockHeight}...`);
     }
 
     await this.manager.transaction(async (manager) => {
@@ -195,10 +197,13 @@ export class App {
     const memUsage = process.memoryUsage().heapUsed / 1024 / 1024;
 
     this.logger.info(
-      `Speed: ${speed} blocks/sec, memory usage: ${
+      `Current block: ${
+        this.currentBlockHeight
+      }, speed: ${speed} blocks/sec, memory usage: ${
         Math.round(memUsage * 100) / 100
       } MB`,
     );
+
     this.processedBlocksCounter = 0;
   }
 
