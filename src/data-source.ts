@@ -1,3 +1,4 @@
+import path from 'path';
 import { Container } from 'typedi';
 import { DataSource } from 'typeorm';
 import { Config } from './config';
@@ -56,7 +57,7 @@ export const AppDataSource = new DataSource({
     Transaction,
     TransactionAction,
   ],
-  migrations: ['src/migrations/**/*.ts'],
+  migrations: [path.resolve(__dirname, 'migrations/**/*')],
   subscribers: [],
   namingStrategy: new CustomNamingStrategy(),
 });

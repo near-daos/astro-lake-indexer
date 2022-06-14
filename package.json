@@ -5,6 +5,7 @@
    "main": "build/index.js",
    "scripts": {
       "build": "tsc --build",
+      "build:start": "node build/index.js",
       "clean": "tsc --build --clean",
       "cli": "ts-node src/cli.ts",
       "start": "ts-node src/index.ts",
