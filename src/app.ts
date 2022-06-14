@@ -26,7 +26,7 @@ export class App {
 
   private startBlockHeight = 0;
   private currentBlockHeight: number;
-  private processedBlocksCounter: number;
+  private processedBlocksCounter = 0;
 
   private blocksQueue: BlockResult[] = [];
 
@@ -96,6 +96,9 @@ export class App {
   }
 
   stop() {
+    if (!this.running) {
+      return;
+    }
     this.running = false;
     this.reportStatsTimer && clearInterval(this.reportStatsTimer);
     this.reportStats();

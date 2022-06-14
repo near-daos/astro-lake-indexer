@@ -28,4 +28,4 @@ EOF
 
 npm run schema:sync
 npm run migration:run
-npm run start
+npm run build:start
