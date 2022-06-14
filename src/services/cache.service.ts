@@ -7,19 +7,19 @@ import * as Near from '../near';
 export class CacheService {
   constructor(
     private readonly transactionsCache = new LRUCache<string, TransactionData>({
-      max: 500,
+      max: 100,
     }),
     private readonly receiptsCache = new LRUCache<string, ReceiptData>({
-      max: 2000,
+      max: 500,
     }),
     private readonly executionOutcomesCache = new LRUCache<
       string,
       ExecutionOutcomeData
     >({
-      max: 2000,
+      max: 500,
     }),
     private readonly transactionHashesCache = new LRUCache<string, string>({
-      max: 2000,
+      max: 100,
     }),
     private readonly alwaysStoreTransactions = new LRUCache({
       max: 100,
