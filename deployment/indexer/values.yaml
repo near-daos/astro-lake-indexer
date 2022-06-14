@@ -1,0 +1,61 @@
+# Default values for sputnik-v2-api.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: 398077236708.dkr.ecr.eu-central-1.amazonaws.com
+  tag: latest
+  name: astro-lake-indexer
+  pullPolicy: Always
+
+imagePullSecrets: [ ]
+nameOverride: ""
+fullnameOverride: ""
+
+container:
+  # Specifies the internal container port
+  internalPort: &port 3000
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: *port
+  targetPort: *port
+
+resources:
+  limits:
+    memory: 1000Mi
+  requests:
+    cpu: 50m
+    memory: 1000Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+version:
+  commit: latest
+  branch: develop
+
+environment:
+  PORT: *port
