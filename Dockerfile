@@ -1,6 +1,6 @@
-FROM node:16-alpine As dependencies
+FROM node:18-alpine As dependencies
 
-ARG APP_NAME indexer
+ARG APP_NAME=indexer
 ENV APP_NAME ${APP_NAME}
 
 ARG NODE_ENV=development

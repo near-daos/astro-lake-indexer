@@ -144,9 +144,8 @@ export class App {
 
       this.blocksQueue = this.blocksQueue.concat(results);
 
-      this.currentBlockHeight = Math.max(
-        ...results.map(({ blockHeight }) => blockHeight),
-      );
+      this.currentBlockHeight =
+        Math.max(...results.map(({ blockHeight }) => blockHeight)) + 1;
     }
   }
 

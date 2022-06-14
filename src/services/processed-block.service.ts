@@ -22,6 +22,8 @@ export class ProcessedBlockService {
   }
 
   async store(manager: EntityManager, block: Near.Block) {
-    return manager.save(ProcessedBlock, { block_height: block.header.height });
+    return manager.insert(ProcessedBlock, {
+      block_height: block.header.height,
+    });
   }
 }
