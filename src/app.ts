@@ -30,8 +30,8 @@ export class App {
 
   private blocksQueue: BlockResult[] = [];
 
-  private reportSpeedTimer: NodeJS.Timer;
-  private readonly reportSpeedInterval = 10;
+  private reportStatsTimer: NodeJS.Timer;
+  private readonly reportStatsInterval = 10;
 
   private readonly retryConfig: Partial<RetryConfig<unknown>> = {
     retries: 10,
@@ -88,15 +88,15 @@ export class App {
 
     process.nextTick(() => this.download());
     process.nextTick(() => this.process());
-    this.reportSpeedTimer = setInterval(
-      () => this.reportSpeed(),
-      this.reportSpeedInterval * 1000,
+    this.reportStatsTimer = setInterval(
+      () => this.reportStats(),
+      this.reportStatsInterval * 1000,
     );
   }
 
   stop() {
     this.running = false;
-    this.reportSpeedTimer && clearInterval(this.reportSpeedTimer);
+    this.reportStatsTimer && clearInterval(this.reportStatsTimer);
   }
 
   private async download() {
@@ -186,11 +186,14 @@ export class App {
     });
   }
 
-  private reportSpeed() {
+  private reportStats() {
+    const speed = this.processedBlocksCounter / this.reportStatsInterval;
+    const memUsage = process.memoryUsage().heapUsed / 1024 / 1024;
+
     this.logger.info(
-      `Speed: ${
-        this.processedBlocksCounter / this.reportSpeedInterval
-      } blocks/sec`,
+      `Speed: ${speed} blocks/sec, memory usage: ${
+        Math.round(memUsage * 100) / 100
+      } MB`,
     );
     this.processedBlocksCounter = 0;
   }
