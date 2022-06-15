@@ -76,9 +76,9 @@ export class ActionReceiptService {
       .orIgnore()
       .execute();
 
-    const actions = entities.map((entity) => entity.actions).flat();
-    const inputDatas = entities.map((entity) => entity.inputData).flat();
-    const outputDatas = entities.map((entity) => entity.outputData).flat();
+    const actions = entities.flatMap((entity) => entity.actions);
+    const inputDatas = entities.flatMap((entity) => entity.inputData);
+    const outputDatas = entities.flatMap((entity) => entity.outputData);
 
     await Promise.all([
       this.actionReceiptActionService.insert(manager, actions),

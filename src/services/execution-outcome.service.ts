@@ -62,7 +62,7 @@ export class ExecutionOutcomeService {
       .orIgnore()
       .execute();
 
-    const receipts = entities.map((entity) => entity.receipts).flat();
+    const receipts = entities.flatMap((entity) => entity.receipts);
 
     return this.executionOutcomeReceiptService.insert(manager, receipts);
   }

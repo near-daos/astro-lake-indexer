@@ -72,7 +72,7 @@ export class AccountChangeService {
 
   async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     const values = shards
-      .map((shard) =>
+      .flatMap((shard) =>
         shard.state_changes
           .filter((stateChange) => this.shouldStore(stateChange))
           .map((stateChange, index) =>
@@ -84,14 +84,13 @@ export class AccountChangeService {
             ),
           ),
       )
-      .flat()
-      .filter(Boolean) as QueryDeepPartialEntity<AccountChange>;
+      .filter(Boolean);
 
     return manager
       .createQueryBuilder()
       .insert()
       .into(AccountChange)
-      .values(values)
+      .values(values as QueryDeepPartialEntity<AccountChange>[])
       .orIgnore()
       .execute();
   }

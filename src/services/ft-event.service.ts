@@ -100,25 +100,21 @@ export class FtEventService {
   }
 
   async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards
-      .map((shard, shardId) =>
-        shard.receipt_execution_outcomes
-          .map((outcome) => {
-            const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
-              .map(Near.parseLogEvent)
-              .filter(Near.isNEP141Event)
-              .filter(this.shouldStore)
-              .map((event) => ({ event, outcome }));
+    const entities = shards.flatMap((shard, shardId) =>
+      shard.receipt_execution_outcomes.flatMap((outcome) => {
+        const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
+          .map(Near.parseLogEvent)
+          .filter(Near.isNEP141Event)
+          .filter(this.shouldStore)
+          .map((event) => ({ event, outcome }));
 
-            return this.fromJSON(
-              block.header.timestamp,
-              shardId,
-              eventsWithOutcomes,
-            );
-          })
-          .flat(),
-      )
-      .flat();
+        return this.fromJSON(
+          block.header.timestamp,
+          shardId,
+          eventsWithOutcomes,
+        );
+      }),
+    );
 
     return manager
       .createQueryBuilder()

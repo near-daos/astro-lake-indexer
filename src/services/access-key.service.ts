@@ -20,7 +20,7 @@ export class AccessKeyService {
 
     const actions = this.executionOutcomeService
       .getSuccessfulReceiptActions(
-        shards.map((shard) => shard.receipt_execution_outcomes).flat(),
+        shards.flatMap((shard) => shard.receipt_execution_outcomes),
       )
       .filter((receipt) => this.shouldStore(receipt))
       .map(async (receipt) => {

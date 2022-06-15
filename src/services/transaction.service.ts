@@ -68,7 +68,7 @@ export class TransactionService {
       .orIgnore()
       .execute();
 
-    const actions = entities.map((entity) => entity.actions).flat();
+    const actions = entities.flatMap((entity) => entity.actions);
 
     await this.transactionActionService.insert(manager, actions);
   }
