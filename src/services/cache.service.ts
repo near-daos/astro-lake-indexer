@@ -19,7 +19,7 @@ export class CacheService {
       max: 500,
     }),
     private readonly transactionHashesCache = new LRUCache<string, string>({
-      max: 100,
+      max: 500,
     }),
     private readonly alwaysStoreTransactions = new LRUCache({
       max: 100,
