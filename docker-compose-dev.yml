@@ -13,5 +13,23 @@ services:
       - POSTGRES_PASSWORD=indexer
       - POSTGRES_DB=indexer
 
+  indexer:
+    build:
+      context: .
+      args:
+        - NODE_ENV=development
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+    deploy:
+      resources:
+        limits:
+          memory: 2000M
+        reservations:
+          cpus: '0.1'
+          memory: 2000M
+
 volumes:
   pg-data:
