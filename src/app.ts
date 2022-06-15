@@ -28,7 +28,7 @@ export class App {
   private currentBlockHeight: number;
   private processedBlocksCounter = 0;
 
-  private blocksQueue: BlockResult[] = [];
+  private readonly blocksQueue: BlockResult[] = [];
 
   private reportStatsTimer: NodeJS.Timer;
   private readonly reportStatsInterval = 10;
@@ -144,10 +144,8 @@ export class App {
 
       results.sort((a, b) => a.blockHeight - b.blockHeight);
 
-      this.blocksQueue = this.blocksQueue.concat(results);
-
-      this.currentBlockHeight =
-        Math.max(...results.map(({ blockHeight }) => blockHeight)) + 1;
+      this.blocksQueue.push(...results);
+      this.currentBlockHeight = results[results.length - 1].blockHeight + 1;
     }
   }
 
@@ -160,7 +158,7 @@ export class App {
     }
 
     if (this.running) {
-      setImmediate(() => this.process());
+      setTimeout(() => this.process(), 100);
     }
   }
 

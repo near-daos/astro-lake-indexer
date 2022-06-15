@@ -1,6 +1,7 @@
 import { Logger } from 'log4js';
 import { uniqWith } from 'lodash';
 import { Inject, Service } from 'typedi';
+import { EntityManager } from 'typeorm';
 import { BlockService } from './block.service';
 import { CacheService } from './cache.service';
 import { ChunkService } from './chunk.service';
@@ -14,7 +15,6 @@ import {
   ReceiptDataWithTransactionHash,
   TransactionData,
 } from '../types';
-import { EntityManager } from 'typeorm';
 
 @Service()
 export class ObjectService {
@@ -265,31 +265,35 @@ export class ObjectService {
       ),
     }); */
 
-    await this.blockService.insert(manager, blockEntities);
-    await this.chunkService.insert(manager, chunkEntities);
-    await this.transactionService.insert(manager, transactionEntities);
-    await this.receiptService.insert(manager, receiptEntities);
-    await this.executionOutcomeService.insert(
-      manager,
-      executionOutcomeEntities,
-    );
-
-    blockEntities.length &&
+    if (blockEntities.length) {
+      await this.blockService.insert(manager, blockEntities);
       this.logger.info('Stored blocks: %d', blockEntities.length);
+    }
 
-    chunkEntities.length &&
+    if (chunkEntities.length) {
+      await this.chunkService.insert(manager, chunkEntities);
       this.logger.info('Stored chunks: %d', chunkEntities.length);
+    }
 
-    transactionEntities.length &&
+    if (transactionEntities.length) {
+      await this.transactionService.insert(manager, transactionEntities);
       this.logger.info('Stored transactions: %d', transactionEntities.length);
+    }
 
-    receiptEntities.length &&
+    if (receiptEntities.length) {
+      await this.receiptService.insert(manager, receiptEntities);
       this.logger.info('Stored receipts: %d', receiptEntities.length);
+    }
 
-    executionOutcomeEntities.length &&
+    if (executionOutcomeEntities.length) {
+      await this.executionOutcomeService.insert(
+        manager,
+        executionOutcomeEntities,
+      );
       this.logger.info(
         'Stored execution outcomes: %d',
         executionOutcomeEntities.length,
       );
+    }
   }
 }
