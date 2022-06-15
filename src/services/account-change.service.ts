@@ -70,8 +70,18 @@ export class AccountChangeService {
     });
   }
 
+  async insert(manager: EntityManager, entities: AccountChange[]) {
+    return manager
+      .createQueryBuilder()
+      .insert()
+      .into(AccountChange)
+      .values(entities as QueryDeepPartialEntity<AccountChange>[])
+      .orIgnore()
+      .execute();
+  }
+
   async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
-    const values = shards
+    const entities = shards
       .flatMap((shard) =>
         shard.state_changes
           .filter((stateChange) => this.shouldStore(stateChange))
@@ -84,15 +94,13 @@ export class AccountChangeService {
             ),
           ),
       )
-      .filter(Boolean);
+      .filter(Boolean) as AccountChange[];
 
-    return manager
-      .createQueryBuilder()
-      .insert()
-      .into(AccountChange)
-      .values(values as QueryDeepPartialEntity<AccountChange>[])
-      .orIgnore()
-      .execute();
+    if (!entities.length) {
+      return;
+    }
+
+    return this.insert(manager, entities);
   }
 
   shouldStore(stateChange: Near.StateChange) {

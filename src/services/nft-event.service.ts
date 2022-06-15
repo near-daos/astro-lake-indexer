@@ -116,6 +116,16 @@ export class NftEventService {
     return entities;
   }
 
+  async insert(manager: EntityManager, entities: NftEvent[]) {
+    return manager
+      .createQueryBuilder()
+      .insert()
+      .into(NftEvent)
+      .values(entities as QueryDeepPartialEntity<NftEvent>[])
+      .orIgnore()
+      .execute();
+  }
+
   async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     const entities = shards.flatMap((shard, shardId) =>
       shard.receipt_execution_outcomes.flatMap((outcome) => {
@@ -133,13 +143,11 @@ export class NftEventService {
       }),
     );
 
-    return manager
-      .createQueryBuilder()
-      .insert()
-      .into(NftEvent)
-      .values(entities as QueryDeepPartialEntity<NftEvent>[])
-      .orIgnore()
-      .execute();
+    if (!entities.length) {
+      return;
+    }
+
+    return this.insert(manager, entities);
   }
 
   shouldStore(event: Near.NEP171Event) {

@@ -36,6 +36,16 @@ export class EventService {
     );
   }
 
+  async insert(manager: EntityManager, entities: Event[]) {
+    return manager
+      .createQueryBuilder()
+      .insert()
+      .into(Event)
+      .values(entities as QueryDeepPartialEntity<Event>[])
+      .orIgnore()
+      .execute();
+  }
+
   async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     const entities = shards.flatMap((shard, shardId) =>
       shard.receipt_execution_outcomes.flatMap((outcome) => {
@@ -53,13 +63,11 @@ export class EventService {
       }),
     );
 
-    return manager
-      .createQueryBuilder()
-      .insert()
-      .into(Event)
-      .values(entities as QueryDeepPartialEntity<Event>[])
-      .orIgnore()
-      .execute();
+    if (!entities.length) {
+      return;
+    }
+
+    return this.insert(manager, entities);
   }
 
   shouldStore(event: Near.Event) {

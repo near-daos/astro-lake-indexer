@@ -99,6 +99,16 @@ export class FtEventService {
     return entities;
   }
 
+  async insert(manager: EntityManager, entities: FtEvent[]) {
+    return manager
+      .createQueryBuilder()
+      .insert()
+      .into(FtEvent)
+      .values(entities as QueryDeepPartialEntity<FtEvent>[])
+      .orIgnore()
+      .execute();
+  }
+
   async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
     const entities = shards.flatMap((shard, shardId) =>
       shard.receipt_execution_outcomes.flatMap((outcome) => {
@@ -116,13 +126,11 @@ export class FtEventService {
       }),
     );
 
-    return manager
-      .createQueryBuilder()
-      .insert()
-      .into(FtEvent)
-      .values(entities as QueryDeepPartialEntity<FtEvent>[])
-      .orIgnore()
-      .execute();
+    if (!entities.length) {
+      return;
+    }
+
+    return this.insert(manager, entities);
   }
 
   shouldStore(event: Near.NEP141Event) {
