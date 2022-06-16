@@ -1,29 +1,21 @@
 import { Service } from 'typedi';
-import QuickLRU from 'quick-lru';
+import Cache from '../cache';
 import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
 import * as Near from '../near';
 
 @Service({ global: true })
 export class CacheService {
   constructor(
-    private readonly transactionsCache = new QuickLRU<string, TransactionData>({
-      maxSize: 100,
-    }),
-    private readonly receiptsCache = new QuickLRU<string, ReceiptData>({
-      maxSize: 500,
-    }),
-    private readonly executionOutcomesCache = new QuickLRU<
+    private readonly transactionsCache = new Cache<string, TransactionData>(
+      100,
+    ),
+    private readonly receiptsCache = new Cache<string, ReceiptData>(500),
+    private readonly executionOutcomesCache = new Cache<
       string,
       ExecutionOutcomeData
-    >({
-      maxSize: 500,
-    }),
-    private readonly transactionHashesCache = new QuickLRU<string, string>({
-      maxSize: 500,
-    }),
-    private readonly alwaysStoreTransactions = new QuickLRU({
-      maxSize: 100,
-    }),
+    >(500),
+    private readonly transactionHashesCache = new Cache<string, string>(500),
+    private readonly alwaysStoreTransactions = new Cache(100),
   ) {}
 
   cacheBlock(block: Near.Block, shards: Near.Shard[]) {
@@ -65,7 +57,7 @@ export class CacheService {
           }
 
           const transactionHash =
-            this.transactionHashesCache.peek(receiptOrDataId);
+            this.transactionHashesCache.get(receiptOrDataId);
 
           if (!transactionHash) {
             return;
@@ -93,7 +85,7 @@ export class CacheService {
             },
           );
 
-          const transactionHash = this.transactionHashesCache.peek(
+          const transactionHash = this.transactionHashesCache.get(
             executionOutcome.execution_outcome.id,
           );
 
@@ -113,7 +105,7 @@ export class CacheService {
   }
 
   getTransactionHash(receiptOrDataId: string) {
-    return this.transactionHashesCache.peek(receiptOrDataId);
+    return this.transactionHashesCache.get(receiptOrDataId);
   }
 
   alwaysStoreTransaction(transactionHash: string) {
@@ -130,7 +122,7 @@ export class CacheService {
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
     // find transaction data
-    const transactionData = this.transactionsCache.peek(transactionHash);
+    const transactionData = this.transactionsCache.get(transactionHash);
 
     if (transactionData) {
       transactions.push(transactionData);
@@ -161,7 +153,7 @@ export class CacheService {
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
     // find current receipt
-    const receiptData = this.receiptsCache.peek(receiptId);
+    const receiptData = this.receiptsCache.get(receiptId);
 
     if (receiptData) {
       receipts.push(receiptData);
@@ -178,7 +170,7 @@ export class CacheService {
 
       // include data receipts in results
       actionReceipt.Action.output_data_receivers.forEach(({ data_id }) => {
-        const dataReceiptData = this.receiptsCache.peek(data_id);
+        const dataReceiptData = this.receiptsCache.get(data_id);
 
         if (dataReceiptData) {
           receipts.push(dataReceiptData);
@@ -190,7 +182,7 @@ export class CacheService {
     }
 
     // find execution outcome for receipt
-    const executionOutcomeData = this.executionOutcomesCache.peek(
+    const executionOutcomeData = this.executionOutcomesCache.get(
       receiptData.receipt.receipt_id,
     );
 
