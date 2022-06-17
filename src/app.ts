@@ -28,8 +28,6 @@ export class App {
   private currentBlockHeight: number;
   private processedBlocksCounter = 0;
 
-  private readonly blocksQueue: BlockResult[] = [];
-
   private reportStatsTimer: NodeJS.Timer;
   private readonly reportStatsInterval = 10;
 
@@ -89,7 +87,6 @@ export class App {
     );
 
     process.nextTick(() => this.download());
-    process.nextTick(() => this.process());
     this.reportStatsTimer = setInterval(
       () => this.reportStats(),
       this.reportStatsInterval * 1000,
@@ -107,6 +104,8 @@ export class App {
   }
 
   private async download() {
+    let processPromise;
+
     while (this.running) {
       const blocks = await retry(
         () => this.fetcher.listBlocks(this.currentBlockHeight),
@@ -144,21 +143,20 @@ export class App {
 
       results.sort((a, b) => a.blockHeight - b.blockHeight);
 
-      this.blocksQueue.push(...results);
       this.currentBlockHeight = results[results.length - 1].blockHeight + 1;
+
+      if (processPromise) {
+        await processPromise;
+      }
+
+      processPromise = this.process(results);
     }
   }
 
-  private async process() {
-    let result: BlockResult | undefined;
-
-    while (this.running && (result = this.blocksQueue.shift())) {
+  private async process(results: BlockResult[]) {
+    for (const result of results) {
       await this.processBlock(result);
       this.processedBlocksCounter++;
-    }
-
-    if (this.running) {
-      setTimeout(() => this.process(), 100);
     }
   }
 

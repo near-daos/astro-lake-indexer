@@ -19,5 +19,4 @@ RUN npm install
 # build
 RUN npm run build
 
-#CMD [ "/bin/sh", "entrypoint.sh" ]
-CMD tail -f /dev/null
+CMD [ "/bin/sh", "entrypoint.sh" ]
