@@ -253,36 +253,42 @@ export class ObjectService {
         ),
     );
 
-    /* console.log({
-      blockEntities: blockEntities.map((block) => block.block_hash),
-      chunkEntities: chunkEntities.map((chunk) => chunk.chunk_hash),
-      transactionEntities: transactionEntities.map(
-        (transaction) => transaction.transaction_hash,
-      ),
-      receiptEntities: receiptEntities.map((receipt) => receipt.receipt_id),
-      executionOutcomeEntities: executionOutcomeEntities.map(
-        (executionOutcome) => executionOutcome.receipt_id,
-      ),
-    }); */
-
     if (blockEntities.length) {
       await this.blockService.insert(manager, blockEntities);
-      this.logger.info('Stored blocks: %d', blockEntities.length);
+      this.logger.info(
+        'Stored blocks: %d (%s)',
+        blockEntities.length,
+        blockEntities.map((block) => block.block_hash).join(','),
+      );
     }
 
     if (chunkEntities.length) {
       await this.chunkService.insert(manager, chunkEntities);
-      this.logger.info('Stored chunks: %d', chunkEntities.length);
+      this.logger.info(
+        'Stored chunks: %d (%s)',
+        chunkEntities.length,
+        chunkEntities.map((chunk) => chunk.chunk_hash).join(','),
+      );
     }
 
     if (transactionEntities.length) {
       await this.transactionService.insert(manager, transactionEntities);
-      this.logger.info('Stored transactions: %d', transactionEntities.length);
+      this.logger.info(
+        'Stored transactions: %d (%s)',
+        transactionEntities.length,
+        transactionEntities
+          .map((transaction) => transaction.transaction_hash)
+          .join(','),
+      );
     }
 
     if (receiptEntities.length) {
       await this.receiptService.insert(manager, receiptEntities);
-      this.logger.info('Stored receipts: %d', receiptEntities.length);
+      this.logger.info(
+        'Stored receipts: %d (%s)',
+        receiptEntities.length,
+        receiptEntities.map((receipt) => receipt.receipt_id).join(','),
+      );
     }
 
     if (executionOutcomeEntities.length) {
@@ -291,8 +297,11 @@ export class ObjectService {
         executionOutcomeEntities,
       );
       this.logger.info(
-        'Stored execution outcomes: %d',
+        'Stored execution outcomes: %d (%s)',
         executionOutcomeEntities.length,
+        executionOutcomeEntities
+          .map((executionOutcome) => executionOutcome.receipt_id)
+          .join(','),
       );
     }
   }
