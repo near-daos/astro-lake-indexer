@@ -115,7 +115,7 @@ export class FtEventService {
         const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
           .map(Near.parseLogEvent)
           .filter(Near.isNEP141Event)
-          .filter(this.shouldStore)
+          .filter((event) => this.shouldStore(event))
           .map((event) => ({ event, outcome }));
 
         return this.fromJSON(

@@ -52,7 +52,7 @@ export class EventService {
         const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
           .map(Near.parseLogEvent)
           .filter(Near.isEvent)
-          .filter(this.shouldStore)
+          .filter((event) => this.shouldStore(event))
           .map((event) => ({ event, outcome }));
 
         return this.fromJSON(

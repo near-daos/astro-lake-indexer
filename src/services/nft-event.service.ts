@@ -132,7 +132,7 @@ export class NftEventService {
         const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
           .map(Near.parseLogEvent)
           .filter(Near.isNEP171Event)
-          .filter(this.shouldStore)
+          .filter((event) => this.shouldStore(event))
           .map((event) => ({ event, outcome }));
 
         return this.fromJSON(
