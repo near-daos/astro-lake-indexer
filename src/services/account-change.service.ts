@@ -107,7 +107,7 @@ export class AccountChangeService {
     this.logger.info(
       'Stored account changes: %d (%s)',
       entities.length,
-      entities.map((event) => event.caused_by_receipt_id).join(', '),
+      entities.map((event) => event.affected_account_id).join(', '),
     );
 
     return result;
