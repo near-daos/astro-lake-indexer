@@ -1,8 +1,9 @@
+import { Logger } from 'log4js';
 import { Inject, Service } from 'typedi';
 import { DeepPartial, Repository } from 'typeorm';
 import { ExecutionOutcomeService } from './execution-outcome.service';
 import { Config } from '../config';
-import { InjectRepository } from '../decorators';
+import { InjectLogger, InjectRepository } from '../decorators';
 import { Account } from '../entities';
 import * as Near from '../near';
 import { matchAccounts } from '../utils';
@@ -10,6 +11,8 @@ import { matchAccounts } from '../utils';
 @Service()
 export class AccountService {
   constructor(
+    @InjectLogger('account-service')
+    private readonly logger: Logger,
     @Inject()
     private readonly config: Config,
     @InjectRepository(Account)
@@ -32,7 +35,7 @@ export class AccountService {
 
     if (result.identifiers.every((id) => id === undefined)) {
       // re-create deleted account
-      return this.repository
+      const result = this.repository
         .createQueryBuilder()
         .update()
         .set({
@@ -48,13 +51,27 @@ export class AccountService {
           height: account.last_update_block_height,
         })
         .execute();
+
+      this.logger.info(
+        `Updated account: %s (%s)`,
+        account.account_id,
+        account.created_by_receipt_id,
+      );
+
+      return result;
     }
+
+    this.logger.info(
+      `Created account: %s (%s)`,
+      account.account_id,
+      account.created_by_receipt_id,
+    );
 
     return result;
   }
 
   private async deleteAccount(account: DeepPartial<Account>) {
-    return this.repository
+    const result = await this.repository
       .createQueryBuilder()
       .update()
       .set({
@@ -70,6 +87,14 @@ export class AccountService {
         height: account.last_update_block_height,
       })
       .execute();
+
+    this.logger.info(
+      `Deleted account: %s (%s)`,
+      account.account_id,
+      account.deleted_by_receipt_id,
+    );
+
+    return result;
   }
 
   async store(block: Near.Block, shards: Near.Shard[]) {
@@ -128,8 +153,12 @@ export class AccountService {
       }
     });
 
-    await Promise.all(createOrUpdateAccounts);
-    await Promise.all(deleteAccounts);
+    const createOrUpdateAccountResults = await Promise.all(
+      createOrUpdateAccounts,
+    );
+    const deleteResults = await Promise.all(deleteAccounts);
+
+    return { createOrUpdateAccountResults, deleteResults };
   }
 
   shouldStore(receipt: Near.Receipt) {

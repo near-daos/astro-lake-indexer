@@ -261,7 +261,7 @@ export class ObjectService {
       this.logger.info(
         'Stored blocks: %d (%s)',
         blockEntities.length,
-        blockEntities.map((block) => block.block_hash).join(','),
+        blockEntities.map((block) => block.block_hash).join(', '),
       );
     }
 
@@ -270,7 +270,7 @@ export class ObjectService {
       this.logger.info(
         'Stored chunks: %d (%s)',
         chunkEntities.length,
-        chunkEntities.map((chunk) => chunk.chunk_hash).join(','),
+        chunkEntities.map((chunk) => chunk.chunk_hash).join(', '),
       );
     }
 
@@ -281,7 +281,7 @@ export class ObjectService {
         transactionEntities.length,
         transactionEntities
           .map((transaction) => transaction.transaction_hash)
-          .join(','),
+          .join(', '),
       );
     }
 
@@ -290,7 +290,7 @@ export class ObjectService {
       this.logger.info(
         'Stored receipts: %d (%s)',
         receiptEntities.length,
-        receiptEntities.map((receipt) => receipt.receipt_id).join(','),
+        receiptEntities.map((receipt) => receipt.receipt_id).join(', '),
       );
     }
 
@@ -301,7 +301,7 @@ export class ObjectService {
         executionOutcomeEntities.length,
         executionOutcomeEntities
           .map((executionOutcome) => executionOutcome.receipt_id)
-          .join(','),
+          .join(', '),
       );
     }
   }

@@ -1,8 +1,9 @@
+import { Logger } from 'log4js';
 import { Inject, Service } from 'typedi';
 import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Config } from '../config';
-import { InjectRepository } from '../decorators';
+import { InjectLogger, InjectRepository } from '../decorators';
 import { Event } from '../entities';
 import * as Near from '../near';
 import { jsonMatchAccounts } from '../utils';
@@ -10,6 +11,8 @@ import { jsonMatchAccounts } from '../utils';
 @Service()
 export class EventService {
   constructor(
+    @InjectLogger('event-service')
+    private readonly logger: Logger,
     @Inject()
     private readonly config: Config,
     @InjectRepository(Event)
@@ -66,7 +69,15 @@ export class EventService {
       return;
     }
 
-    return this.insertIgnore(entities);
+    const result = this.insertIgnore(entities);
+
+    this.logger.info(
+      'Stored events: %d (%s)',
+      entities.length,
+      entities.map((event) => event.emitted_for_receipt_id).join(', '),
+    );
+
+    return result;
   }
 
   shouldStore(event: Near.Event) {

@@ -1,8 +1,9 @@
+import { Logger } from 'log4js';
 import { Inject, Service } from 'typedi';
 import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Config } from '../config';
-import { InjectRepository } from '../decorators';
+import { InjectLogger, InjectRepository } from '../decorators';
 import { AccountChange, AccountChangeReason } from '../entities';
 import * as Near from '../near';
 import { matchAccounts } from '../utils';
@@ -10,6 +11,8 @@ import { matchAccounts } from '../utils';
 @Service()
 export class AccountChangeService {
   constructor(
+    @InjectLogger('account-change-service')
+    private readonly logger: Logger,
     @Inject()
     private readonly config: Config,
     @InjectRepository(AccountChange)
@@ -99,7 +102,15 @@ export class AccountChangeService {
       return;
     }
 
-    return this.insertIgnore(entities);
+    const result = this.insertIgnore(entities);
+
+    this.logger.info(
+      'Stored account changes: %d (%s)',
+      entities.length,
+      entities.map((event) => event.caused_by_receipt_id).join(', '),
+    );
+
+    return result;
   }
 
   shouldStore(stateChange: Near.StateChange) {
