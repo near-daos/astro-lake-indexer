@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '../decorators';
 import { Chunk } from '../entities';
 import * as Near from '../near';
@@ -22,11 +22,10 @@ export class ChunkService {
     });
   }
 
-  async insert(manager: EntityManager, entities: Chunk[]) {
-    return manager
+  async insertIgnore(entities: Chunk[]) {
+    return this.repository
       .createQueryBuilder()
       .insert()
-      .into(Chunk)
       .values(entities)
       .orIgnore()
       .execute();

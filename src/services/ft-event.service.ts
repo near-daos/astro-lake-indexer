@@ -1,5 +1,5 @@
 import { Inject, Service } from 'typedi';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Config } from '../config';
 import { InjectRepository } from '../decorators';
@@ -99,17 +99,16 @@ export class FtEventService {
     return entities;
   }
 
-  async insert(manager: EntityManager, entities: FtEvent[]) {
-    return manager
+  async insertIgnore(entities: FtEvent[]) {
+    return this.repository
       .createQueryBuilder()
       .insert()
-      .into(FtEvent)
       .values(entities as QueryDeepPartialEntity<FtEvent>[])
       .orIgnore()
       .execute();
   }
 
-  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards.flatMap((shard, shardId) =>
       shard.receipt_execution_outcomes.flatMap((outcome) => {
         const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
@@ -130,7 +129,7 @@ export class FtEventService {
       return;
     }
 
-    return this.insert(manager, entities);
+    return this.insertIgnore(entities);
   }
 
   shouldStore(event: Near.NEP141Event) {

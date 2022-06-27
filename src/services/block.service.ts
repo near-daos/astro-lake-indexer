@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '../decorators';
 import { Block } from '../entities';
 import * as Near from '../near';
@@ -22,11 +22,10 @@ export class BlockService {
     });
   }
 
-  async insert(manager: EntityManager, entities: Block[]) {
-    return manager
+  async insertIgnore(entities: Block[]) {
+    return this.repository
       .createQueryBuilder()
       .insert()
-      .into(Block)
       .values(entities)
       .orIgnore()
       .execute();

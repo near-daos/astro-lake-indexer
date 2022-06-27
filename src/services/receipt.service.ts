@@ -1,5 +1,5 @@
 import { Inject, Service } from 'typedi';
-import { DeepPartial, EntityManager, Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ActionReceiptService } from './action-receipt.service';
 import { DataReceiptService } from './data-receipt.service';
@@ -69,11 +69,10 @@ export class ReceiptService {
     });
   }
 
-  async insert(manager: EntityManager, entities: Receipt[]) {
-    await manager
+  async insertIgnore(entities: Receipt[]) {
+    await this.repository
       .createQueryBuilder()
       .insert()
-      .into(Receipt)
       .values(entities as QueryDeepPartialEntity<Receipt>[])
       .orIgnore()
       .execute();
@@ -87,8 +86,8 @@ export class ReceiptService {
       .filter((data) => data) as DataReceipt[];
 
     await Promise.all([
-      this.actionReceiptService.insert(manager, actions),
-      this.dataReceiptService.insert(manager, datas),
+      this.actionReceiptService.insertIgnore(actions),
+      this.dataReceiptService.insertIgnore(datas),
     ]);
   }
 

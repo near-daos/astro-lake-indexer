@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { InjectRepository } from '../decorators';
 import { ExecutionOutcomeReceipt } from '../entities';
@@ -23,11 +23,10 @@ export class ExecutionOutcomeReceiptService {
     });
   }
 
-  async insert(manager: EntityManager, entities: ExecutionOutcomeReceipt[]) {
-    return manager
+  async insertIgnore(entities: ExecutionOutcomeReceipt[]) {
+    return this.repository
       .createQueryBuilder()
       .insert()
-      .into(ExecutionOutcomeReceipt)
       .values(entities as QueryDeepPartialEntity<ExecutionOutcomeReceipt>[])
       .orIgnore()
       .execute();

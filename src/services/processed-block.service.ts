@@ -1,5 +1,5 @@
 import { Service } from 'typedi';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as Near from '../near';
 import { ProcessedBlock } from '../entities';
 import { InjectRepository } from '../decorators';
@@ -21,8 +21,8 @@ export class ProcessedBlockService {
     return entity?.block_height;
   }
 
-  async store(manager: EntityManager, block: Near.Block) {
-    return manager.insert(ProcessedBlock, {
+  async store(block: Near.Block) {
+    return this.repository.insert({
       block_height: block.header.height,
     });
   }

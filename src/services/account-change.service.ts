@@ -1,5 +1,5 @@
 import { Inject, Service } from 'typedi';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Config } from '../config';
 import { InjectRepository } from '../decorators';
@@ -70,17 +70,16 @@ export class AccountChangeService {
     });
   }
 
-  async insert(manager: EntityManager, entities: AccountChange[]) {
-    return manager
+  async insertIgnore(entities: AccountChange[]) {
+    return this.repository
       .createQueryBuilder()
       .insert()
-      .into(AccountChange)
       .values(entities as QueryDeepPartialEntity<AccountChange>[])
       .orIgnore()
       .execute();
   }
 
-  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
       .flatMap((shard) =>
         shard.state_changes
@@ -100,7 +99,7 @@ export class AccountChangeService {
       return;
     }
 
-    return this.insert(manager, entities);
+    return this.insertIgnore(entities);
   }
 
   shouldStore(stateChange: Near.StateChange) {

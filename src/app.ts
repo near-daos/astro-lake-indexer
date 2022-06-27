@@ -172,20 +172,18 @@ export class App {
       this.logger.debug(`Processing block ${blockHeight}...`);
     }
 
-    await this.manager.transaction(async (manager) => {
-      await this.objectService.store(manager, block, shards);
+    await this.objectService.store(block, shards);
 
-      await Promise.all([
-        this.accountService.store(manager, block, shards),
-        this.accessKeyService.store(manager, block, shards),
-        this.accountChangeService.store(manager, block, shards),
-        this.eventService.store(manager, block, shards),
-        this.ftEventService.store(manager, block, shards),
-        this.nftEventService.store(manager, block, shards),
-      ]);
+    await Promise.all([
+      this.accountService.store(block, shards),
+      this.accessKeyService.store(block, shards),
+      this.accountChangeService.store(block, shards),
+      this.eventService.store(block, shards),
+      this.ftEventService.store(block, shards),
+      this.nftEventService.store(block, shards),
+    ]);
 
-      await this.processedBlockService.store(manager, block);
-    });
+    await this.processedBlockService.store(block);
   }
 
   private reportStats() {

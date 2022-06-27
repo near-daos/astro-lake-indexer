@@ -1,7 +1,6 @@
 import { Logger } from 'log4js';
 import { uniqWith } from 'lodash';
 import { Inject, Service } from 'typedi';
-import { EntityManager } from 'typeorm';
 import { BlockService } from './block.service';
 import { CacheService } from './cache.service';
 import { ChunkService } from './chunk.service';
@@ -35,7 +34,7 @@ export class ObjectService {
     private readonly executionOutcomeService: ExecutionOutcomeService,
   ) {}
 
-  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
+  async store(block: Near.Block, shards: Near.Shard[]) {
     let transactions: TransactionData[] = [];
     let receipts: ReceiptDataWithTransactionHash[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
@@ -165,6 +164,10 @@ export class ObjectService {
       );
     });
 
+    if (!transactions.length && !receipts.length && !executionOutcomes.length) {
+      return;
+    }
+
     // extract blocks to store
     let blocks = [
       ...transactions.map(({ block }) => block),
@@ -254,7 +257,7 @@ export class ObjectService {
     );
 
     if (blockEntities.length) {
-      await this.blockService.insert(manager, blockEntities);
+      await this.blockService.insertIgnore(blockEntities);
       this.logger.info(
         'Stored blocks: %d (%s)',
         blockEntities.length,
@@ -263,7 +266,7 @@ export class ObjectService {
     }
 
     if (chunkEntities.length) {
-      await this.chunkService.insert(manager, chunkEntities);
+      await this.chunkService.insertIgnore(chunkEntities);
       this.logger.info(
         'Stored chunks: %d (%s)',
         chunkEntities.length,
@@ -272,7 +275,7 @@ export class ObjectService {
     }
 
     if (transactionEntities.length) {
-      await this.transactionService.insert(manager, transactionEntities);
+      await this.transactionService.insertIgnore(transactionEntities);
       this.logger.info(
         'Stored transactions: %d (%s)',
         transactionEntities.length,
@@ -283,7 +286,7 @@ export class ObjectService {
     }
 
     if (receiptEntities.length) {
-      await this.receiptService.insert(manager, receiptEntities);
+      await this.receiptService.insertIgnore(receiptEntities);
       this.logger.info(
         'Stored receipts: %d (%s)',
         receiptEntities.length,
@@ -292,10 +295,7 @@ export class ObjectService {
     }
 
     if (executionOutcomeEntities.length) {
-      await this.executionOutcomeService.insert(
-        manager,
-        executionOutcomeEntities,
-      );
+      await this.executionOutcomeService.insertIgnore(executionOutcomeEntities);
       this.logger.info(
         'Stored execution outcomes: %d (%s)',
         executionOutcomeEntities.length,

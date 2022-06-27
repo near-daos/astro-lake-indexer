@@ -1,7 +1,9 @@
 import { Inject, Service } from 'typedi';
-import { EntityManager } from 'typeorm';
+import { Repository } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ExecutionOutcomeService } from './execution-outcome.service';
 import { Config } from '../config';
+import { InjectRepository } from '../decorators';
 import { AccessKey, PermissionType } from '../entities';
 import * as Near from '../near';
 import { matchAccounts } from '../utils';
@@ -11,13 +13,26 @@ export class AccessKeyService {
   constructor(
     @Inject()
     private readonly config: Config,
+    @InjectRepository(AccessKey)
+    private readonly repository: Repository<AccessKey>,
     @Inject()
     private readonly executionOutcomeService: ExecutionOutcomeService,
   ) {}
 
-  async store(manager: EntityManager, block: Near.Block, shards: Near.Shard[]) {
-    const repository = manager.getRepository(AccessKey);
+  async insertIgnore(
+    values:
+      | QueryDeepPartialEntity<AccessKey>
+      | QueryDeepPartialEntity<AccessKey>[],
+  ) {
+    return this.repository
+      .createQueryBuilder()
+      .insert()
+      .values(values)
+      .orIgnore()
+      .execute();
+  }
 
+  async store(block: Near.Block, shards: Near.Shard[]) {
     const actions = this.executionOutcomeService
       .getSuccessfulReceiptActions(
         shards.flatMap((shard) => shard.receipt_execution_outcomes),
@@ -37,7 +52,7 @@ export class AccessKeyService {
               const permission = Near.parseKind<Near.Permissions>(
                 access_key.permission,
               );
-              return repository.insert({
+              return this.insertIgnore({
                 public_key,
                 account_id: receipt.receiver_id,
                 created_by_receipt_id: receipt.receipt_id,
@@ -50,7 +65,7 @@ export class AccessKeyService {
               const {
                 DeleteKey: { public_key },
               } = action as Near.ActionDeleteKey;
-              return repository.upsert(
+              return this.repository.upsert(
                 {
                   public_key,
                   account_id: receipt.receiver_id,
@@ -70,7 +85,7 @@ export class AccessKeyService {
               if (publicKey.length !== 32) {
                 return;
               }
-              return repository.insert({
+              return this.insertIgnore({
                 public_key: `ed25519:${publicKey.toString('base64')}`,
                 account_id: receipt.receiver_id,
                 created_by_receipt_id: receipt.receipt_id,
@@ -80,7 +95,7 @@ export class AccessKeyService {
             }
 
             case Near.Actions.DeleteAccount: {
-              return repository.update(
+              return this.repository.update(
                 {
                   account_id: receipt.receiver_id,
                 },

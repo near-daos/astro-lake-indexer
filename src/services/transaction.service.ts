@@ -1,5 +1,5 @@
 import { Inject, Service } from 'typedi';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { TransactionActionService } from './transaction-action.service';
 import { Config } from '../config';
@@ -59,18 +59,17 @@ export class TransactionService {
     });
   }
 
-  async insert(manager: EntityManager, entities: Transaction[]) {
-    await manager
+  async insertIgnore(entities: Transaction[]) {
+    await this.repository
       .createQueryBuilder()
       .insert()
-      .into(Transaction)
       .values(entities as QueryDeepPartialEntity<Transaction>[])
       .orIgnore()
       .execute();
 
     const actions = entities.flatMap((entity) => entity.actions);
 
-    await this.transactionActionService.insert(manager, actions);
+    await this.transactionActionService.insertIgnore(actions);
   }
 
   shouldStore(tx: Near.TransactionWithOutcome) {
