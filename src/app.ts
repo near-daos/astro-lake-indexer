@@ -13,9 +13,9 @@ import {
   CacheService,
   EventService,
   FtEventService,
+  LastBlockService,
   NftEventService,
   ObjectService,
-  ProcessedBlockService,
 } from './services';
 import { BlockResult } from './types';
 import * as Near from './near';
@@ -61,7 +61,7 @@ export class App {
     @Inject()
     private readonly nftEventService: NftEventService,
     @Inject()
-    private readonly processedBlockService: ProcessedBlockService,
+    private readonly lastBlockService: LastBlockService,
     @InjectEntityManager()
     private readonly manager: EntityManager,
   ) {
@@ -73,7 +73,7 @@ export class App {
     this.processedBlocksCounter = 0;
 
     const latestBlockHeight =
-      await this.processedBlockService.getLatestBlockHeight();
+      await this.lastBlockService.getLatestBlockHeight();
 
     if (latestBlockHeight && latestBlockHeight >= this.startBlockHeight) {
       this.startBlockHeight = latestBlockHeight + 1;
@@ -183,7 +183,7 @@ export class App {
       this.nftEventService.store(block, shards),
     ]);
 
-    await this.processedBlockService.store(block);
+    await this.lastBlockService.store(block);
   }
 
   private reportStats() {

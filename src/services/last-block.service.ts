@@ -1,14 +1,14 @@
 import { Service } from 'typedi';
 import { Repository } from 'typeorm';
 import * as Near from '../near';
-import { ProcessedBlock } from '../entities';
+import { LastBlock } from '../entities';
 import { InjectRepository } from '../decorators';
 
 @Service()
-export class ProcessedBlockService {
+export class LastBlockService {
   constructor(
-    @InjectRepository(ProcessedBlock)
-    private readonly repository: Repository<ProcessedBlock>,
+    @InjectRepository(LastBlock)
+    private readonly repository: Repository<LastBlock>,
   ) {}
 
   async getLatestBlockHeight() {
@@ -22,8 +22,15 @@ export class ProcessedBlockService {
   }
 
   async store(block: Near.Block) {
-    return this.repository.insert({
-      block_height: block.header.height,
-    });
+    const result = await this.repository.update(
+      {},
+      {
+        block_height: block.header.height,
+      },
+    );
+    if (!result.affected) {
+      return this.repository.insert({ block_height: block.header.height });
+    }
+    return result;
   }
 }
