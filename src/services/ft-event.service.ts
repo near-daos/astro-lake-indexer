@@ -144,6 +144,10 @@ export class FtEventService {
   }
 
   shouldStore(event: Near.NEP141Event) {
+    if (!Array.isArray(event.data)) {
+      return false;
+    }
+
     switch (event.event) {
       case Near.NEP141Events.Mint:
         return event.data.some(({ owner_id }) =>

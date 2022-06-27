@@ -161,6 +161,10 @@ export class NftEventService {
   }
 
   shouldStore(event: Near.NEP171Event) {
+    if (!Array.isArray(event.data)) {
+      return false;
+    }
+
     switch (event.event) {
       case Near.NEP171Events.Mint:
         return event.data.some(({ owner_id }) =>
