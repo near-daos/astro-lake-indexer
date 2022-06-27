@@ -24,6 +24,11 @@ Run migrations:
 npm run migration:run
 ```
 
+Build:
+```
+npm run build
+```
+
 Run:
 ```
 npm run start
