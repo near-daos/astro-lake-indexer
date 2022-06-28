@@ -7,14 +7,14 @@ import * as Near from '../near';
 export class CacheService {
   constructor(
     private readonly transactionsCache = new Cache<string, TransactionData>(
-      100,
+      1000,
     ),
-    private readonly receiptsCache = new Cache<string, ReceiptData>(500),
+    private readonly receiptsCache = new Cache<string, ReceiptData>(5000),
     private readonly executionOutcomesCache = new Cache<
       string,
       ExecutionOutcomeData
-    >(500),
-    private readonly transactionHashesCache = new Cache<string, string>(500),
+    >(5000),
+    private readonly transactionHashesCache = new Cache<string, string>(1000),
     private readonly alwaysStoreTransactions = new Cache(100),
   ) {}
 
