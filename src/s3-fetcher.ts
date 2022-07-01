@@ -56,7 +56,7 @@ export class S3Fetcher {
 
       return this.json.parse(result?.Body?.toString() || '') as Near.Block;
     } catch (err) {
-      throw new Error(`Unable to block ${key} (${err})`);
+      throw new Error(`Unable to fetch block ${key} (${err})`);
     }
   }
 
@@ -76,7 +76,7 @@ export class S3Fetcher {
 
       return this.json.parse(result?.Body?.toString() || '') as Near.Shard;
     } catch (err) {
-      throw new Error(`Unable to shard ${key} (${err})`);
+      throw new Error(`Unable to fetch shard ${key} (${err})`);
     }
   }
 }
