@@ -45,15 +45,19 @@ export class S3Fetcher {
 
     this.logger.debug(`Fetching block ${key}`);
 
-    const result = await this.s3
-      .getObject({
-        Bucket: this.config.AWS_BUCKET,
-        Key: key,
-        RequestPayer: 'requester',
-      })
-      .promise();
+    try {
+      const result = await this.s3
+        .getObject({
+          Bucket: this.config.AWS_BUCKET,
+          Key: key,
+          RequestPayer: 'requester',
+        })
+        .promise();
 
-    return this.json.parse(result?.Body?.toString() || '') as Near.Block;
+      return this.json.parse(result?.Body?.toString() || '') as Near.Block;
+    } catch (err) {
+      throw new Error(`Unable to block ${key} (${err})`);
+    }
   }
 
   async getShard(blockHeight: number, shardId: number) {
@@ -61,14 +65,18 @@ export class S3Fetcher {
 
     this.logger.debug(`Fetching shard ${key}`);
 
-    const result = await this.s3
-      .getObject({
-        Bucket: this.config.AWS_BUCKET,
-        Key: key,
-        RequestPayer: 'requester',
-      })
-      .promise();
+    try {
+      const result = await this.s3
+        .getObject({
+          Bucket: this.config.AWS_BUCKET,
+          Key: key,
+          RequestPayer: 'requester',
+        })
+        .promise();
 
-    return this.json.parse(result?.Body?.toString() || '') as Near.Shard;
+      return this.json.parse(result?.Body?.toString() || '') as Near.Shard;
+    } catch (err) {
+      throw new Error(`Unable to shard ${key} (${err})`);
+    }
   }
 }
