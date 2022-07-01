@@ -32,7 +32,7 @@ export class FtEvent {
   emitted_index_of_event_entry_in_shard: number;
 
   @PrimaryColumn('text')
-  emitted_by_contract_id: string;
+  emitted_by_contract_account_id: string;
 
   @PrimaryColumn('text')
   amount: string;
