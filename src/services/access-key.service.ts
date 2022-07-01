@@ -41,10 +41,10 @@ export class AccessKeyService {
         shards.flatMap((shard) => shard.receipt_execution_outcomes),
       )
       .filter((receipt) => this.shouldStore(receipt))
-      .map(async (receipt) => {
+      .flatMap((receipt) => {
         const { actions } = (receipt.receipt as Near.ActionReceipt).Action;
 
-        for (const action of actions) {
+        return actions.map(async (action) => {
           const actionKind = Near.parseKind<Near.Actions>(action);
 
           switch (actionKind) {
@@ -137,7 +137,7 @@ export class AccessKeyService {
               return result;
             }
           }
-        }
+        });
       });
 
     return Promise.all(actions);

@@ -104,10 +104,10 @@ export class AccountService {
       )
       .filter((receipt) => this.shouldStore(receipt));
 
-    const createOrUpdateAccounts = receipts.map(async (receipt) => {
+    const createOrUpdateAccounts = receipts.flatMap(async (receipt) => {
       const { actions } = (receipt.receipt as Near.ActionReceipt).Action;
 
-      for (const action of actions) {
+      return actions.map((action) => {
         const actionKind = Near.parseKind<Near.Actions>(action);
 
         switch (actionKind) {
@@ -133,13 +133,13 @@ export class AccountService {
               last_update_block_height: block.header.height,
             });
         }
-      }
+      });
     });
 
-    const deleteAccounts = receipts.map(async (receipt) => {
+    const deleteAccounts = receipts.flatMap(async (receipt) => {
       const { actions } = (receipt.receipt as Near.ActionReceipt).Action;
 
-      for (const action of actions) {
+      return actions.map((action) => {
         const actionKind = Near.parseKind<Near.Actions>(action);
 
         switch (actionKind) {
@@ -150,7 +150,7 @@ export class AccountService {
               last_update_block_height: block.header.height,
             });
         }
-      }
+      });
     });
 
     const createOrUpdateAccountResults = await Promise.all(
