@@ -33,7 +33,7 @@ export class EventService {
         emitted_at_block_timestamp: blockTimestamp,
         emitted_in_shard_id: shardId,
         emitted_index_of_event_entry_in_shard: index,
-        emitted_by_contract_id: outcome.receipt.receiver_id,
+        emitted_by_contract_account_id: outcome.receipt.receiver_id,
         event_json: event,
       }),
     );
