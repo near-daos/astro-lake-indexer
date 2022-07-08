@@ -9,11 +9,11 @@ export class CacheService {
     private readonly transactionsCache = new Cache<string, TransactionData>(
       1000,
     ),
-    private readonly receiptsCache = new Cache<string, ReceiptData>(5000),
+    private readonly receiptsCache = new Cache<string, ReceiptData>(10000),
     private readonly executionOutcomesCache = new Cache<
       string,
       ExecutionOutcomeData
-    >(5000),
+    >(10000),
     private readonly transactionHashesCache = new Cache<string, string>(1000),
     private readonly alwaysStoreTransactions = new Cache(100),
   ) {}
