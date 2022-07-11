@@ -79,7 +79,7 @@ export class CacheService {
             executionOutcome.execution_outcome.id,
             {
               block,
-              shard,
+              shardId: shard.shard_id,
               indexInChunk,
               executionOutcome,
             },

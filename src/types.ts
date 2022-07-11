@@ -25,7 +25,7 @@ export interface ReceiptDataWithTransactionHash extends ReceiptData {
 
 export interface ExecutionOutcomeData {
   block: Near.Block;
-  shard: Near.Shard;
+  shardId: number;
   indexInChunk: number;
   executionOutcome: Near.ExecutionOutcomeWithReceipt;
 }

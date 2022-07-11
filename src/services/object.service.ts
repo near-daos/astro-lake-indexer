@@ -128,7 +128,7 @@ export class ObjectService {
             // store the whole transaction
             executionOutcomes.push({
               block,
-              shard,
+              shardId: shard.shard_id,
               indexInChunk,
               executionOutcome,
             });
@@ -179,7 +179,6 @@ export class ObjectService {
     let blockShards = [
       ...transactions.map(({ block, shard }) => ({ block, shard })),
       ...receipts.map(({ block, shard }) => ({ block, shard })),
-      ...executionOutcomes.map(({ block, shard }) => ({ block, shard })),
     ];
 
     // find unique blocks
@@ -246,11 +245,11 @@ export class ObjectService {
     );
 
     const executionOutcomeEntities = executionOutcomes.map(
-      ({ block, shard, indexInChunk, executionOutcome }) =>
+      ({ block, shardId, indexInChunk, executionOutcome }) =>
         this.executionOutcomeService.fromJSON(
           block.header.hash,
           block.header.timestamp,
-          shard.shard_id,
+          shardId,
           indexInChunk,
           executionOutcome,
         ),
