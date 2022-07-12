@@ -122,7 +122,7 @@ export class CacheService {
             this.fullTransactionsCache.get(transactionHash);
 
           if (!fullTransaction) {
-            throw new Error(`Not found full tx for hash: ${fullTransaction}`);
+            throw new Error(`Not found full tx for hash: ${transactionHash}`);
           }
 
           // add execution outcome to full transaction
