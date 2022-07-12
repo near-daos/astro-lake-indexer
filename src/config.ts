@@ -13,6 +13,8 @@ export class Config {
       LOG_LEVEL: 'info',
       FETCH_MAX_KEYS: 100,
       LOOK_BACK_BLOCKS: 20,
+      TX_CACHE_SIZE: 1000,
+      TX_HASHES_CACHE_SIZE: 5000,
       BLOCKS_DL_CONCURRENCY: 10,
       WAIT_FOR_NEW_BLOCKS: 2000,
     });
@@ -33,6 +35,9 @@ export class Config {
 
       'START_BLOCK_HEIGHT',
       'LOOK_BACK_BLOCKS',
+      'TX_CACHE_SIZE',
+      'TX_HASHES_CACHE_SIZE',
+
       'FETCH_MAX_KEYS',
       'BLOCKS_DL_CONCURRENCY',
       'WAIT_FOR_NEW_BLOCKS',
@@ -91,6 +96,14 @@ export class Config {
 
   get LOOK_BACK_BLOCKS(): number {
     return parseInt(this.provider.get('LOOK_BACK_BLOCKS'));
+  }
+
+  get TX_CACHE_SIZE(): number {
+    return parseInt(this.provider.get('TX_CACHE_SIZE'));
+  }
+
+  get TX_HASHES_CACHE_SIZE(): number {
+    return parseInt(this.provider.get('TX_HASHES_CACHE_SIZE'));
   }
 
   get FETCH_MAX_KEYS(): number {

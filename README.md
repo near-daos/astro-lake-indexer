@@ -50,6 +50,10 @@ npm run cli 12345
 
 `LOOK_BACK_BLOCKS` - number of blocks to cache before start (default: 20)
 
+`TX_CACHE_SIZE` - max number of transactions to keep in cache (default: 1000)
+
+`TX_HASHES_CACHE_SIZE` - max number of transaction hashes to keep in cache (default: 5000)
+
 `FETCH_MAX_KEYS` - number of blocks to download at one iteration (default: 100)
 
 `BLOCKS_DL_CONCURRENCY` - number of blocks to download at once (default: 10)

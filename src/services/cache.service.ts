@@ -2,28 +2,35 @@ import { Logger } from 'log4js';
 import LRUCache from 'lru-cache';
 import { Inject, Service } from 'typedi';
 import { TransactionService } from './transaction.service';
+import { Config } from '../config';
+import { InjectLogger } from '../decorators';
 import { FullTransaction } from '../types';
 import * as Near from '../near';
-import { InjectLogger } from '../decorators';
 
 @Service({ global: true })
 export class CacheService {
+  private readonly fullTransactionsCache: LRUCache<string, FullTransaction>;
+  private readonly transactionHashesCache: LRUCache<string, string>;
+  private readonly alwaysStoreTransactions: LRUCache<string, boolean>;
+
   constructor(
     @InjectLogger('cache-service')
     private readonly logger: Logger,
     @Inject()
+    private readonly config: Config,
+    @Inject()
     private readonly transactionService: TransactionService,
-    private readonly fullTransactionsCache = new LRUCache<
-      string,
-      FullTransaction
-    >({ max: 1000 }),
-    private readonly transactionHashesCache = new LRUCache<string, string>({
-      max: 10000,
-    }),
-    private readonly alwaysStoreTransactions = new LRUCache<string, boolean>({
+  ) {
+    this.fullTransactionsCache = new LRUCache<string, FullTransaction>({
+      max: this.config.TX_CACHE_SIZE,
+    });
+    this.transactionHashesCache = new LRUCache<string, string>({
+      max: this.config.TX_HASHES_CACHE_SIZE,
+    });
+    this.alwaysStoreTransactions = new LRUCache<string, boolean>({
       max: 100,
-    }),
-  ) {}
+    });
+  }
 
   cacheBlock(block: Near.Block, shards: Near.Shard[]) {
     shards.forEach((shard) => {
@@ -169,5 +176,13 @@ export class CacheService {
     transactionHashes.forEach((hash) => {
       this.alwaysStoreTransactions.set(hash, true);
     });
+  }
+
+  getTransactionsCount() {
+    return this.fullTransactionsCache.size;
+  }
+
+  getTransactionHashesCount() {
+    return this.transactionHashesCache.size;
   }
 }

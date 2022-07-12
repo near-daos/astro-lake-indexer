@@ -81,7 +81,7 @@ export class App {
       this.startBlockHeight = latestBlockHeight + 1;
     }
 
-    this.logger.info(`Start block height ${this.startBlockHeight}`);
+    this.logger.info(`Start block height: ${this.startBlockHeight}`);
 
     this.currentBlockHeight = Math.max(
       this.startBlockHeight - this.config.LOOK_BACK_BLOCKS,
@@ -168,7 +168,9 @@ export class App {
     this.cacheService.cacheBlock(block, shards);
 
     if (blockHeight < this.startBlockHeight) {
-      this.logger.info(`Caching block ${blockHeight}...`);
+      this.logger.info(
+        `Caching block ${blockHeight} (txs: ${this.cacheService.getTransactionsCount()}, hashes: ${this.cacheService.getTransactionHashesCount()})...`,
+      );
       return;
     } else {
       this.logger.debug(`Processing block ${blockHeight}...`);
