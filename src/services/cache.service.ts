@@ -21,11 +21,13 @@ export class CacheService {
   cacheBlock(block: Near.Block, shards: Near.Shard[]) {
     shards.forEach((shard) => {
       if (shard.chunk) {
+        const chunk = shard.chunk;
+
         // cache transactions
         shard.chunk.transactions.forEach((transaction, indexInChunk) => {
           this.transactionsCache.set(transaction.transaction.hash, {
             block,
-            shard,
+            chunk,
             indexInChunk,
             transaction,
           });
@@ -43,7 +45,7 @@ export class CacheService {
 
           this.receiptsCache.set(receiptOrDataId, {
             block,
-            shard,
+            chunk,
             indexInChunk,
             receipt,
           });

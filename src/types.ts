@@ -8,14 +8,14 @@ export interface BlockResult {
 
 export interface TransactionData {
   block: Near.Block;
-  shard: Near.Shard;
+  chunk: Near.Chunk;
   indexInChunk: number;
   transaction: Near.TransactionWithOutcome;
 }
 
 export interface ReceiptData {
   block: Near.Block;
-  shard: Near.Shard;
+  chunk: Near.Chunk;
   indexInChunk: number;
   receipt: Near.Receipt;
 }

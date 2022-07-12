@@ -41,6 +41,8 @@ export class ObjectService {
 
     shards.forEach((shard) => {
       if (shard.chunk) {
+        const chunk = shard.chunk;
+
         // get transaction to store
         shard.chunk.transactions.forEach((transaction, indexInChunk) => {
           if (this.transactionService.shouldStore(transaction)) {
@@ -49,7 +51,7 @@ export class ObjectService {
               transaction.transaction.hash,
             );
 
-            transactions.push({ block, shard, indexInChunk, transaction });
+            transactions.push({ block, chunk, indexInChunk, transaction });
           }
         });
 
@@ -72,7 +74,7 @@ export class ObjectService {
             // store the whole transaction
             receipts.push({
               block,
-              shard,
+              chunk,
               indexInChunk,
               transactionHash,
               receipt,
@@ -176,20 +178,20 @@ export class ObjectService {
     ];
 
     // extract shards to store
-    let blockShards = [
-      ...transactions.map(({ block, shard }) => ({ block, shard })),
-      ...receipts.map(({ block, shard }) => ({ block, shard })),
+    let chunks = [
+      ...transactions.map(({ block, chunk }) => ({ block, chunk })),
+      ...receipts.map(({ block, chunk }) => ({ block, chunk })),
     ];
 
     // find unique blocks
     blocks = uniqWith(blocks, (a, b) => a.header.height === b.header.height);
 
-    // find unique shards
-    blockShards = uniqWith(
-      blockShards,
+    // find unique chunks
+    chunks = uniqWith(
+      chunks,
       (a, b) =>
         a.block.header.height === b.block.header.height &&
-        a.shard.shard_id === b.shard.shard_id,
+        a.chunk.header.shard_id === b.chunk.header.shard_id,
     );
 
     // find unique transactions
@@ -217,27 +219,27 @@ export class ObjectService {
       this.blockService.fromJSON(block),
     );
 
-    const chunkEntities = blockShards.map(({ block, shard }) =>
-      this.chunkService.fromJSON(block.header.hash, shard.chunk as Near.Chunk),
+    const chunkEntities = chunks.map(({ block, chunk }) =>
+      this.chunkService.fromJSON(block.header.hash, chunk),
     );
 
     const transactionEntities = transactions.map(
-      ({ block, shard, indexInChunk, transaction }) =>
+      ({ block, chunk, indexInChunk, transaction }) =>
         this.transactionService.fromJSON(
           block.header.hash,
           block.header.timestamp,
-          (shard.chunk as Near.Chunk).header.chunk_hash,
+          chunk.header.chunk_hash,
           indexInChunk,
           transaction,
         ),
     );
 
     const receiptEntities = receipts.map(
-      ({ block, shard, indexInChunk, transactionHash, receipt }) =>
+      ({ block, chunk, indexInChunk, transactionHash, receipt }) =>
         this.receiptService.fromJSON(
           block.header.hash,
           block.header.timestamp,
-          (shard.chunk as Near.Chunk).header.chunk_hash,
+          chunk.header.chunk_hash,
           indexInChunk,
           transactionHash,
           receipt,
