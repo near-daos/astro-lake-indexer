@@ -1,21 +1,28 @@
-import { Service } from 'typedi';
-import Cache from '../cache';
-import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
+import { Logger } from 'log4js';
+import LRUCache from 'lru-cache';
+import { Inject, Service } from 'typedi';
+import { TransactionService } from './transaction.service';
+import { FullTransaction } from '../types';
 import * as Near from '../near';
+import { InjectLogger } from '../decorators';
 
 @Service({ global: true })
 export class CacheService {
   constructor(
-    private readonly transactionsCache = new Cache<string, TransactionData>(
-      5000,
-    ),
-    private readonly receiptsCache = new Cache<string, ReceiptData>(10000),
-    private readonly executionOutcomesCache = new Cache<
+    @InjectLogger('cache-service')
+    private readonly logger: Logger,
+    @Inject()
+    private readonly transactionService: TransactionService,
+    private readonly fullTransactionsCache = new LRUCache<
       string,
-      ExecutionOutcomeData
-    >(10000),
-    private readonly transactionHashesCache = new Cache<string, string>(5000),
-    private readonly alwaysStoreTransactions = new Cache(100),
+      FullTransaction
+    >({ max: 1000 }),
+    private readonly transactionHashesCache = new LRUCache<string, string>({
+      max: 10000,
+    }),
+    private readonly alwaysStoreTransactions = new LRUCache<string, boolean>({
+      max: 100,
+    }),
   ) {}
 
   cacheBlock(block: Near.Block, shards: Near.Shard[]) {
@@ -25,12 +32,23 @@ export class CacheService {
 
         // cache transactions
         shard.chunk.transactions.forEach((transaction, indexInChunk) => {
-          this.transactionsCache.set(transaction.transaction.hash, {
-            block,
-            chunk,
-            indexInChunk,
-            transaction,
-          });
+          const fullTransaction = this.fullTransactionsCache.get(
+            transaction.transaction.hash,
+          );
+
+          // add transaction to full transaction
+          if (!fullTransaction) {
+            this.fullTransactionsCache.set(transaction.transaction.hash, {
+              transaction: {
+                block,
+                chunk,
+                indexInChunk,
+                transaction,
+              },
+              receipts: [],
+              executionOutcomes: [],
+            });
+          }
 
           // store transaction hash for future receipts
           this.transactionHashesCache.set(
@@ -43,10 +61,29 @@ export class CacheService {
         shard.chunk.receipts.forEach((receipt, indexInChunk) => {
           const receiptOrDataId = Near.getReceiptOrDataId(receipt);
 
-          this.receiptsCache.set(receiptOrDataId, {
+          const transactionHash =
+            this.transactionHashesCache.get(receiptOrDataId);
+
+          if (!transactionHash) {
+            this.logger.warn(
+              `Not found parent tx hash for receipt: ${receiptOrDataId}`,
+            );
+            return;
+          }
+
+          const fullTransaction =
+            this.fullTransactionsCache.get(transactionHash);
+
+          if (!fullTransaction) {
+            throw new Error(`Not found full tx for hash: ${fullTransaction}`);
+          }
+
+          // add receipt to full transaction
+          fullTransaction.receipts.push({
             block,
             chunk,
             indexInChunk,
+            transactionHash,
             receipt,
           });
 
@@ -55,13 +92,6 @@ export class CacheService {
           );
 
           if (receiptType !== Near.ReceiptTypes.Action) {
-            return;
-          }
-
-          const transactionHash =
-            this.transactionHashesCache.get(receiptOrDataId);
-
-          if (!transactionHash) {
             return;
           }
 
@@ -77,23 +107,31 @@ export class CacheService {
       // cache execution outcomes
       shard.receipt_execution_outcomes.forEach(
         (executionOutcome, indexInChunk) => {
-          this.executionOutcomesCache.set(
-            executionOutcome.execution_outcome.id,
-            {
-              block,
-              shardId: shard.shard_id,
-              indexInChunk,
-              executionOutcome,
-            },
-          );
-
           const transactionHash = this.transactionHashesCache.get(
             executionOutcome.execution_outcome.id,
           );
 
           if (!transactionHash) {
+            this.logger.warn(
+              `Not found parent tx hash for execution outcome: ${executionOutcome.execution_outcome.id}`,
+            );
             return;
           }
+
+          const fullTransaction =
+            this.fullTransactionsCache.get(transactionHash);
+
+          if (!fullTransaction) {
+            throw new Error(`Not found full tx for hash: ${fullTransaction}`);
+          }
+
+          // add execution outcome to full transaction
+          fullTransaction.executionOutcomes.push({
+            block,
+            shardId: shard.shard_id,
+            indexInChunk,
+            executionOutcome,
+          });
 
           // store transaction hash for future receipts
           executionOutcome.execution_outcome.outcome.receipt_ids.forEach(
@@ -106,11 +144,15 @@ export class CacheService {
     });
   }
 
+  getFullTransaction(transactionHash: string) {
+    return this.fullTransactionsCache.get(transactionHash);
+  }
+
   getTransactionHash(receiptOrDataId: string) {
     return this.transactionHashesCache.get(receiptOrDataId);
   }
 
-  alwaysStoreTransaction(transactionHash: string) {
+  setAlwaysStoreTransaction(transactionHash: string) {
     this.alwaysStoreTransactions.set(transactionHash, true);
   }
 
@@ -118,99 +160,14 @@ export class CacheService {
     return this.alwaysStoreTransactions.has(transactionHash);
   }
 
-  findObjectsByTransactionHash(transactionHash: string) {
-    const transactions: TransactionData[] = [];
-    let receipts: ReceiptData[] = [];
-    let executionOutcomes: ExecutionOutcomeData[] = [];
+  async loadAlwaysStoreTransactions() {
+    const transactionHashes =
+      await this.transactionService.getLatestTransactionHashes(
+        this.alwaysStoreTransactions.max,
+      );
 
-    // find transaction data
-    const transactionData = this.transactionsCache.get(transactionHash);
-
-    if (transactionData) {
-      transactions.push(transactionData);
-    } else {
-      return { transactions, receipts, executionOutcomes };
-    }
-
-    const [convertedIntoReceiptId] =
-      transactionData.transaction.outcome.execution_outcome.outcome.receipt_ids;
-
-    // find child receipts
-    const childReceipts = this.findChildReceipts(convertedIntoReceiptId);
-
-    receipts = receipts.concat(childReceipts.receipts);
-    executionOutcomes = executionOutcomes.concat(
-      childReceipts.executionOutcomes,
-    );
-
-    return {
-      transactions,
-      receipts,
-      executionOutcomes,
-    };
-  }
-
-  findChildReceipts(receiptId: string) {
-    let receipts: ReceiptData[] = [];
-    let executionOutcomes: ExecutionOutcomeData[] = [];
-
-    // find current receipt
-    const receiptData = this.receiptsCache.get(receiptId);
-
-    if (receiptData) {
-      receipts.push(receiptData);
-    } else {
-      return { receipts, executionOutcomes };
-    }
-
-    const receiptType = Near.parseKind<Near.ReceiptTypes>(
-      receiptData.receipt.receipt,
-    );
-
-    if (receiptType === Near.ReceiptTypes.Action) {
-      const actionReceipt = receiptData.receipt.receipt as Near.ActionReceipt;
-
-      // include data receipts in results
-      actionReceipt.Action.output_data_receivers.forEach(({ data_id }) => {
-        const dataReceiptData = this.receiptsCache.get(data_id);
-
-        if (dataReceiptData) {
-          receipts.push(dataReceiptData);
-        }
-      });
-    } else {
-      // data receipts dont have execution outcomes
-      return { receipts, executionOutcomes };
-    }
-
-    // find execution outcome for receipt
-    const executionOutcomeData = this.executionOutcomesCache.get(
-      receiptData.receipt.receipt_id,
-    );
-
-    if (executionOutcomeData) {
-      executionOutcomes.push(executionOutcomeData);
-    } else {
-      return { receipts, executionOutcomes };
-    }
-
-    // find child receipts and execution outcomes
-    executionOutcomeData.executionOutcome.execution_outcome.outcome.receipt_ids.forEach(
-      (receiptId) => {
-        const childExecutionOutcomeData = this.findChildReceipts(receiptId);
-
-        if (childExecutionOutcomeData) {
-          receipts = receipts.concat(childExecutionOutcomeData.receipts);
-          executionOutcomes = executionOutcomes.concat(
-            childExecutionOutcomeData.executionOutcomes,
-          );
-        }
-      },
-    );
-
-    return {
-      receipts,
-      executionOutcomes,
-    };
+    transactionHashes.forEach((hash) => {
+      this.alwaysStoreTransactions.set(hash, true);
+    });
   }
 }

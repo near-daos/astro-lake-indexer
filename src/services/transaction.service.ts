@@ -87,4 +87,15 @@ export class TransactionService {
       return jsonMatchAccounts(actionArgs, this.config.TRACK_ACCOUNTS);
     });
   }
+
+  async getLatestTransactionHashes(limit: number) {
+    const rows = await this.repository
+      .createQueryBuilder()
+      .select('transaction_hash')
+      .orderBy('block_timestamp', 'DESC')
+      .limit(limit)
+      .getRawMany();
+
+    return rows.map((row) => row.transaction_hash);
+  }
 }

@@ -9,11 +9,7 @@ import { ReceiptService } from './receipt.service';
 import { ExecutionOutcomeService } from './execution-outcome.service';
 import { InjectLogger } from '../decorators';
 import * as Near from '../near';
-import {
-  ExecutionOutcomeData,
-  ReceiptDataWithTransactionHash,
-  TransactionData,
-} from '../types';
+import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
 
 @Service()
 export class ObjectService {
@@ -36,7 +32,7 @@ export class ObjectService {
 
   async store(block: Near.Block, shards: Near.Shard[]) {
     let transactions: TransactionData[] = [];
-    let receipts: ReceiptDataWithTransactionHash[] = [];
+    let receipts: ReceiptData[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
 
     shards.forEach((shard) => {
@@ -47,7 +43,7 @@ export class ObjectService {
         shard.chunk.transactions.forEach((transaction, indexInChunk) => {
           if (this.transactionService.shouldStore(transaction)) {
             // mark the whole transaction as always to store for future receipts & execution outcomes
-            this.cacheService.alwaysStoreTransaction(
+            this.cacheService.setAlwaysStoreTransaction(
               transaction.transaction.hash,
             );
 
@@ -62,15 +58,12 @@ export class ObjectService {
           );
 
           if (!transactionHash) {
-            this.logger.warn(
-              `Not found parent tx hash for receipt ${receipt.receipt_id}`,
+            throw new Error(
+              `Not found parent tx hash for receipt: ${receipt.receipt_id}`,
             );
           }
 
-          if (
-            transactionHash &&
-            this.cacheService.isAlwaysStoreTransaction(transactionHash)
-          ) {
+          if (this.cacheService.isAlwaysStoreTransaction(transactionHash)) {
             // store the whole transaction
             receipts.push({
               block,
@@ -82,29 +75,21 @@ export class ObjectService {
           }
 
           if (this.receiptService.shouldStore(receipt)) {
-            // transaction hash is mandatory
-            if (!transactionHash) {
-              throw new Error(
-                `Not found parent tx hash for receipt ${receipt.receipt_id}`,
-              );
+            // mark the whole transaction as always to store for future receipts & execution outcomes
+            this.cacheService.setAlwaysStoreTransaction(transactionHash);
+
+            // get full transaction
+            const fullTransaction =
+              this.cacheService.getFullTransaction(transactionHash);
+
+            if (!fullTransaction) {
+              throw new Error(`Not found full tx for hash: ${transactionHash}`);
             }
 
-            // mark the whole transaction as always to store for future receipts & execution outcomes
-            this.cacheService.alwaysStoreTransaction(transactionHash);
-
-            // find all objects in transaction
-            const results =
-              this.cacheService.findObjectsByTransactionHash(transactionHash);
-
-            transactions = transactions.concat(results.transactions);
-            receipts = receipts.concat(
-              results.receipts.map((receipt) => ({
-                ...receipt,
-                transactionHash,
-              })),
-            );
+            transactions.push(fullTransaction.transaction);
+            receipts = receipts.concat(fullTransaction.receipts);
             executionOutcomes = executionOutcomes.concat(
-              results.executionOutcomes,
+              fullTransaction.executionOutcomes,
             );
           }
         });
@@ -118,15 +103,12 @@ export class ObjectService {
           );
 
           if (!transactionHash) {
-            this.logger.warn(
+            throw new Error(
               `Not found parent tx hash for execution outcome ${executionOutcome.execution_outcome.id}`,
             );
           }
 
-          if (
-            transactionHash &&
-            this.cacheService.isAlwaysStoreTransaction(transactionHash)
-          ) {
+          if (this.cacheService.isAlwaysStoreTransaction(transactionHash)) {
             // store the whole transaction
             executionOutcomes.push({
               block,
@@ -137,29 +119,21 @@ export class ObjectService {
           }
 
           if (this.executionOutcomeService.shouldStore(executionOutcome)) {
-            // transaction hash is mandatory
-            if (!transactionHash) {
-              throw new Error(
-                `Not found parent tx hash for execution outcome ${executionOutcome.execution_outcome.id}`,
-              );
+            // mark transaction as always to store for future receipts & execution outcomes
+            this.cacheService.setAlwaysStoreTransaction(transactionHash);
+
+            // get full transaction
+            const fullTransaction =
+              this.cacheService.getFullTransaction(transactionHash);
+
+            if (!fullTransaction) {
+              throw new Error(`Not found full tx for hash: ${transactionHash}`);
             }
 
-            // mark transaction as always to store for future receipts & execution outcomes
-            this.cacheService.alwaysStoreTransaction(transactionHash);
-
-            // find all objects in transaction
-            const results =
-              this.cacheService.findObjectsByTransactionHash(transactionHash);
-
-            transactions = transactions.concat(results.transactions);
-            receipts = receipts.concat(
-              results.receipts.map((receipt) => ({
-                ...receipt,
-                transactionHash,
-              })),
-            );
+            transactions.push(fullTransaction.transaction);
+            receipts = receipts.concat(fullTransaction.receipts);
             executionOutcomes = executionOutcomes.concat(
-              results.executionOutcomes,
+              fullTransaction.executionOutcomes,
             );
           }
         },

@@ -72,6 +72,8 @@ export class App {
     this.running = true;
     this.processedBlocksCounter = 0;
 
+    await this.cacheService.loadAlwaysStoreTransactions();
+
     const latestBlockHeight =
       await this.lastBlockService.getLatestBlockHeight();
 

@@ -17,10 +17,8 @@ export interface ReceiptData {
   block: Near.Block;
   chunk: Near.Chunk;
   indexInChunk: number;
-  receipt: Near.Receipt;
-}
-export interface ReceiptDataWithTransactionHash extends ReceiptData {
   transactionHash: string;
+  receipt: Near.Receipt;
 }
 
 export interface ExecutionOutcomeData {
@@ -28,4 +26,10 @@ export interface ExecutionOutcomeData {
   shardId: number;
   indexInChunk: number;
   executionOutcome: Near.ExecutionOutcomeWithReceipt;
+}
+
+export interface FullTransaction {
+  transaction: TransactionData;
+  receipts: ReceiptData[];
+  executionOutcomes: ExecutionOutcomeData[];
 }
