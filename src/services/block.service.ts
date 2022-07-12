@@ -2,7 +2,7 @@ import { Service } from 'typedi';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '../decorators';
 import { Block } from '../entities';
-import * as Near from '../near';
+import { BlockData } from '../types';
 
 @Service()
 export class BlockService {
@@ -10,7 +10,7 @@ export class BlockService {
     @InjectRepository(Block) private readonly repository: Repository<Block>,
   ) {}
 
-  fromJSON(block: Near.Block) {
+  fromJSON(block: BlockData) {
     return this.repository.create({
       block_height: block.header.height,
       block_hash: block.header.hash,

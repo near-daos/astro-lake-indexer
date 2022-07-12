@@ -6,23 +6,33 @@ export interface BlockResult {
   shards: Near.Shard[];
 }
 
+export interface BlockData {
+  author: string;
+  header: Near.BlockHeader;
+}
+
+export interface ChunkData {
+  author: string;
+  header: Near.ChunkHeader;
+}
+
 export interface TransactionData {
-  block: Near.Block;
-  chunk: Near.Chunk;
+  block: BlockData;
+  chunk: ChunkData;
   indexInChunk: number;
   transaction: Near.TransactionWithOutcome;
 }
 
 export interface ReceiptData {
-  block: Near.Block;
-  chunk: Near.Chunk;
+  block: BlockData;
+  chunk: ChunkData;
   indexInChunk: number;
   transactionHash: string;
   receipt: Near.Receipt;
 }
 
 export interface ExecutionOutcomeData {
-  block: Near.Block;
+  block: BlockData;
   shardId: number;
   indexInChunk: number;
   executionOutcome: Near.ExecutionOutcomeWithReceipt;

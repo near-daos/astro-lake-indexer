@@ -32,10 +32,18 @@ export class CacheService {
     });
   }
 
-  cacheBlock(block: Near.Block, shards: Near.Shard[]) {
+  cacheBlock(nearBlock: Near.Block, shards: Near.Shard[]) {
+    const block = {
+      author: nearBlock.author,
+      header: nearBlock.header,
+    };
+
     shards.forEach((shard) => {
       if (shard.chunk) {
-        const chunk = shard.chunk;
+        const chunk = {
+          author: shard.chunk.author,
+          header: shard.chunk.header,
+        };
 
         // cache transactions
         shard.chunk.transactions.forEach((transaction, indexInChunk) => {

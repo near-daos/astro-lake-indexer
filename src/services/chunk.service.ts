@@ -2,7 +2,7 @@ import { Service } from 'typedi';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '../decorators';
 import { Chunk } from '../entities';
-import * as Near from '../near';
+import { ChunkData } from '../types';
 
 @Service()
 export class ChunkService {
@@ -10,7 +10,7 @@ export class ChunkService {
     @InjectRepository(Chunk) private readonly repository: Repository<Chunk>,
   ) {}
 
-  fromJSON(blockHash: string, chunk: Near.Chunk) {
+  fromJSON(blockHash: string, chunk: ChunkData) {
     return this.repository.create({
       included_in_block_hash: blockHash,
       chunk_hash: chunk.header.chunk_hash,
