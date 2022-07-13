@@ -1,5 +1,6 @@
 import { Logger } from 'log4js';
 import LRUCache from 'lru-cache';
+import { cloneDeep } from 'lodash';
 import { Inject, Service } from 'typedi';
 import { TransactionService } from './transaction.service';
 import { Config } from '../config';
@@ -35,14 +36,14 @@ export class CacheService {
   cacheBlock(nearBlock: Near.Block, shards: Near.Shard[]) {
     const block = {
       author: nearBlock.author,
-      header: nearBlock.header,
+      header: cloneDeep(nearBlock.header),
     };
 
     shards.forEach((shard) => {
       if (shard.chunk) {
         const chunk = {
           author: shard.chunk.author,
-          header: shard.chunk.header,
+          header: cloneDeep(shard.chunk.header),
         };
 
         // cache transactions
@@ -58,7 +59,7 @@ export class CacheService {
                 block,
                 chunk,
                 indexInChunk,
-                transaction,
+                transaction: cloneDeep(transaction),
               },
               receipts: [],
               executionOutcomes: [],
@@ -99,7 +100,7 @@ export class CacheService {
             chunk,
             indexInChunk,
             transactionHash,
-            receipt,
+            receipt: cloneDeep(receipt),
           });
 
           const receiptType = Near.parseKind<Near.ReceiptTypes>(
@@ -145,7 +146,7 @@ export class CacheService {
             block,
             shardId: shard.shard_id,
             indexInChunk,
-            executionOutcome,
+            executionOutcome: cloneDeep(executionOutcome),
           });
 
           // store transaction hash for future receipts
