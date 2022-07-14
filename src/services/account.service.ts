@@ -22,19 +22,26 @@ export class AccountService {
   ) {}
 
   private async createOrUpdateAccount(account: DeepPartial<Account>) {
-    const result = await this.repository
-      .createQueryBuilder()
-      .insert()
-      .values({
-        account_id: account.account_id,
-        created_by_receipt_id: account.created_by_receipt_id,
-        last_update_block_height: account.last_update_block_height,
-      })
-      .orIgnore()
-      .execute();
+    try {
+      const result = await this.repository
+        .createQueryBuilder()
+        .insert()
+        .values({
+          account_id: account.account_id,
+          created_by_receipt_id: account.created_by_receipt_id,
+          last_update_block_height: account.last_update_block_height,
+        })
+        .execute();
 
-    if (result.identifiers.every((id) => id === undefined)) {
-      // re-create deleted account
+      this.logger.info(
+        `Created account: %s (%s)`,
+        account.account_id,
+        account.created_by_receipt_id,
+      );
+
+      return result;
+    } catch (err) {
+      // Update deleted account
       const result = this.repository
         .createQueryBuilder()
         .update()
@@ -60,14 +67,6 @@ export class AccountService {
 
       return result;
     }
-
-    this.logger.info(
-      `Created account: %s (%s)`,
-      account.account_id,
-      account.created_by_receipt_id,
-    );
-
-    return result;
   }
 
   private async deleteAccount(account: DeepPartial<Account>) {
@@ -75,7 +74,6 @@ export class AccountService {
       .createQueryBuilder()
       .update()
       .set({
-        account_id: account.account_id,
         deleted_by_receipt_id: account.deleted_by_receipt_id,
         last_update_block_height: account.last_update_block_height,
       })
@@ -153,12 +151,10 @@ export class AccountService {
       });
     });
 
-    const createOrUpdateAccountResults = await Promise.all(
-      createOrUpdateAccounts,
-    );
     const deleteResults = await Promise.all(deleteAccounts);
+    const createOrUpdateResults = await Promise.all(createOrUpdateAccounts);
 
-    return { createOrUpdateAccountResults, deleteResults };
+    return { deleteResults, createOrUpdateResults };
   }
 
   shouldStore(receipt: Near.Receipt) {
