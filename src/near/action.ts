@@ -68,11 +68,3 @@ export type Action =
   | ActionAddKey
   | ActionDeleteKey
   | ActionDeleteAccount;
-
-export interface ActionFunctionCallArgs {
-  method_name: string;
-  args_base64: string;
-  gas: Amount;
-  deposit: string;
-  args_json?: Record<string, string> | null;
-}
