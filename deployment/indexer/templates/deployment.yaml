@@ -42,6 +42,8 @@ spec:
               name: astro-lake-indexer-s3-secret
           - secretRef:
               name: astro-lake-indexer-db-secret
+          - secretRef:
+              name: lake-indexer-redis-secret
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
