@@ -33,6 +33,12 @@ export class Config {
       'DATABASE_PASSWORD',
       'DATABASE_NAME',
 
+      'REDIS_HOST',
+      'REDIS_PORT',
+      'REDIS_USERNAME',
+      'REDIS_PASSWORD',
+      'REDIS_DATABASE',
+
       'START_BLOCK_HEIGHT',
       'LOOK_BACK_BLOCKS',
       'TX_CACHE_SIZE',
@@ -88,6 +94,26 @@ export class Config {
 
   get DATABASE_NAME(): string {
     return this.provider.get('DATABASE_NAME');
+  }
+
+  get REDIS_HOST(): string {
+    return this.provider.get('REDIS_HOST');
+  }
+
+  get REDIS_PORT(): number {
+    return parseInt(this.provider.get('REDIS_PORT'));
+  }
+
+  get REDIS_USERNAME(): string {
+    return this.provider.get('REDIS_USERNAME');
+  }
+
+  get REDIS_PASSWORD(): string {
+    return this.provider.get('REDIS_PASSWORD');
+  }
+
+  get REDIS_DATABASE(): number {
+    return parseInt(this.provider.get('REDIS_DATABASE'));
   }
 
   get START_BLOCK_HEIGHT(): number {

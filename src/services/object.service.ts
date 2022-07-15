@@ -6,6 +6,7 @@ import { CacheService } from './cache.service';
 import { ChunkService } from './chunk.service';
 import { TransactionService } from './transaction.service';
 import { ReceiptService } from './receipt.service';
+import { RedisService } from './redis.service';
 import { ExecutionOutcomeService } from './execution-outcome.service';
 import { InjectLogger } from '../decorators';
 import * as Near from '../near';
@@ -28,12 +29,15 @@ export class ObjectService {
     private readonly receiptService: ReceiptService,
     @Inject()
     private readonly executionOutcomeService: ExecutionOutcomeService,
+    @Inject()
+    private readonly redisService: RedisService,
   ) {}
 
   async store(block: Near.Block, shards: Near.Shard[]) {
     let transactions: TransactionData[] = [];
     let receipts: ReceiptData[] = [];
     let executionOutcomes: ExecutionOutcomeData[] = [];
+    const streamReceiptIds: string[] = [];
 
     shards.forEach((shard) => {
       if (shard.chunk) {
@@ -91,6 +95,8 @@ export class ObjectService {
             executionOutcomes = executionOutcomes.concat(
               fullTransaction.executionOutcomes,
             );
+
+            streamReceiptIds.push(receipt.receipt_id);
           }
         });
       }
@@ -278,6 +284,21 @@ export class ObjectService {
           .map((executionOutcome) => executionOutcome.receipt_id)
           .join(', '),
       );
+    }
+
+    // stream receipts
+    if (receiptEntities.length) {
+      streamReceiptIds.forEach((receiptId) => {
+        const receipt = receiptEntities.find(
+          (receipt) => receipt.receipt_id === receiptId,
+        );
+
+        if (!receipt) {
+          return;
+        }
+
+        this.redisService.streamReceipt(receipt);
+      });
     }
   }
 }

@@ -49,6 +49,7 @@
       "@supercharge/promise-pool": "2.3.0",
       "aws-sdk": "2.1174.0",
       "dotenv": "16.0.1",
+      "ioredis": "5.2.0",
       "json-bigint": "1.0.0",
       "lodash": "4.17.21",
       "log4js": "6.6.0",
