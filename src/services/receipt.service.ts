@@ -27,7 +27,7 @@ export class ReceiptService {
     blockTimestamp: bigint,
     chunkHash: string,
     indexInChunk: number,
-    transactionHash: string | undefined,
+    transactionHash: string,
     receipt: Near.Receipt,
   ) {
     const receiptKind = Near.parseKind<Near.ReceiptTypes>(receipt.receipt);
