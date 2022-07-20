@@ -26,10 +26,14 @@ export class LastBlockService {
       {},
       {
         block_height: block.header.height,
+        block_timestamp: block.header.timestamp,
       },
     );
     if (!result.affected) {
-      return this.repository.insert({ block_height: block.header.height });
+      return this.repository.insert({
+        block_height: block.header.height,
+        block_timestamp: block.header.timestamp,
+      });
     }
     return result;
   }
