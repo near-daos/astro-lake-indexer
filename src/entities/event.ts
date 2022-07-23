@@ -1,4 +1,5 @@
 import {
+  Column,
   Entity,
   Index,
   JoinColumn,
@@ -33,7 +34,7 @@ export class Event {
   @PrimaryColumn('text')
   emitted_by_contract_account_id: string;
 
-  @PrimaryColumn('jsonb')
+  @Column('jsonb')
   event_json: Record<string, unknown>;
 
   @ManyToOne(() => Receipt)
