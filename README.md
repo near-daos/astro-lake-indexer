@@ -63,4 +63,4 @@ npm run cli 12345
 
 ### Known issues
 
-- Wrong `index_in_block` stored in `account_changes` table. Fixed in e4d40c7bfcd6eecc95545ac3f4b486e67ec522b0. 
+- Wrong `index_in_block` stored in `account_changes` table. Fixed in [e4d40c7b](https://github.com/near-daos/astro-lake-indexer/commit/e4d40c7bfcd6eecc95545ac3f4b486e67ec522b0). 
