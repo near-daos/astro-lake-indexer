@@ -5,6 +5,8 @@ metadata:
   labels:
     {{- include "astro-lake-indexer.labels" . | nindent 4 }}
 spec:
+  strategy:
+    type: Recreate
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
@@ -14,8 +16,6 @@ spec:
       labels:
         {{- include "astro-lake-indexer.selectorLabels" . | nindent 8 }}
     spec:
-      strategy:
-        type: Recreate
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
