@@ -59,3 +59,8 @@ npm run cli 12345
 `BLOCKS_DL_CONCURRENCY` - number of blocks to download at once (default: 10)
 
 `WAIT_FOR_NEW_BLOCKS` - if there are no new blocks, wait (ms) before new request (default: 2000)
+
+
+### Known issues
+
+- Wrong `index_in_block` stored in `account_changes` table. Fixed in e4d40c7bfcd6eecc95545ac3f4b486e67ec522b0. 
