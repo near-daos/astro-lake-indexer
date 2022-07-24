@@ -84,19 +84,18 @@ export class AccountChangeService {
 
   async store(block: Near.Block, shards: Near.Shard[]) {
     const entities = shards
-      .flatMap((shard) =>
-        shard.state_changes
-          .filter((stateChange) => this.shouldStore(stateChange))
-          .map((stateChange, index) =>
-            this.fromJSON(
-              block.header.hash,
-              block.header.timestamp,
-              index,
-              stateChange,
-            ),
-          ),
-      )
-      .filter(Boolean) as AccountChange[];
+      .flatMap((shard) => shard.state_changes)
+      .filter((stateChange) => this.shouldCount(stateChange))
+      .map((stateChange, indexInBlock) => ({ stateChange, indexInBlock }))
+      .filter(({ stateChange }) => this.shouldStore(stateChange))
+      .map(({ stateChange, indexInBlock }) =>
+        this.fromJSON(
+          block.header.hash,
+          block.header.timestamp,
+          indexInBlock,
+          stateChange,
+        ),
+      ) as AccountChange[];
 
     if (!entities.length) {
       return;
@@ -111,6 +110,13 @@ export class AccountChangeService {
     );
 
     return result;
+  }
+
+  shouldCount(stateChange: Near.StateChange) {
+    return [
+      Near.StateChangeTypes.AccountUpdate,
+      Near.StateChangeTypes.AccountDeletion,
+    ].includes(stateChange.type);
   }
 
   shouldStore(stateChange: Near.StateChange) {
