@@ -112,21 +112,23 @@ export class FtEventService {
   }
 
   async store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards.flatMap((shard, shardId) =>
-      shard.receipt_execution_outcomes.flatMap((outcome) => {
-        const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
-          .map(Near.parseLogEvent)
-          .filter(Near.isNEP141Event)
-          .filter((event) => this.shouldStore(event))
-          .map((event) => ({ event, outcome }));
+    const entities = shards
+      .flatMap((shard, shardId) => {
+        const eventsWithOutcomes = shard.receipt_execution_outcomes.flatMap(
+          (outcome) =>
+            outcome.execution_outcome.outcome.logs
+              .map(Near.parseLogEvent)
+              .filter(Near.isNEP141Event)
+              .map((event) => ({ event, outcome })),
+        );
 
         return this.fromJSON(
           block.header.timestamp,
           shardId,
           eventsWithOutcomes,
         );
-      }),
-    );
+      })
+      .filter((ftEvent) => this.shouldStore(ftEvent));
 
     if (!entities.length) {
       return;
@@ -143,28 +145,16 @@ export class FtEventService {
     return result;
   }
 
-  shouldStore(event: Near.NEP141Event) {
-    if (!Array.isArray(event.data)) {
-      return false;
-    }
-
-    switch (event.event) {
-      case Near.NEP141Events.Mint:
-        return event.data.some(({ owner_id }) =>
-          matchAccounts(owner_id, this.config.TRACK_ACCOUNTS),
-        );
-
-      case Near.NEP141Events.Transfer:
-        return event.data.some(
-          ({ old_owner_id, new_owner_id }) =>
-            matchAccounts(old_owner_id, this.config.TRACK_ACCOUNTS) ||
-            matchAccounts(new_owner_id, this.config.TRACK_ACCOUNTS),
-        );
-
-      case Near.NEP141Events.Burn:
-        return event.data.some(({ owner_id }) =>
-          matchAccounts(owner_id, this.config.TRACK_ACCOUNTS),
-        );
-    }
+  shouldStore(ftEvent: FtEvent) {
+    return (
+      matchAccounts(
+        ftEvent.token_old_owner_account_id,
+        this.config.TRACK_ACCOUNTS,
+      ) ||
+      matchAccounts(
+        ftEvent.token_new_owner_account_id,
+        this.config.TRACK_ACCOUNTS,
+      )
+    );
   }
 }

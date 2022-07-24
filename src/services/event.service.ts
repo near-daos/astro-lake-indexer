@@ -22,21 +22,18 @@ export class EventService {
   fromJSON(
     blockTimestamp: bigint,
     shardId: number,
-    eventsWithOutcomes: {
-      event: Near.UnknownEvent;
-      outcome: Near.ExecutionOutcomeWithReceipt;
-    }[],
+    indexInShard: number,
+    event: Near.UnknownEvent,
+    outcome: Near.ExecutionOutcomeWithReceipt,
   ) {
-    return eventsWithOutcomes.map(({ event, outcome }, index) =>
-      this.repository.create({
-        emitted_for_receipt_id: outcome.execution_outcome.id,
-        emitted_at_block_timestamp: blockTimestamp,
-        emitted_in_shard_id: shardId,
-        emitted_index_of_event_entry_in_shard: index,
-        emitted_by_contract_account_id: outcome.receipt.receiver_id,
-        event_json: event,
-      }),
-    );
+    return this.repository.create({
+      emitted_for_receipt_id: outcome.execution_outcome.id,
+      emitted_at_block_timestamp: blockTimestamp,
+      emitted_in_shard_id: shardId,
+      emitted_index_of_event_entry_in_shard: indexInShard,
+      emitted_by_contract_account_id: outcome.receipt.receiver_id,
+      event_json: event,
+    });
   }
 
   async insertIgnore(entities: Event[]) {
@@ -49,21 +46,27 @@ export class EventService {
   }
 
   async store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards.flatMap((shard, shardId) =>
-      shard.receipt_execution_outcomes.flatMap((outcome) => {
-        const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
-          .map(Near.parseLogEvent)
-          .filter(Near.isEvent)
-          .filter((event) => this.shouldStore(event))
-          .map((event) => ({ event, outcome }));
-
-        return this.fromJSON(
-          block.header.timestamp,
-          shardId,
-          eventsWithOutcomes,
+    const entities = shards
+      .flatMap((shard, shardId) => {
+        const eventsWithOutcomes = shard.receipt_execution_outcomes.flatMap(
+          (outcome) =>
+            outcome.execution_outcome.outcome.logs
+              .map(Near.parseLogEvent)
+              .filter(Near.isEvent)
+              .map((event) => ({ event, outcome })),
         );
-      }),
-    );
+
+        return eventsWithOutcomes.map(({ event, outcome }, indexInShard) =>
+          this.fromJSON(
+            block.header.timestamp,
+            shardId,
+            indexInShard,
+            event,
+            outcome,
+          ),
+        );
+      })
+      .filter((event) => this.shouldStore(event));
 
     if (!entities.length) {
       return;
@@ -80,7 +83,7 @@ export class EventService {
     return result;
   }
 
-  shouldStore(event: Near.Event) {
-    return jsonMatchAccounts(event, this.config.TRACK_ACCOUNTS);
+  shouldStore(event: Event) {
+    return jsonMatchAccounts(event.event_json, this.config.TRACK_ACCOUNTS);
   }
 }
