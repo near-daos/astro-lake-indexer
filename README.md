@@ -74,3 +74,5 @@ npm run cli 12345
   - nearlend-dao.sputnik-dao.near (4 entries)
   - peaceinc.sputnik-dao.near (1 entry)
   - near-insider.sputnik-dao.near (2 entries).
+
+- Wrong `emitted_index_of_event_entry_in_shard` stored in `events`, `assets__fungible_token_events` and `assets__non_fungible_token_events` tables. Fixed in [a1c6b7aa](https://github.com/near-daos/astro-lake-indexer/commit/a1c6b7aa0137348a5f453165f50d0c78db1358fa).
