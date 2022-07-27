@@ -35,6 +35,9 @@ export class NftEventService {
           {
             const { data } = event as Near.NEP171EventMint;
             data.forEach(({ token_ids, owner_id, memo }) => {
+              if (!Array.isArray(token_ids) || !owner_id) {
+                return;
+              }
               token_ids.forEach((tokenId) => {
                 entities.push(
                   this.repository.create({
@@ -67,6 +70,13 @@ export class NftEventService {
                 authorized_id,
                 memo,
               }) => {
+                if (
+                  !Array.isArray(token_ids) ||
+                  !old_owner_id ||
+                  !new_owner_id
+                ) {
+                  return;
+                }
                 token_ids.forEach((tokenId) => {
                   entities.push(
                     this.repository.create({
@@ -94,6 +104,9 @@ export class NftEventService {
           {
             const { data } = event as Near.NEP171EventBurn;
             data.forEach(({ token_ids, owner_id, authorized_id, memo }) => {
+              if (!Array.isArray(token_ids) || !owner_id) {
+                return;
+              }
               token_ids.forEach((tokenId) => {
                 entities.push(
                   this.repository.create({

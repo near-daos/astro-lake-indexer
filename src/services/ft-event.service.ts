@@ -35,6 +35,9 @@ export class FtEventService {
           {
             const { data } = event as Near.NEP141EventMint;
             data.forEach(({ amount, owner_id, memo }) => {
+              if (!amount || !owner_id) {
+                return;
+              }
               entities.push(
                 this.repository.create({
                   emitted_for_receipt_id: outcome.execution_outcome.id,
@@ -57,6 +60,9 @@ export class FtEventService {
           {
             const { data } = event as Near.NEP141EventTransfer;
             data.forEach(({ amount, old_owner_id, new_owner_id, memo }) => {
+              if (!amount || !old_owner_id || !new_owner_id) {
+                return;
+              }
               entities.push(
                 this.repository.create({
                   emitted_for_receipt_id: outcome.execution_outcome.id,
@@ -79,6 +85,9 @@ export class FtEventService {
           {
             const { data } = event as Near.NEP141EventBurn;
             data.forEach(({ amount, owner_id, memo }) => {
+              if (!amount || !owner_id) {
+                return;
+              }
               entities.push(
                 this.repository.create({
                   emitted_for_receipt_id: outcome.execution_outcome.id,
