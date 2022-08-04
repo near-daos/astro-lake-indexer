@@ -39,11 +39,13 @@ spec:
           - configMapRef:
               name: {{ .Release.Name }}-version
           - secretRef:
-              name: astro-lake-indexer-s3-secret
+              name: indexer-iam-user-secrets
           - secretRef:
-              name: astro-lake-indexer-db-secret
+              name: indexer-rds-secrets
           - secretRef:
-              name: lake-indexer-redis-secret
+              name: indexer-redis-secrets
+          - secretRef:
+              name: indexer-service-secrets
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
