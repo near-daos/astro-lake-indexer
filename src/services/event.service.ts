@@ -72,7 +72,7 @@ export class EventService {
       return;
     }
 
-    const result = this.insertIgnore(entities);
+    const result = await this.insertIgnore(entities);
 
     this.logger.info(
       'Stored events: %d (%s)',

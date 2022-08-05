@@ -45,7 +45,7 @@ export class AccessKeyService {
       return result;
     } catch (err) {
       // Update deleted access key
-      const result = this.repository
+      const result = await this.repository
         .createQueryBuilder()
         .update()
         .set({

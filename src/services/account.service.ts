@@ -42,7 +42,7 @@ export class AccountService {
       return result;
     } catch (err) {
       // Update deleted account
-      const result = this.repository
+      const result = await this.repository
         .createQueryBuilder()
         .update()
         .set({

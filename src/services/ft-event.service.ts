@@ -143,7 +143,7 @@ export class FtEventService {
       return;
     }
 
-    const result = this.insertIgnore(entities);
+    const result = await this.insertIgnore(entities);
 
     this.logger.info(
       'Stored FT events: %d (%s)',

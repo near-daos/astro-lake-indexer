@@ -165,7 +165,7 @@ export class NftEventService {
       return;
     }
 
-    const result = this.insertIgnore(entities);
+    const result = await this.insertIgnore(entities);
 
     this.logger.info(
       'Stored NFT events: %d (%s)',
