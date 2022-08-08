@@ -19,6 +19,7 @@ import {
 } from './services';
 import { BlockResult } from './types';
 import * as Near from './near';
+import './tracing';
 
 @Service()
 export class App {

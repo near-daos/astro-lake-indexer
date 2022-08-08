@@ -41,6 +41,11 @@ helm.sh/chart: {{ include "astro-lake-indexer.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if eq .Values.environment.DATADOG_APM_ENABLED "true" }}
+tags.datadoghq.com/env: "{{ .Values.environment.DATADOG_ENV }}"
+tags.datadoghq.com/service: astro-lake-indexer
+tags.datadoghq.com/version: 1.0.0
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -49,6 +54,19 @@ Selector labels
 {{- define "astro-lake-indexer.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "astro-lake-indexer.name" . }}
 app.kubernetes.io/instance: "astro-lake-indexer"
+{{- end -}}
+
+{{/*
+Metadata labels
+*/}}
+{{- define "astro-lake-indexer.metadataLabels" -}}
+app.kubernetes.io/name: {{ include "astro-lake-indexer.name" . }}
+app.kubernetes.io/instance: "astro-lake-indexer"
+{{- if eq .Values.environment.DATADOG_APM_ENABLED "true" }}
+tags.datadoghq.com/env: "{{ .Values.environment.DATADOG_ENV }}"
+tags.datadoghq.com/service: astro-lake-indexer
+tags.datadoghq.com/version: 1.0.0
+{{- end -}}
 {{- end -}}
 
 {{/*
