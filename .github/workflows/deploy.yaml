@@ -4,7 +4,7 @@ on:
     inputs:
       environment:
         required: true
-        description: Specify environment to run on. Valid values are development, production
+        description: Specify environment to run on. Valid values are test, production
       tag:
         required: true
         description: Specify docker tag to deploy.
@@ -29,13 +29,13 @@ jobs:
             echo "input was provided: ${{ github.event.inputs.environment }}"
             echo "::set-output name=environment::${{ github.event.inputs.environment }}"
             case "${{ github.event.inputs.environment }}" in
-              development)
+              test)
                 echo "::set-output name=docker_env_tag::${{ github.event.inputs.tag }}"
-                echo "::set-output name=namespace::sputnik-v2-${{ github.event.inputs.environment }}"
+                echo "::set-output name=namespace::astro-be-${{ github.event.inputs.environment }}"
               ;;
               production)
                 echo "::set-output name=docker_env_tag::${{ github.event.inputs.tag }}"
-                echo "::set-output name=namespace::sputnik-v2"
+                echo "::set-output name=namespace::astro-be"
               ;;
               *)
                 echo "Provided environment '${{ github.event.inputs.environment }}' is incorrect"
