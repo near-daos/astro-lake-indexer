@@ -1,11 +1,10 @@
 import { Logger } from 'log4js';
-import { EntityManager } from 'typeorm';
 import { Inject, Service } from 'typedi';
 import { PromisePool } from '@supercharge/promise-pool';
 import { retry, RetryConfig, wait } from 'ts-retry-promise';
 import { S3Fetcher } from './s3-fetcher';
 import { Config } from './config';
-import { InjectEntityManager, InjectLogger } from './decorators';
+import { InjectLogger } from './decorators';
 import {
   AccessKeyService,
   AccountChangeService,
@@ -16,6 +15,7 @@ import {
   LastBlockService,
   NftEventService,
   ObjectService,
+  StatsDService,
 } from './services';
 import { BlockResult } from './types';
 import * as Near from './near';
@@ -46,6 +46,8 @@ export class App {
     @Inject()
     private readonly fetcher: S3Fetcher,
     @Inject()
+    private readonly statsDService: StatsDService,
+    @Inject()
     private readonly cacheService: CacheService,
     @Inject()
     private readonly objectService: ObjectService,
@@ -63,8 +65,6 @@ export class App {
     private readonly nftEventService: NftEventService,
     @Inject()
     private readonly lastBlockService: LastBlockService,
-    @InjectEntityManager()
-    private readonly manager: EntityManager,
   ) {
     this.startBlockHeight = config.START_BLOCK_HEIGHT;
   }
@@ -200,15 +200,23 @@ export class App {
 
   private reportStats() {
     const speed = this.processedBlocksCounter / this.reportStatsInterval;
-    const memUsage = process.memoryUsage().heapUsed / 1024 / 1024;
+    const memUsage = process.memoryUsage();
+    const heapUsedMb = memUsage.heapUsed / 1024 / 1024;
 
     this.logger.info(
       `Current block: ${
         this.currentBlockHeight
       }, speed: ${speed} blocks/sec, memory usage: ${
-        Math.round(memUsage * 100) / 100
+        Math.round(heapUsedMb * 100) / 100
       } MB`,
     );
+
+    // send stats to datadog
+    this.statsDService.client.gauge('block.current', this.currentBlockHeight);
+    this.statsDService.client.gauge('block.rate', speed);
+    this.statsDService.client.gauge('memory.rss', memUsage.rss);
+    this.statsDService.client.gauge('memory.heapTotal', memUsage.heapTotal);
+    this.statsDService.client.gauge('memory.heapUsed', memUsage.heapUsed);
 
     this.processedBlocksCounter = 0;
   }

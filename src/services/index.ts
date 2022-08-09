@@ -17,5 +17,6 @@ export * from './nft-event.service';
 export * from './object.service';
 export * from './last-block.service';
 export * from './receipt.service';
+export * from './stats-d.service';
 export * from './transaction.service';
 export * from './transaction-action.service';
