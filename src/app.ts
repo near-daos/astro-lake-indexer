@@ -126,23 +126,27 @@ export class App {
         .handleError((err) => {
           throw err;
         })
-        .process(async (blockHeight) => {
-          const block = await retry(
-            () => this.fetcher.getBlock(blockHeight),
-            this.retryConfig,
-          );
+        .process(async (blockHeight) =>
+          tracer.trace('block.download', async (span) => {
+            const block = await retry(
+              () => this.fetcher.getBlock(blockHeight),
+              this.retryConfig,
+            );
 
-          const shards = await Promise.all(
-            block.chunks.map((chunk) =>
-              retry(
-                () => this.fetcher.getShard(blockHeight, chunk.shard_id),
-                this.retryConfig,
+            const shards = await Promise.all(
+              block.chunks.map((chunk) =>
+                retry(
+                  () => this.fetcher.getShard(blockHeight, chunk.shard_id),
+                  this.retryConfig,
+                ),
               ),
-            ),
-          );
+            );
 
-          return { blockHeight, block, shards };
-        });
+            span?.setTag('height', blockHeight);
+
+            return { blockHeight, block, shards };
+          }),
+        );
 
       results.sort((a, b) => a.blockHeight - b.blockHeight);
 
