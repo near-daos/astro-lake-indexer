@@ -19,7 +19,7 @@ import {
 } from './services';
 import { BlockResult } from './types';
 import * as Near from './near';
-import './tracing';
+import tracer from './tracing';
 
 @Service()
 export class App {
@@ -158,7 +158,10 @@ export class App {
 
   private async process(results: BlockResult[]) {
     for (const result of results) {
-      await this.processBlock(result);
+      await tracer.trace('block.process', async (span) => {
+        await this.processBlock(result);
+        span?.setTag('height', result.blockHeight);
+      });
       this.processedBlocksCounter++;
     }
   }
