@@ -35,6 +35,9 @@ export class NftEventService {
           {
             const { data } = event as Near.NEP171EventMint;
             data.forEach(({ token_ids, owner_id, memo }) => {
+              if (!Array.isArray(token_ids) || !owner_id) {
+                return;
+              }
               token_ids.forEach((tokenId) => {
                 entities.push(
                   this.repository.create({
@@ -67,6 +70,13 @@ export class NftEventService {
                 authorized_id,
                 memo,
               }) => {
+                if (
+                  !Array.isArray(token_ids) ||
+                  !old_owner_id ||
+                  !new_owner_id
+                ) {
+                  return;
+                }
                 token_ids.forEach((tokenId) => {
                   entities.push(
                     this.repository.create({
@@ -94,6 +104,9 @@ export class NftEventService {
           {
             const { data } = event as Near.NEP171EventBurn;
             data.forEach(({ token_ids, owner_id, authorized_id, memo }) => {
+              if (!Array.isArray(token_ids) || !owner_id) {
+                return;
+              }
               token_ids.forEach((tokenId) => {
                 entities.push(
                   this.repository.create({
@@ -130,27 +143,29 @@ export class NftEventService {
   }
 
   async store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards.flatMap((shard, shardId) =>
-      shard.receipt_execution_outcomes.flatMap((outcome) => {
-        const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
-          .map(Near.parseLogEvent)
-          .filter(Near.isNEP171Event)
-          .filter((event) => this.shouldStore(event))
-          .map((event) => ({ event, outcome }));
+    const entities = shards
+      .flatMap((shard, shardId) => {
+        const eventsWithOutcomes = shard.receipt_execution_outcomes.flatMap(
+          (outcome) =>
+            outcome.execution_outcome.outcome.logs
+              .map(Near.parseLogEvent)
+              .filter(Near.isNEP171Event)
+              .map((event) => ({ event, outcome })),
+        );
 
         return this.fromJSON(
           block.header.timestamp,
           shardId,
           eventsWithOutcomes,
         );
-      }),
-    );
+      })
+      .filter((nftEvent) => this.shouldStore(nftEvent));
 
     if (!entities.length) {
       return;
     }
 
-    const result = this.insertIgnore(entities);
+    const result = await this.insertIgnore(entities);
 
     this.logger.info(
       'Stored NFT events: %d (%s)',
@@ -161,33 +176,16 @@ export class NftEventService {
     return result;
   }
 
-  shouldStore(event: Near.NEP171Event) {
-    if (!Array.isArray(event.data)) {
-      return false;
-    }
-
-    switch (event.event) {
-      case Near.NEP171Events.Mint:
-        return event.data.some(({ owner_id }) =>
-          matchAccounts(owner_id, this.config.TRACK_ACCOUNTS),
-        );
-
-      case Near.NEP171Events.Transfer:
-        return event.data.some(
-          ({ old_owner_id, new_owner_id, authorized_id }) =>
-            matchAccounts(old_owner_id, this.config.TRACK_ACCOUNTS) ||
-            matchAccounts(new_owner_id, this.config.TRACK_ACCOUNTS) ||
-            (authorized_id &&
-              matchAccounts(authorized_id, this.config.TRACK_ACCOUNTS)),
-        );
-
-      case Near.NEP171Events.Burn:
-        return event.data.some(
-          ({ owner_id, authorized_id }) =>
-            matchAccounts(owner_id, this.config.TRACK_ACCOUNTS) ||
-            (authorized_id &&
-              matchAccounts(authorized_id, this.config.TRACK_ACCOUNTS)),
-        );
-    }
+  shouldStore(nftEvent: NftEvent) {
+    return (
+      matchAccounts(
+        nftEvent.token_old_owner_account_id,
+        this.config.TRACK_ACCOUNTS,
+      ) ||
+      matchAccounts(
+        nftEvent.token_new_owner_account_id,
+        this.config.TRACK_ACCOUNTS,
+      )
+    );
   }
 }

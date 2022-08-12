@@ -59,3 +59,20 @@ npm run cli 12345
 `BLOCKS_DL_CONCURRENCY` - number of blocks to download at once (default: 10)
 
 `WAIT_FOR_NEW_BLOCKS` - if there are no new blocks, wait (ms) before new request (default: 2000)
+
+
+### Known issues
+
+- Wrong `index_in_block` stored in `account_changes` table. Fixed in [e4d40c7b](https://github.com/near-daos/astro-lake-indexer/commit/e4d40c7bfcd6eecc95545ac3f4b486e67ec522b0). 
+- Some account changes are missing from the NEAR indexer for explorer database (mainnet) for some reason. So number of records in `account_changes` won't match. 
+ 
+    Affected accounts:
+  - tenk.sputnik-dao.near (6 entries)
+  - community.sputnik-dao.near (2 entries)
+  - creatives.sputnik-dao.near (2 entries)
+  - cudo.sputnik-dao.near (4 entries)
+  - nearlend-dao.sputnik-dao.near (4 entries)
+  - peaceinc.sputnik-dao.near (1 entry)
+  - near-insider.sputnik-dao.near (2 entries).
+
+- Wrong `emitted_index_of_event_entry_in_shard` stored in `events`, `assets__fungible_token_events` and `assets__non_fungible_token_events` tables. Fixed in [a1c6b7aa](https://github.com/near-daos/astro-lake-indexer/commit/a1c6b7aa0137348a5f453165f50d0c78db1358fa).

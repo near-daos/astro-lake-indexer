@@ -185,9 +185,17 @@ export const isEvent = (event: Near.Event | undefined): event is Near.Event =>
 export const isNEP141Event = (
   event: Near.Event | undefined,
 ): event is Near.NEP141Event =>
-  event !== undefined && event.standard === Near.EventStandards.NEP141;
+  typeof event === 'object' &&
+  event.standard === Near.EventStandards.NEP141 &&
+  typeof event.version === 'string' &&
+  Object.values(Near.NEP141Events).includes(event.event as Near.NEP141Events) &&
+  Array.isArray(event.data);
 
 export const isNEP171Event = (
   event: Near.Event | undefined,
 ): event is Near.NEP171Event =>
-  event !== undefined && event.standard === Near.EventStandards.NEP171;
+  typeof event === 'object' &&
+  event.standard === Near.EventStandards.NEP171 &&
+  typeof event.version === 'string' &&
+  Object.values(Near.NEP171Events).includes(event.event as Near.NEP171Events) &&
+  Array.isArray(event.data);

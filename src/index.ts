@@ -1,3 +1,4 @@
+import './tracing';
 import 'reflect-metadata';
 import * as AWS from 'aws-sdk';
 import { Container } from 'typedi';

@@ -63,7 +63,7 @@ export class ExecutionOutcomeService {
 
     const receipts = entities.flatMap((entity) => entity.receipts);
 
-    return this.executionOutcomeReceiptService.insertIgnore(receipts);
+    await this.executionOutcomeReceiptService.insertIgnore(receipts);
   }
 
   shouldStore(outcome: Near.ExecutionOutcomeWithReceipt) {

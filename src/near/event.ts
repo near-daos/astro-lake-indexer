@@ -30,7 +30,6 @@ export interface EventBase extends UnknownEvent {
 
 export interface NEP141EventBase extends EventBase {
   standard: EventStandards.NEP141;
-  version: string;
 }
 
 export interface NEP141EventMint extends NEP141EventBase {
@@ -59,7 +58,6 @@ export interface NEP141EventBurn extends NEP141EventBase {
 
 export interface NEP171EventBase extends EventBase {
   standard: EventStandards.NEP171;
-  version: string;
 }
 
 export interface NEP171EventMint extends NEP171EventBase {

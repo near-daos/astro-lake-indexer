@@ -35,6 +35,9 @@ export class FtEventService {
           {
             const { data } = event as Near.NEP141EventMint;
             data.forEach(({ amount, owner_id, memo }) => {
+              if (!amount || !owner_id) {
+                return;
+              }
               entities.push(
                 this.repository.create({
                   emitted_for_receipt_id: outcome.execution_outcome.id,
@@ -57,6 +60,9 @@ export class FtEventService {
           {
             const { data } = event as Near.NEP141EventTransfer;
             data.forEach(({ amount, old_owner_id, new_owner_id, memo }) => {
+              if (!amount || !old_owner_id || !new_owner_id) {
+                return;
+              }
               entities.push(
                 this.repository.create({
                   emitted_for_receipt_id: outcome.execution_outcome.id,
@@ -79,6 +85,9 @@ export class FtEventService {
           {
             const { data } = event as Near.NEP141EventBurn;
             data.forEach(({ amount, owner_id, memo }) => {
+              if (!amount || !owner_id) {
+                return;
+              }
               entities.push(
                 this.repository.create({
                   emitted_for_receipt_id: outcome.execution_outcome.id,
@@ -112,27 +121,29 @@ export class FtEventService {
   }
 
   async store(block: Near.Block, shards: Near.Shard[]) {
-    const entities = shards.flatMap((shard, shardId) =>
-      shard.receipt_execution_outcomes.flatMap((outcome) => {
-        const eventsWithOutcomes = outcome.execution_outcome.outcome.logs
-          .map(Near.parseLogEvent)
-          .filter(Near.isNEP141Event)
-          .filter((event) => this.shouldStore(event))
-          .map((event) => ({ event, outcome }));
+    const entities = shards
+      .flatMap((shard, shardId) => {
+        const eventsWithOutcomes = shard.receipt_execution_outcomes.flatMap(
+          (outcome) =>
+            outcome.execution_outcome.outcome.logs
+              .map(Near.parseLogEvent)
+              .filter(Near.isNEP141Event)
+              .map((event) => ({ event, outcome })),
+        );
 
         return this.fromJSON(
           block.header.timestamp,
           shardId,
           eventsWithOutcomes,
         );
-      }),
-    );
+      })
+      .filter((ftEvent) => this.shouldStore(ftEvent));
 
     if (!entities.length) {
       return;
     }
 
-    const result = this.insertIgnore(entities);
+    const result = await this.insertIgnore(entities);
 
     this.logger.info(
       'Stored FT events: %d (%s)',
@@ -143,28 +154,16 @@ export class FtEventService {
     return result;
   }
 
-  shouldStore(event: Near.NEP141Event) {
-    if (!Array.isArray(event.data)) {
-      return false;
-    }
-
-    switch (event.event) {
-      case Near.NEP141Events.Mint:
-        return event.data.some(({ owner_id }) =>
-          matchAccounts(owner_id, this.config.TRACK_ACCOUNTS),
-        );
-
-      case Near.NEP141Events.Transfer:
-        return event.data.some(
-          ({ old_owner_id, new_owner_id }) =>
-            matchAccounts(old_owner_id, this.config.TRACK_ACCOUNTS) ||
-            matchAccounts(new_owner_id, this.config.TRACK_ACCOUNTS),
-        );
-
-      case Near.NEP141Events.Burn:
-        return event.data.some(({ owner_id }) =>
-          matchAccounts(owner_id, this.config.TRACK_ACCOUNTS),
-        );
-    }
+  shouldStore(ftEvent: FtEvent) {
+    return (
+      matchAccounts(
+        ftEvent.token_old_owner_account_id,
+        this.config.TRACK_ACCOUNTS,
+      ) ||
+      matchAccounts(
+        ftEvent.token_new_owner_account_id,
+        this.config.TRACK_ACCOUNTS,
+      )
+    );
   }
 }

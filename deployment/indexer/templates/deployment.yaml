@@ -5,16 +5,16 @@ metadata:
   labels:
     {{- include "astro-lake-indexer.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
   strategy:
     type: Recreate
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "astro-lake-indexer.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "astro-lake-indexer.selectorLabels" . | nindent 8 }}
+        {{- include "astro-lake-indexer.metadataLabels" . | nindent 8 }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -33,15 +33,44 @@ spec:
             - name: http
               containerPort: {{ .Values.container.internalPort }}
               protocol: TCP
+          env:
+            {{- if eq .Values.environment.DATADOG_APM_ENABLED "true" }}
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+            - name: DD_LOGS_INJECTION
+              value: "true"
+            - name: DD_TRACE_SAMPLE_RATE
+              value: "1"
+            - name: DD_PROFILING_ENABLED
+              value: "true"
+            {{- end }}
           envFrom:
           - configMapRef:
               name: astro-lake-indexer-configmap
           - configMapRef:
               name: {{ .Release.Name }}-version
           - secretRef:
-              name: astro-lake-indexer-s3-secret
+              name: indexer-iam-user-secrets
           - secretRef:
-              name: astro-lake-indexer-db-secret
+              name: indexer-rds-secrets
+          - secretRef:
+              name: indexer-redis-secrets
+          - secretRef:
+              name: indexer-service-secrets
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

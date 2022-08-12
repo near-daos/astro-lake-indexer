@@ -46,7 +46,7 @@ export class Receipt {
   @Column('enum', { enum: ReceiptKind })
   receipt_kind: ReceiptKind;
 
-  @Column('text', { nullable: true })
+  @Column('text')
   @Index()
   originated_from_transaction_hash: string;
 

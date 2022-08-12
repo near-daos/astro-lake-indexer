@@ -1,11 +1,10 @@
 import { Logger } from 'log4js';
-import { EntityManager } from 'typeorm';
 import { Inject, Service } from 'typedi';
 import { PromisePool } from '@supercharge/promise-pool';
 import { retry, RetryConfig, wait } from 'ts-retry-promise';
 import { S3Fetcher } from './s3-fetcher';
 import { Config } from './config';
-import { InjectEntityManager, InjectLogger } from './decorators';
+import { InjectLogger } from './decorators';
 import {
   AccessKeyService,
   AccountChangeService,
@@ -16,9 +15,11 @@ import {
   LastBlockService,
   NftEventService,
   ObjectService,
+  StatsDService,
 } from './services';
 import { BlockResult } from './types';
 import * as Near from './near';
+import tracer from './tracing';
 
 @Service()
 export class App {
@@ -45,6 +46,8 @@ export class App {
     @Inject()
     private readonly fetcher: S3Fetcher,
     @Inject()
+    private readonly statsDService: StatsDService,
+    @Inject()
     private readonly cacheService: CacheService,
     @Inject()
     private readonly objectService: ObjectService,
@@ -62,8 +65,6 @@ export class App {
     private readonly nftEventService: NftEventService,
     @Inject()
     private readonly lastBlockService: LastBlockService,
-    @InjectEntityManager()
-    private readonly manager: EntityManager,
   ) {
     this.startBlockHeight = config.START_BLOCK_HEIGHT;
   }
@@ -125,23 +126,27 @@ export class App {
         .handleError((err) => {
           throw err;
         })
-        .process(async (blockHeight) => {
-          const block = await retry(
-            () => this.fetcher.getBlock(blockHeight),
-            this.retryConfig,
-          );
+        .process(async (blockHeight) =>
+          tracer.trace('block.download', async (span) => {
+            const block = await retry(
+              () => this.fetcher.getBlock(blockHeight),
+              this.retryConfig,
+            );
 
-          const shards = await Promise.all(
-            block.chunks.map((chunk) =>
-              retry(
-                () => this.fetcher.getShard(blockHeight, chunk.shard_id),
-                this.retryConfig,
+            const shards = await Promise.all(
+              block.chunks.map((chunk) =>
+                retry(
+                  () => this.fetcher.getShard(blockHeight, chunk.shard_id),
+                  this.retryConfig,
+                ),
               ),
-            ),
-          );
+            );
 
-          return { blockHeight, block, shards };
-        });
+            span?.setTag('height', blockHeight);
+
+            return { blockHeight, block, shards };
+          }),
+        );
 
       results.sort((a, b) => a.blockHeight - b.blockHeight);
 
@@ -157,7 +162,10 @@ export class App {
 
   private async process(results: BlockResult[]) {
     for (const result of results) {
-      await this.processBlock(result);
+      await tracer.trace('block.process', async (span) => {
+        await this.processBlock(result);
+        span?.setTag('height', result.blockHeight);
+      });
       this.processedBlocksCounter++;
     }
   }
@@ -192,15 +200,23 @@ export class App {
 
   private reportStats() {
     const speed = this.processedBlocksCounter / this.reportStatsInterval;
-    const memUsage = process.memoryUsage().heapUsed / 1024 / 1024;
+    const memUsage = process.memoryUsage();
+    const heapUsedMb = memUsage.heapUsed / 1024 / 1024;
 
     this.logger.info(
       `Current block: ${
         this.currentBlockHeight
       }, speed: ${speed} blocks/sec, memory usage: ${
-        Math.round(memUsage * 100) / 100
+        Math.round(heapUsedMb * 100) / 100
       } MB`,
     );
+
+    // send stats to datadog
+    this.statsDService.client.gauge('block.current', this.currentBlockHeight);
+    this.statsDService.client.gauge('block.rate', speed);
+    this.statsDService.client.gauge('memory.rss', memUsage.rss);
+    this.statsDService.client.gauge('memory.heapTotal', memUsage.heapTotal);
+    this.statsDService.client.gauge('memory.heapUsed', memUsage.heapUsed);
 
     this.processedBlocksCounter = 0;
   }
