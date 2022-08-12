@@ -11,6 +11,8 @@ export class Config {
     this.provider.env();
     this.provider.defaults({
       LOG_LEVEL: 'info',
+      REDIS_PORT: 6379,
+      REDIS_DATABASE: 0,
       FETCH_MAX_KEYS: 100,
       LOOK_BACK_BLOCKS: 20,
       TX_CACHE_SIZE: 1000,
@@ -34,10 +36,6 @@ export class Config {
       'DATABASE_NAME',
 
       'REDIS_HOST',
-      'REDIS_PORT',
-      'REDIS_USERNAME',
-      'REDIS_PASSWORD',
-      'REDIS_DATABASE',
 
       'START_BLOCK_HEIGHT',
       'LOOK_BACK_BLOCKS',
