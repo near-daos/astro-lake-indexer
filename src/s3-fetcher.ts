@@ -1,11 +1,11 @@
-import { Inject, Service } from 'typedi';
 import * as AWS from 'aws-sdk';
-import { Logger } from 'log4js';
 import JSONbig from 'json-bigint';
+import { Logger } from 'log4js';
+import { Inject, Service } from 'typedi';
 import { Config } from './config';
 import { InjectLogger } from './decorators';
-import { formatBlockHeight } from './utils';
 import * as Near from './near';
+import { formatBlockHeight } from './utils';
 
 @Service()
 export class S3Fetcher {
@@ -78,5 +78,15 @@ export class S3Fetcher {
     } catch (err) {
       throw new Error(`Unable to fetch shard ${key} (${err})`);
     }
+  }
+
+  async getFullBlock(blockHeight: number) {
+    const block = await this.getBlock(blockHeight);
+
+    const shards = await Promise.all(
+      block.chunks.map((chunk) => this.getShard(blockHeight, chunk.shard_id)),
+    );
+
+    return { blockHeight, block, shards };
   }
 }

@@ -35,3 +35,6 @@ export const jsonMatchAccounts = (
     return matchAccounts(String(object), accounts);
   }
 };
+
+export const wait = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

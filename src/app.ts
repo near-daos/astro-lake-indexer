@@ -1,7 +1,6 @@
 import { Logger } from 'log4js';
 import { Inject, Service } from 'typedi';
 import { PromisePool } from '@supercharge/promise-pool';
-import { retry, RetryConfig, wait } from 'ts-retry-promise';
 import { S3Fetcher } from './s3-fetcher';
 import { Config } from './config';
 import { InjectLogger } from './decorators';
@@ -17,9 +16,10 @@ import {
   ObjectService,
   StatsDService,
 } from './services';
+import tracer from './tracing';
 import { BlockResult } from './types';
 import * as Near from './near';
-import tracer from './tracing';
+import { wait } from './utils';
 
 @Service()
 export class App {
@@ -31,12 +31,6 @@ export class App {
 
   private reportStatsTimer: NodeJS.Timer;
   private readonly reportStatsInterval = 10;
-
-  private readonly retryConfig: Partial<RetryConfig<unknown>> = {
-    retries: 10,
-    delay: 1000,
-    logger: (msg: string) => this.logger.warn(msg),
-  };
 
   constructor(
     @InjectLogger('app')
@@ -110,10 +104,7 @@ export class App {
     let processPromise;
 
     while (this.running) {
-      const blocks = await retry(
-        () => this.fetcher.listBlocks(this.currentBlockHeight),
-        this.retryConfig,
-      );
+      const blocks = await this.fetcher.listBlocks(this.currentBlockHeight);
 
       if (!blocks.length) {
         this.logger.info('Waiting for new blocks...');
@@ -128,23 +119,9 @@ export class App {
         })
         .process(async (blockHeight) =>
           tracer.trace('block.download', async (span) => {
-            const block = await retry(
-              () => this.fetcher.getBlock(blockHeight),
-              this.retryConfig,
-            );
-
-            const shards = await Promise.all(
-              block.chunks.map((chunk) =>
-                retry(
-                  () => this.fetcher.getShard(blockHeight, chunk.shard_id),
-                  this.retryConfig,
-                ),
-              ),
-            );
-
             span?.setTag('height', blockHeight);
 
-            return { blockHeight, block, shards };
+            return this.fetcher.getFullBlock(blockHeight);
           }),
         );
 

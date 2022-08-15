@@ -2058,11 +2058,6 @@
     "v8-compile-cache-lib" "^3.0.1"
     "yn" "3.1.1"
 
-"ts-retry-promise@0.6.2":
-  "integrity" "sha512-QFnm3RuFivgkQGKm8XX7F7sAMQEI7pzVkfSlcWMYH+MoIRy7BI3sE8135YPapP8Fra5KgAuOq2QFT969N14cAw=="
-  "resolved" "https://registry.npmjs.org/ts-retry-promise/-/ts-retry-promise-0.6.2.tgz"
-  "version" "0.6.2"
-
 "tslib@^1.8.1":
   "integrity" "sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg=="
   "resolved" "https://registry.npmjs.org/tslib/-/tslib-1.14.1.tgz"
