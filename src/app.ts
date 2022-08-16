@@ -1,5 +1,6 @@
 import { Logger } from 'log4js';
 import { Inject, Service } from 'typedi';
+import { wait } from 'ts-retry-promise';
 import { PromisePool } from '@supercharge/promise-pool';
 import { S3Fetcher } from './s3-fetcher';
 import { Config } from './config';
@@ -19,7 +20,6 @@ import {
 import tracer from './tracing';
 import { BlockResult } from './types';
 import * as Near from './near';
-import { wait } from './utils';
 
 @Service()
 export class App {
@@ -104,7 +104,9 @@ export class App {
     let processPromise;
 
     while (this.running) {
-      const blocks = await this.fetcher.listBlocks(this.currentBlockHeight);
+      const blocks = await this.fetcher.listBlocksWithRetry(
+        this.currentBlockHeight,
+      );
 
       if (!blocks.length) {
         this.logger.info('Waiting for new blocks...');
@@ -121,7 +123,7 @@ export class App {
           tracer.trace('block.download', async (span) => {
             span?.setTag('height', blockHeight);
 
-            return this.fetcher.getFullBlock(blockHeight);
+            return this.fetcher.getFullBlockWithRetry(blockHeight);
           }),
         );
 

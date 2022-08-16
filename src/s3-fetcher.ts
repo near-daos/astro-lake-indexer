@@ -2,6 +2,7 @@ import * as AWS from 'aws-sdk';
 import JSONbig from 'json-bigint';
 import { Logger } from 'log4js';
 import { Inject, Service } from 'typedi';
+import { retry, RetryConfig } from 'ts-retry-promise';
 import { Config } from './config';
 import { InjectLogger } from './decorators';
 import * as Near from './near';
@@ -16,6 +17,12 @@ export class S3Fetcher {
     private readonly logger: Logger,
     private readonly s3 = new AWS.S3(),
     private readonly json = JSONbig({ useNativeBigInt: true }),
+    private readonly retryConfig: Partial<RetryConfig<unknown>> = {
+      retries: 20,
+      delay: 1000,
+      timeout: 'INFINITELY',
+      logger: (msg) => this.logger.warn(msg),
+    },
   ) {}
 
   async listBlocks(startBlockHeight: number) {
@@ -88,5 +95,13 @@ export class S3Fetcher {
     );
 
     return { blockHeight, block, shards };
+  }
+
+  async listBlocksWithRetry(startBlockHeight: number) {
+    return retry(() => this.listBlocks(startBlockHeight), this.retryConfig);
+  }
+
+  async getFullBlockWithRetry(blockHeight: number) {
+    return retry(() => this.getFullBlock(blockHeight), this.retryConfig);
   }
 }
