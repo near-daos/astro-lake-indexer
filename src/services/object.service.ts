@@ -14,6 +14,9 @@ import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
 
 @Service()
 export class ObjectService {
+  // ignore delayed receipts https://github.com/near/nearcore/pull/4827
+  private readonly delayedReceiptBlocks = [47317863, 47317864, 47317865];
+
   constructor(
     @InjectLogger('object-service')
     private readonly logger: Logger,
@@ -61,24 +64,32 @@ export class ObjectService {
             Near.getReceiptOrDataId(receipt),
           );
 
-          if (!transactionHash) {
+          if (transactionHash) {
+            if (this.cacheService.isAlwaysStoreTransaction(transactionHash)) {
+              // store the whole transaction
+              receipts.push({
+                block,
+                chunk,
+                indexInChunk,
+                transactionHash,
+                receipt,
+              });
+            }
+          } else if (this.delayedReceiptBlocks.includes(block.header.height)) {
+            this.logger.warn(`Ignoring delayed receipt ${receipt.receipt_id}`);
+          } else {
             throw new Error(
               `Not found parent tx hash for receipt: ${receipt.receipt_id}`,
             );
           }
 
-          if (this.cacheService.isAlwaysStoreTransaction(transactionHash)) {
-            // store the whole transaction
-            receipts.push({
-              block,
-              chunk,
-              indexInChunk,
-              transactionHash,
-              receipt,
-            });
-          }
-
           if (this.receiptService.shouldStore(receipt)) {
+            if (!transactionHash) {
+              throw new Error(
+                `Not found parent tx hash for receipt: ${receipt.receipt_id}`,
+              );
+            }
+
             // mark the whole transaction as always to store for future receipts & execution outcomes
             this.cacheService.setAlwaysStoreTransaction(transactionHash);
 
@@ -108,23 +119,32 @@ export class ObjectService {
             executionOutcome.execution_outcome.id,
           );
 
-          if (!transactionHash) {
+          if (transactionHash) {
+            if (this.cacheService.isAlwaysStoreTransaction(transactionHash)) {
+              // store the whole transaction
+              executionOutcomes.push({
+                block,
+                shardId: shard.shard_id,
+                indexInChunk,
+                executionOutcome,
+              });
+            }
+          } else if (this.delayedReceiptBlocks.includes(block.header.height)) {
+            this.logger.warn(
+              `Ignoring delayed execution outcome ${executionOutcome.execution_outcome.id}`,
+            );
+          } else {
             throw new Error(
               `Not found parent tx hash for execution outcome ${executionOutcome.execution_outcome.id}`,
             );
           }
 
-          if (this.cacheService.isAlwaysStoreTransaction(transactionHash)) {
-            // store the whole transaction
-            executionOutcomes.push({
-              block,
-              shardId: shard.shard_id,
-              indexInChunk,
-              executionOutcome,
-            });
-          }
-
           if (this.executionOutcomeService.shouldStore(executionOutcome)) {
+            if (!transactionHash) {
+              throw new Error(
+                `Not found parent tx hash for execution outcome ${executionOutcome.execution_outcome.id}`,
+              );
+            }
             // mark transaction as always to store for future receipts & execution outcomes
             this.cacheService.setAlwaysStoreTransaction(transactionHash);
 
