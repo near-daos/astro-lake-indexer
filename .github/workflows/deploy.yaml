@@ -35,7 +35,7 @@ jobs:
               ;;
               production)
                 echo "::set-output name=docker_env_tag::${{ github.event.inputs.tag }}"
-                echo "::set-output name=namespace::astro-be"
+                echo "::set-output name=namespace::astro-be-prod"
               ;;
               *)
                 echo "Provided environment '${{ github.event.inputs.environment }}' is incorrect"
