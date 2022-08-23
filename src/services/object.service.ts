@@ -8,6 +8,7 @@ import { TransactionService } from './transaction.service';
 import { ReceiptService } from './receipt.service';
 import { RedisService } from './redis.service';
 import { ExecutionOutcomeService } from './execution-outcome.service';
+import { Config } from '../config';
 import { InjectLogger } from '../decorators';
 import * as Near from '../near';
 import { ExecutionOutcomeData, ReceiptData, TransactionData } from '../types';
@@ -20,6 +21,8 @@ export class ObjectService {
   constructor(
     @InjectLogger('object-service')
     private readonly logger: Logger,
+    @Inject()
+    private readonly config: Config,
     @Inject()
     private readonly cacheService: CacheService,
     @Inject()
@@ -307,7 +310,7 @@ export class ObjectService {
     }
 
     // stream receipts
-    if (receiptEntities.length) {
+    if (receiptEntities.length && this.config.REDIS_STREAMING) {
       streamReceiptIds.forEach((receiptId) => {
         const receipt = receiptEntities.find(
           (receipt) => receipt.receipt_id === receiptId,

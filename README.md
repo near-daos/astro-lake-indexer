@@ -50,6 +50,8 @@ npm run cli 12345
 
 ### Configuration
 
+`REDIS_STREAMING` - enable or disable streaming of receipts to Redis stream
+
 `START_BLOCK_HEIGHT` - height of block to start download from
 
 `LOOK_BACK_BLOCKS` - number of blocks to cache before start (default: 20)

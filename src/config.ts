@@ -50,6 +50,14 @@ export class Config {
     ]);
   }
 
+  private getBoolean(key: string) {
+    const val = this.provider.get(key);
+    if (!val) {
+      return false;
+    }
+    return ['true', 'yes', 'on', '1'].includes(String(val).toLowerCase());
+  }
+
   get LOG_LEVEL(): string {
     return this.provider.get('LOG_LEVEL');
   }
@@ -96,6 +104,10 @@ export class Config {
 
   get REDIS_HOST(): string {
     return this.provider.get('REDIS_HOST');
+  }
+
+  get REDIS_STREAMING(): boolean {
+    return this.getBoolean('REDIS_STREAMING');
   }
 
   get REDIS_PORT(): number {
