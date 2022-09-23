@@ -10,6 +10,8 @@ import { formatBlockHeight } from './utils';
 
 @Service()
 export class S3Fetcher {
+  private readonly retryConfig: Partial<RetryConfig<unknown>>;
+
   constructor(
     @Inject()
     private readonly config: Config,
@@ -17,13 +19,15 @@ export class S3Fetcher {
     private readonly logger: Logger,
     private readonly s3 = new AWS.S3(),
     private readonly json = JSONbig({ useNativeBigInt: true }),
-    private readonly retryConfig: Partial<RetryConfig<unknown>> = {
-      retries: 20,
-      delay: 1000,
+  ) {
+    this.retryConfig = {
+      retries: config.BLOCK_FETCH_RETRIES,
+      delay: config.BLOCK_FETCH_DELAY_MS,
+      backoff: 'EXPONENTIAL',
       timeout: 'INFINITELY',
       logger: (msg) => this.logger.warn(msg),
-    },
-  ) {}
+    };
+  }
 
   async listBlocks(startBlockHeight: number) {
     const startAfter = formatBlockHeight(startBlockHeight);

@@ -154,6 +154,14 @@ export class Config {
     return parseInt(this.provider.get('WAIT_FOR_NEW_BLOCKS'));
   }
 
+  get BLOCK_FETCH_RETRIES(): number {
+    return parseInt(this.provider.get('BLOCK_FETCH_RETRIES'));
+  }
+
+  get BLOCK_FETCH_DELAY_MS(): number {
+    return parseInt(this.provider.get('BLOCK_FETCH_DELAY_MS'));
+  }
+
   get TRACK_ACCOUNTS(): string[] {
     return (this.provider.get('TRACK_ACCOUNTS') as string)
       .split(',')
