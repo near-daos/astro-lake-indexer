@@ -10,4 +10,4 @@ runs:
     - shell: bash
       run: |
         npm install
-        npm build
+        npm run build
