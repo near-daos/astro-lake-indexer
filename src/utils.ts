@@ -3,7 +3,7 @@ export const formatBlockHeight = (blockHeight: number) => {
 };
 
 export const matchAccounts = (string: unknown, accounts: string[]) => {
-  if (!string || !(typeof string === 'string')) {
+  if (!string || typeof string !== 'string') {
     return false;
   }
   return accounts.some(
