@@ -19,6 +19,8 @@ export class Config {
       TX_HASHES_CACHE_SIZE: 5000,
       BLOCKS_DL_CONCURRENCY: 10,
       WAIT_FOR_NEW_BLOCKS: 2000,
+      BLOCK_FETCH_RETRIES: 20,
+      BLOCK_FETCH_DELAY_MS: 1000,
     });
     this.provider.required([
       'LOG_LEVEL',
@@ -45,6 +47,8 @@ export class Config {
       'FETCH_MAX_KEYS',
       'BLOCKS_DL_CONCURRENCY',
       'WAIT_FOR_NEW_BLOCKS',
+      'BLOCK_FETCH_RETRIES',
+      'BLOCK_FETCH_DELAY_MS',
 
       'TRACK_ACCOUNTS',
     ]);

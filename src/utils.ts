@@ -2,11 +2,8 @@ export const formatBlockHeight = (blockHeight: number) => {
   return String(blockHeight).padStart(12, '0');
 };
 
-export const matchAccounts = (
-  string: string | undefined | null,
-  accounts: string[],
-) => {
-  if (!string) {
+export const matchAccounts = (string: unknown, accounts: string[]) => {
+  if (!string || typeof string !== 'string') {
     return false;
   }
   return accounts.some(
